@@ -2,6 +2,9 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup />
   <ItemGroup>
+    <Compile Update="CurrentPassword.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="ForgotPasswordControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -14,7 +17,13 @@
     <Compile Update="MyClassesView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="NewPassword.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="NotificationsView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="ProfileManage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="QuestionBankView.xaml.cs">

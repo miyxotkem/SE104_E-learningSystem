@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="firebase\firebase_json.json">
+    <None Update="Firebase\firebase_json.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
