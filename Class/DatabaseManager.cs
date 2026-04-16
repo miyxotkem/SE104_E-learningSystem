@@ -1,4 +1,4 @@
-using e_learning_app;
+    using e_learning_app;
 using Firebase.Auth;
 using Google.Cloud.Firestore;
 using System;
@@ -112,6 +112,99 @@ namespace e_learning_app
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Delete Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<List<CourseContent>> GetCourseContentsAsync(string courseId)
+        {
+            try
+            {
+                if (_db == null) return new List<CourseContent>();
+
+                // Navigate to: Courses -> [courseId] -> Contents
+                CollectionReference contentsRef = _db.Collection("Courses").Document(courseId).Collection("Contents");
+
+                // Fetch them ordered by the OrderIndex we save during drag-and-drop
+                QuerySnapshot snapshot = await contentsRef.OrderBy("OrderIndex").GetSnapshotAsync();
+
+                List<CourseContent> contents = new List<CourseContent>();
+                foreach (DocumentSnapshot document in snapshot.Documents)
+                {
+                    if (document.Exists)
+                    {
+                        CourseContent content = document.ConvertTo<CourseContent>();
+                        content.Id = document.Id; // Attach the Firestore generated ID
+                        contents.Add(content);
+                    }
+                }
+                return contents;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Get Contents Error: {ex.Message}");
+                return new List<CourseContent>();
+            }
+        }
+
+        public async Task<bool> UpdateCourseContentOrderAsync(string courseId, List<CourseContent> contents)
+        {
+            try
+            {
+                if (_db == null) return false;
+
+                // Use a WriteBatch to update all positions in a single transaction
+                WriteBatch batch = _db.StartBatch();
+                CollectionReference contentsRef = _db.Collection("Courses").Document(courseId).Collection("Contents");
+
+                foreach (var content in contents)
+                {
+                    if (!string.IsNullOrEmpty(content.Id))
+                    {
+                        DocumentReference docRef = contentsRef.Document(content.Id);
+                        // We only update the OrderIndex field to save bandwidth
+                        batch.Update(docRef, "OrderIndex", content.OrderIndex);
+                    }
+                }
+
+                await batch.CommitAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Update Order Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateCourseContentAsync(string courseId, CourseContent content)
+        {
+            try
+            {
+                if (_db == null) return false;
+                DocumentReference docRef = _db.Collection("Courses").Document(courseId).Collection("Contents").Document(content.Id);
+                await docRef.SetAsync(content, SetOptions.Overwrite);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Update Content Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteCourseContentAsync(string courseId, string contentId)
+        {
+            try
+            {
+                if (_db == null) return false;
+                DocumentReference docRef = _db.Collection("Courses").Document(courseId).Collection("Contents").Document(contentId);
+                await docRef.DeleteAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Delete Content Error: {ex.Message}");
                 return false;
             }
         }

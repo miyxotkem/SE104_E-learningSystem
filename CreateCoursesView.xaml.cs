@@ -127,11 +127,7 @@ namespace e_learning_app
 
                 if (success)
                 {
-                    var mainWin = Window.GetWindow(this) as MainWindow;
-                    if (mainWin != null)
-                    {
-                        mainWin.MainContentArea.Content = new Views.MyClassesView(_dbManager);
-                    }
+                    NavigateBack(); // Use the unified navigation method
                 }
                 else
                 {
@@ -146,14 +142,23 @@ namespace e_learning_app
             }
         }
 
-        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        // ==========================================
+        // Navigation Logic (FIXED)
+        // ==========================================
+
+        // Wire both the "Hủy bỏ" button and the floating "← Quay lại" button to the same method
+        private void BtnCancel_Click(object sender, RoutedEventArgs e) => NavigateBack();
+        private void BtnBack_Click(object sender, RoutedEventArgs e) => NavigateBack();
+
+        private void NavigateBack()
         {
             var mainWin = Window.GetWindow(this) as MainWindow;
             if (mainWin != null)
             {
-                mainWin.MainContentArea.Content = new Views.MyClassesView(_dbManager);
+                // IMPORTANT: We must pass the current user ID to MyClassesView now!
+                string currentUserId = _dbManager.GetCurrentUser()?.Id;
+                mainWin.MainContentArea.Content = new Views.MyClassesView(_dbManager, currentUserId);
             }
         }
-
     }
 }

@@ -25,7 +25,7 @@ namespace e_learning_app
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            Query query = _dbManager.GetDb.Collection("Users").WhereEqualTo("Email", "john@example.com");
+            Query query = _dbManager.GetDb.Collection("Users").WhereEqualTo("Email", "studenttest@example.com");
             QuerySnapshot snapshot = await query.GetSnapshotAsync();
             _dbManager.SetCurrentUser(snapshot.Documents[0].ConvertTo<User>());
 

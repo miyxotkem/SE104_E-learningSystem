@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         ResizeMode="CanResize"
-        Title="EduFlow - Modern Learning Experience" Height="600" Width="1200"
+        Title="EduFlow - Modern Learning Experience" Height="900" Width="1500"
         Background="#F0F2F5" WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI Variable Display, Segoe UI, Arial">
 

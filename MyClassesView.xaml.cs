@@ -8,12 +8,14 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using e_learning_app;
+using e_learning_app.Class;
 
 namespace e_learning_app.Views
 {
     public partial class MyClassesView : UserControl
     {
         private readonly DatabaseManager _dbManager;
+        private readonly string _currentUserId;
         private List<Course> _allClasses = new();
         private string _filterMode = "all";
         private string _searchText = "";
@@ -24,10 +26,36 @@ namespace e_learning_app.Views
             InitializeComponent();
         }
 
+        public MyClassesView(DatabaseManager dbManager, string currentUserId)
+        {
+            _dbManager = dbManager;
+            _currentUserId = currentUserId;
+            InitializeComponent();
+        }
+
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
+            ApplyRolePermissions(); // <-- NEW: Check role and hide button if Student
             await LoadDataAsync();
             ApplyFilter();
+        }
+
+        // =========================================================
+        // SECURITY & PERMISSIONS
+        // =========================================================
+        private void ApplyRolePermissions()
+        {
+            var currentUser = _dbManager.GetCurrentUser();
+
+            // If there is no user, or the user's role is not "Instructor", hide the Create button
+            if (currentUser == null || currentUser.Role != "Instructor")
+            {
+                BtnCreateClass.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                BtnCreateClass.Visibility = Visibility.Visible;
+            }
         }
 
         // ─── Data Loading ─────────────────────────────────────────────
@@ -50,7 +78,6 @@ namespace e_learning_app.Views
                     if (doc.Exists)
                     {
                         var course = doc.ConvertTo<Course>();
-
                         _allClasses.Add(course);
                     }
                 }
@@ -171,9 +198,73 @@ namespace e_learning_app.Views
             }
         }
 
-        private void BtnAttendance_Click(object sender, RoutedEventArgs e)
+        // =========================================================
+        // ATTENDANCE LOGIC (Điểm danh)
+        // =========================================================
+        private async void BtnAttendance_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn) MessageBox.Show($"Điểm danh ID: {btn.Tag}");
+            if (sender is Button btn && btn.Tag is string courseId)
+            {
+                var selectedCourse = _allClasses.FirstOrDefault(c => c.Id == courseId);
+                var currentUser = _dbManager.GetCurrentUser();
+
+                if (selectedCourse == null || currentUser == null) return;
+
+                // Only students can check in!
+                if (selectedCourse.InstructorId == currentUser.Id || currentUser.Role == "Instructor")
+                {
+                    MessageBox.Show("Giảng viên không cần điểm danh lớp học này!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                try
+                {
+                    // Prevent double-clicks
+                    btn.IsEnabled = false;
+                    btn.Content = "Đang xử lý...";
+
+                    var courseRef = _dbManager.GetDb.Collection("Courses").Document(selectedCourse.Id);
+                    var enrollmentRef = courseRef.Collection("EnrolledStudents").Document(currentUser.Id);
+
+                    var snap = await enrollmentRef.GetSnapshotAsync();
+
+                    if (snap.Exists)
+                    {
+                        MessageBox.Show("Bạn đã điểm danh lớp học này rồi!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                        btn.IsEnabled = true;
+                        btn.Content = "Điểm danh";
+                        return;
+                    }
+
+                    // Not checked in yet! Update using a Batch so both actions happen simultaneously
+                    WriteBatch batch = _dbManager.GetDb.StartBatch();
+
+                    batch.Set(enrollmentRef, new
+                    {
+                        JoinedAt = DateTime.UtcNow,
+                        StudentId = currentUser.Id
+                    });
+
+                    selectedCourse.StudentCount++;
+                    batch.Update(courseRef, "StudentCount", selectedCourse.StudentCount);
+
+                    await batch.CommitAsync();
+
+                    // Refresh UI
+                    ApplyFilter();
+
+                    MessageBox.Show("Điểm danh thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi khi điểm danh: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                finally
+                {
+                    btn.IsEnabled = true;
+                    btn.Content = "Điểm danh";
+                }
+            }
         }
 
         // ─── UI Factory ───────────────────────────────────────────────
