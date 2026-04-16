@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using e_learning_app.Views;
 
@@ -52,6 +52,22 @@ namespace e_learning_app
         {
             SetActiveNav(BtnNotifications);
             StudentContentArea.Content = new StudentNotificationView();
+        }
+
+        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                        "Bạn có chắc muốn đăng xuất khỏi Student Panel?",
+                        "Xác nhận đăng xuất",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                var loginWin = new LoginWindow();
+                loginWin.Show();
+                this.Close();
+            }
         }
     }
 }

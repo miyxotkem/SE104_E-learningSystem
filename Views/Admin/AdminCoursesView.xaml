@@ -1,0 +1,111 @@
+<UserControl x:Class="e_learning_app.Views.Admin.AdminCoursesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F0F2F5"
+             Loaded="UserControl_Loaded">
+
+    <Grid Margin="32,30,32,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- HEADER -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="📚  Quản lý Khóa học" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
+            <TextBlock x:Name="TxtCourseCount" Text="Đang tải..." FontSize="13" Foreground="#64748B" Margin="0,6,0,0"/>
+        </StackPanel>
+
+        <!-- TABLE -->
+        <Border Grid.Row="2" Background="White" CornerRadius="18">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.06" Color="Black"/>
+            </Border.Effect>
+            <DataGrid x:Name="CoursesGrid"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
+                      SelectionMode="Single" SelectionUnit="FullRow"
+                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F1F5F9"
+                      RowHeight="52" ColumnHeaderHeight="44"
+                      BorderThickness="0" Background="White"
+                      FontSize="13" Foreground="#1E293B"
+                      HeadersVisibility="Column">
+
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background"      Value="#F8FAFC"/>
+                        <Setter Property="Foreground"      Value="#64748B"/>
+                        <Setter Property="FontSize"        Value="11"/>
+                        <Setter Property="FontWeight"      Value="Bold"/>
+                        <Setter Property="Padding"         Value="20,0"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F5F3FF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#EDE9FE"/>
+                                <Setter Property="Foreground" Value="#1E293B"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="BorderThickness"   Value="0"/>
+                        <Setter Property="Padding"           Value="20,0"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background"  Value="Transparent"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Tên khóa học"  Binding="{Binding CourseName}"   Width="*"/>
+                    <DataGridTextColumn Header="Giảng viên"    Binding="{Binding TeacherName}"   Width="180"/>
+                    <DataGridTextColumn Header="Số học viên"   Binding="{Binding StudentCount}"  Width="120"/>
+                    <DataGridTextColumn Header="Ngày tạo"      Binding="{Binding CreatedAt}"     Width="130"/>
+
+                    <!-- Status pill -->
+                    <DataGridTemplateColumn Header="Trạng thái" Width="130">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="12" Padding="10,4" Margin="8,0"
+                                        Background="#DCFCE7" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <TextBlock Text="● Đang mở" FontSize="11" Foreground="#16A34A" FontWeight="SemiBold"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Actions -->
+                    <DataGridTemplateColumn Header="Thao tác" Width="140">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="12,0" VerticalAlignment="Center">
+                                    <Border Background="#EDE9FE" CornerRadius="8" Padding="8,4" Margin="0,0,6,0" Cursor="Hand">
+                                        <TextBlock Text="👁️ Xem" FontSize="11" Foreground="#7C3AED" FontWeight="SemiBold"/>
+                                    </Border>
+                                    <Border Background="#FEE2E2" CornerRadius="8" Padding="8,4" Cursor="Hand">
+                                        <TextBlock Text="🗑️ Ẩn" FontSize="11" Foreground="#DC2626" FontWeight="SemiBold"/>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

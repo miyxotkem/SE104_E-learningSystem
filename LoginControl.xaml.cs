@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,15 +35,32 @@ namespace e_learning_app
         private async void login_google(object sender, RoutedEventArgs e)
         {
             btnLogin.IsEnabled = false;
-            string userId = await FirebaseService.LoginWithGoogleAsync();
+            var user = await FirebaseService.LoginWithGoogleAsync();
 
-            if (userId != null)
+            if (user != null)
             {
-                await FirebaseService.CreateUserInFirestore(userId);
+                string userId = user.Uid;
+                string email = user.Info?.Email ?? "No Email";
+                string displayName = user.Info?.DisplayName ?? "No Name";
+
+                await FirebaseService.CreateUserInFirestore(userId, email, displayName);
+
                 var current_window = Window.GetWindow(this) as LoginWindow;
-                MainWindow main = new MainWindow();
-                main.Show();
-                main.Activate();
+                string role = await FirebaseService.GetUserRoleAsync(userId);
+                
+                if (role == "Teacher")
+                {
+                    MainWindow main = new MainWindow();
+                    main.Show();
+                    main.Activate();
+                }
+                else
+                {
+                    StudentMainWindow studentMain = new StudentMainWindow();
+                    studentMain.Show();
+                    studentMain.Activate();
+                }
+                
                 current_window?.Close();
             }
 
@@ -60,25 +77,54 @@ namespace e_learning_app
                 txtstatus.Text = "Vui lòng nhập đầy đủ Email và Mật khẩu!";
                 return;
             }
-            btnLogin.IsEnabled = false;
-
-            string userId = await FirebaseService.LoginAsync(email, password);
-
-            if (userId != null)
+            if (email == "admin" && password == "admin")
             {
                 var current_window = Window.GetWindow(this) as LoginWindow;
-                await FirebaseService.CreateUserInFirestore(userId);
-                MainWindow main = new MainWindow();
-                main.Show();
-                main.Activate();
-                current_window?.Close();
-            }
-            else
-            {
-                txtstatus.Text = "Sai Email hoặc mật khẩu";
-            }
 
-            btnLogin.IsEnabled = true;
+                AdminMainWindow adminMainWindow = new AdminMainWindow();
+                adminMainWindow.Show();
+                adminMainWindow.Activate();
+                current_window?.Close();
+                return;
+            }
+            btnLogin.IsEnabled = false;
+
+            try
+            {
+                string userId = await FirebaseService.LoginAsync(email, password);
+
+                if (userId != null)
+                {
+                    var current_window = Window.GetWindow(this) as LoginWindow;
+                    await FirebaseService.CreateUserInFirestore(userId, email);
+                    
+                    string role = await FirebaseService.GetUserRoleAsync(userId);
+                    
+                    if (role == "Teacher")
+                    {
+                        MainWindow main = new MainWindow();
+                        main.Show();
+                        main.Activate();
+                    }
+                    else
+                    {
+                        StudentMainWindow studentMain = new StudentMainWindow();
+                        studentMain.Show();
+                        studentMain.Activate();
+                    }
+                    current_window?.Close();
+                }
+                else
+                {
+                    txtstatus.Text = "Sai Email hoặc mật khẩu";
+                }
+
+            }
+            catch (Exception ex) { MessageBox.Show("Lỗi kết nối" + ex.Message); }
+            finally
+            {
+                btnLogin.IsEnabled = true;
+            }
         }
 
         private async void login_enter(object sender, KeyEventArgs e)
@@ -94,6 +140,17 @@ namespace e_learning_app
                 }
                 btnLogin.IsEnabled = false;
 
+                if (email == "admin" && password == "admin")
+                {
+                    var current_window = Window.GetWindow(this) as LoginWindow;
+
+                    AdminMainWindow adminMainWindow = new AdminMainWindow();
+                    adminMainWindow.Show();
+                    adminMainWindow.Activate();
+                    current_window?.Close();
+                    return;
+                }
+
                 try
                 {
                     string userId = await FirebaseService.LoginAsync(email, password);
@@ -101,10 +158,22 @@ namespace e_learning_app
                     if (userId != null)
                     {
                         var current_window = Window.GetWindow(this) as LoginWindow;
-                        await FirebaseService.CreateUserInFirestore(userId);
-                        MainWindow main = new MainWindow();
-                        main.Show();
-                        main.Activate();
+                        await FirebaseService.CreateUserInFirestore(userId, email);
+
+                        string role = await FirebaseService.GetUserRoleAsync(userId);
+                    
+                        if (role == "Teacher")
+                        {
+                            MainWindow main = new MainWindow();
+                            main.Show();
+                            main.Activate();
+                        }
+                        else
+                        {
+                            StudentMainWindow studentMain = new StudentMainWindow();
+                            studentMain.Show();
+                            studentMain.Activate();
+                        }
                         current_window?.Close();
                     }
                     else

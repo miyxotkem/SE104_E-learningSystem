@@ -1,0 +1,182 @@
+<UserControl x:Class="e_learning_app.Views.Admin.AdminSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F0F2F5">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="32,30,32,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="24"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- HEADER -->
+            <StackPanel Grid.Row="0">
+                <TextBlock Text="⚙️  Cài đặt Hệ thống" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
+                <TextBlock Text="Quản lý các tham số và cấu hình của nền tảng"
+                           FontSize="13" Foreground="#64748B" Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <!-- SETTINGS CARDS -->
+            <StackPanel Grid.Row="2">
+
+                <!-- Section: Hệ thống -->
+                <TextBlock Text="HỆ THỐNG" FontSize="11" FontWeight="Bold" Foreground="#CBD5E1" Margin="0,0,0,12"/>
+
+                <Border Background="White" CornerRadius="18" Padding="24" Margin="0,0,0,16">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.06" Color="Black"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <!-- Tên hệ thống -->
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="280"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Tên nền tảng" FontWeight="SemiBold" FontSize="14" Foreground="#1E293B"/>
+                                <TextBlock Text="Tên hiển thị của hệ thống cho người dùng"
+                                           FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Background="#F8FAFC" CornerRadius="10" Padding="14,0" Height="40"
+                                    VerticalAlignment="Center">
+                                <TextBox Text="EduFlow" Background="Transparent" BorderThickness="0"
+                                         FontSize="13" VerticalContentAlignment="Center"/>
+                            </Border>
+                        </Grid>
+
+                        <Border Height="1" Background="#F1F5F9" Margin="0,0,0,20"/>
+
+                        <!-- Cho phép đăng ký -->
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Cho phép đăng ký mới" FontWeight="SemiBold" FontSize="14" Foreground="#1E293B"/>
+                                <TextBlock Text="Người dùng mới có thể tạo tài khoản"
+                                           FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <ToggleButton Grid.Column="1" x:Name="ToggleRegistration" IsChecked="True"
+                                          VerticalAlignment="Center" Width="50" Height="26">
+                                <ToggleButton.Style>
+                                    <Style TargetType="ToggleButton">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ToggleButton">
+                                                    <Border x:Name="track" Width="50" Height="26" CornerRadius="13"
+                                                            Background="#E2E8F0">
+                                                        <Border x:Name="thumb" Width="20" Height="20" CornerRadius="10"
+                                                                Background="White" HorizontalAlignment="Left" Margin="3">
+                                                            <Border.Effect>
+                                                                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.2"/>
+                                                            </Border.Effect>
+                                                        </Border>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="track" Property="Background" Value="#7C3AED"/>
+                                                            <Setter TargetName="thumb" Property="HorizontalAlignment" Value="Right"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                        </Grid>
+
+                        <Border Height="1" Background="#F1F5F9" Margin="0,0,0,20"/>
+
+                        <!-- Maintenance mode -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Chế độ bảo trì" FontWeight="SemiBold" FontSize="14" Foreground="#1E293B"/>
+                                <TextBlock Text="Tạm ngưng hệ thống để bảo trì – người dùng sẽ thấy thông báo"
+                                           FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <ToggleButton Grid.Column="1" IsChecked="False" VerticalAlignment="Center"
+                                          Width="50" Height="26">
+                                <ToggleButton.Style>
+                                    <Style TargetType="ToggleButton">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ToggleButton">
+                                                    <Border x:Name="track" Width="50" Height="26" CornerRadius="13"
+                                                            Background="#E2E8F0">
+                                                        <Border x:Name="thumb" Width="20" Height="20" CornerRadius="10"
+                                                                Background="White" HorizontalAlignment="Left" Margin="3">
+                                                            <Border.Effect>
+                                                                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.2"/>
+                                                            </Border.Effect>
+                                                        </Border>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="track" Property="Background" Value="#EF4444"/>
+                                                            <Setter TargetName="thumb" Property="HorizontalAlignment" Value="Right"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Section: Phân quyền mặc định -->
+                <TextBlock Text="PHÂN QUYỀN" FontSize="11" FontWeight="Bold" Foreground="#CBD5E1" Margin="0,8,0,12"/>
+                <Border Background="White" CornerRadius="18" Padding="24" Margin="0,0,0,16">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.06" Color="Black"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="200"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Vai trò mặc định khi đăng ký" FontWeight="SemiBold" FontSize="14" Foreground="#1E293B"/>
+                                <TextBlock Text="Vai trò tự động gán cho tài khoản mới"
+                                           FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" VerticalAlignment="Center" Height="38"
+                                      SelectedIndex="0" FontSize="13"
+                                      BorderBrush="#E2E8F0" Background="#F8FAFC">
+                                <ComboBoxItem Content="Student (Học viên)"/>
+                                <ComboBoxItem Content="Teacher (Giảng viên)"/>
+                            </ComboBox>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Save button -->
+                <Border HorizontalAlignment="Right" CornerRadius="12" Cursor="Hand" Margin="0,8,0,0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#7C3AED" Offset="0"/>
+                            <GradientStop Color="#4F46E5" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Orientation="Horizontal" Margin="22,12">
+                        <TextBlock Text="💾" FontSize="15" VerticalAlignment="Center"/>
+                        <TextBlock Text="  Lưu thay đổi" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="White" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

@@ -1,8 +1,12 @@
 using e_learning_app.Class;
 using Firebase.Auth;
 using Firebase.Auth.Providers;
+using FirebaseAdmin;
+using FirebaseAdmin.Auth;
+using Google.Api;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Util.Store;
+using Google.Cloud.Firestore;
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
@@ -11,9 +15,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using FirebaseAdmin;
-using Google.Cloud.Firestore;
-using FirebaseAdmin.Auth;
+using static Google.Apis.Auth.OAuth2.Web.AuthorizationCodeWebApp;
 
 namespace e_learning_app
 {
@@ -86,7 +88,7 @@ namespace e_learning_app
         //GOOGLEEEEEEEEEEEEE
         private const string GoogleClientId = "105514257729-ienl99san19bis48vav5lppchd7fuf1j.apps.googleusercontent.com";
         private const string GoogleClientSecret = "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";
-        public static async Task<string> LoginWithGoogleAsync()
+        public static async Task<Firebase.Auth.User> LoginWithGoogleAsync()
         {
             string credPath = "gg.auth.api";
             var dataStore = new FileDataStore(credPath, true);
@@ -115,9 +117,9 @@ namespace e_learning_app
                 if (_authClient == null) return null;
 
                 var credential = GoogleProvider.GetCredential(idToken, OAuthCredentialTokenType.IdToken);
+                
                 var authResult = await _authClient.SignInWithCredentialAsync(credential);
-
-                return authResult.User.Uid;
+                return authResult.User;
             }
             catch (Exception ex)
             {
@@ -147,6 +149,25 @@ namespace e_learning_app
                 return false;
             }
         }
+        public static async Task<string> GetUserRoleAsync(string uid)
+        {
+            try
+            {
+                if (Db == null) return "Student";
+                DocumentSnapshot snapshot = await Db.Collection("userss").Document(uid).GetSnapshotAsync();
+                if (snapshot.Exists)
+                {
+                    var data = snapshot.ToDictionary();
+                    if (data.ContainsKey("Role")) return data["Role"]?.ToString() ?? "Student";
+                }
+                return "Student";
+            }
+            catch
+            {
+                return "Student";
+            }
+        }
+
         public static async Task<bool> CreateUserInFirestore(string uid, string email = "", string displayName = "")
         {
             try
@@ -160,6 +181,8 @@ namespace e_learning_app
                 DocumentReference docRef = Db.Collection("userss").Document(uid);
                 DocumentSnapshot snapshot = await docRef.GetSnapshotAsync();
 
+                string role = email == "buitrantrongnguyen@gmail.com" ? "Teacher" : "Student";
+
                 // Kiểm tra xem user đã tồn tại chưa để tránh ghi đè
                 if (!snapshot.Exists)
                 {
@@ -169,10 +192,14 @@ namespace e_learning_app
                         { "Email", email },
                         { "DisplayName", string.IsNullOrEmpty(displayName) ? "New User" : displayName },
                         { "CreatedAt", FieldValue.ServerTimestamp },
-                        { "Role", "Student" }
+                        { "Role", role }
                     };
 
                     await docRef.SetAsync(user);
+                }
+                else
+                {
+                    await docRef.UpdateAsync(new Dictionary<string, object> { { "Role", role }, { "Email", email } });
                 }
                 
                 return true;

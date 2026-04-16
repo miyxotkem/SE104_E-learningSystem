@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:e_learning_app.Views"
         ResizeMode="CanResize"
-        Title="EduSmart – Student Portal" Height="600" Width="1280"
+        Title="Student Panel" Height="600" Width="1280"
         Background="#F0F2F5" WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI Variable Display, Segoe UI, Arial">
 
@@ -65,6 +65,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
@@ -135,9 +136,13 @@
                         <Border Grid.Column="2" Background="#EFF6FF" CornerRadius="8" Padding="6,4" Cursor="Hand">
                             <TextBlock Text="↗" FontSize="12" Foreground="#3B82F6" FontWeight="Bold"/>
                         </Border>
+                        
                     </Grid>
                 </Border>
+                <Button Grid.Row="3" Content="🚪   Đăng xuất" Style="{StaticResource LogoutBtn}"
+                        Click="BtnLogout_Click" Margin="0,0,0,4"/>
             </Grid>
+            
         </Border>
 
         <!-- ===== MAIN CONTENT AREA ===== -->

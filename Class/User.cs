@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 
 namespace e_learning_app
 {
@@ -7,6 +7,9 @@ namespace e_learning_app
     {
         [FirestoreDocumentId]
         public string Id { get; set; }
+
+        // Convenience alias used in Admin views
+        public string Uid => Id;
 
         [FirestoreProperty]
         public string Username { get; set; }
@@ -25,5 +28,8 @@ namespace e_learning_app
 
         [FirestoreProperty]
         public string Role { get; set; }
+
+        [FirestoreProperty]
+        public string CreatedAt { get; set; }
     }
 }

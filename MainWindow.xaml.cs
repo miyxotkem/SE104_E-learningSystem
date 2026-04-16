@@ -70,5 +70,21 @@ namespace e_learning_app
         {
             MainContentArea.Content = new ProfileManage(_dbManager);
         }
+
+        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                        "Bạn có chắc muốn đăng xuất khỏi Teacher Panel?",
+                        "Xác nhận đăng xuất",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                var loginWin = new LoginWindow();
+                loginWin.Show();
+                this.Close();
+            }
+        }
     }
 }
