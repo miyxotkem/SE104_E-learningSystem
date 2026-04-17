@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using e_learning_app.Views;
 
@@ -6,9 +6,13 @@ namespace e_learning_app
 {
     public partial class StudentMainWindow : Window
     {
+        private readonly DatabaseManager _dbManager;
+
         public StudentMainWindow()
         {
             InitializeComponent();
+            _dbManager = new DatabaseManager();
+            _dbManager.Initialize();
         }
 
         private void SetActiveNav(Button activeBtn)
@@ -33,13 +37,13 @@ namespace e_learning_app
         private void BtnCourses_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnCourses);
-            StudentContentArea.Content = new StudentCourseView();
+            StudentContentArea.Content = new MyClassesView(_dbManager, "Student");
         }
 
         private void BtnQuiz_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnQuiz);
-            StudentContentArea.Content = new StudentQuizView();
+            StudentContentArea.Content = new StudentQuizView(_dbManager);
         }
 
         private void BtnProfile_Click(object sender, RoutedEventArgs e)

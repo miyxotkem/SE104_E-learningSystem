@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -28,16 +28,18 @@ namespace e_learning_app.Views
         };
 
         // ==================== CONSTRUCTOR ====================
-        public ExamManagementView()
+        private DatabaseManager _dbManager;
+        public ExamManagementView(DatabaseManager dbManager)
         {
             InitializeComponent();
+            _dbManager = dbManager;
         }
 
         // ==================== LIFECYCLE ====================
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             InitializeFilters();
-            LoadSampleData();
+            await LoadDataFromFirebaseAsync();
         }
 
         private void InitializeFilters()
@@ -56,89 +58,30 @@ namespace e_learning_app.Views
         }
 
         // ==================== DATA LOADING ====================
-        private void LoadSampleData()
+        private async System.Threading.Tasks.Task LoadDataFromFirebaseAsync()
         {
-            // TODO: Load từ Firebase sau khi integrate
-            _allExams = new List<Exam>
+            if (_dbManager == null || _dbManager.GetDb == null) return;
+
+            try
             {
-                new()
+                var query = _dbManager.GetDb.Collection("exams");
+                var snapshot = await query.GetSnapshotAsync();
+
+                _allExams.Clear();
+
+                foreach (var doc in snapshot.Documents)
                 {
-                    Id = "exam_1",
-                    ClassId = "class_1",
-                    Title = "Quiz Chương 1: Giới Thiệu Lập Trình",
-                    Description = "Kiểm tra kiến thức cơ bản về C# và OOP",
-                    Type = ExamType.Quiz,
-                    TotalQuestions = 10,
-                    TimeLimitMinutes = 30,
-                    PassingScore = 50,
-                    IsActive = true,
-                    IsPublished = true,
-                    CreatedAt = DateTime.Now.AddDays(-5),
-                    UpdatedAt = DateTime.Now.AddDays(-5)
-                },
-                new()
-                {
-                    Id = "exam_2",
-                    ClassId = "class_1",
-                    Title = "Bài Tập: Xây Dựng Ứng Dụng WPF",
-                    Description = "Tạo ứng dụng WPF đơn giản với MVVM pattern",
-                    Type = ExamType.Assignment,
-                    TotalQuestions = 1,
-                    TimeLimitMinutes = 120,
-                    PassingScore = 60,
-                    IsActive = true,
-                    IsPublished = true,
-                    CreatedAt = DateTime.Now.AddDays(-3),
-                    UpdatedAt = DateTime.Now.AddDays(-3)
-                },
-                new()
-                {
-                    Id = "exam_3",
-                    ClassId = "class_1",
-                    Title = "Giữa Kỳ: Database & ORM",
-                    Description = "Bài thi giữa kỳ về cơ sở dữ liệu và Entity Framework",
-                    Type = ExamType.Midterm,
-                    TotalQuestions = 25,
-                    TimeLimitMinutes = 90,
-                    PassingScore = 55,
-                    IsActive = false,
-                    IsPublished = true,
-                    ScheduledDate = DateTime.Now.AddDays(7),
-                    CreatedAt = DateTime.Now.AddDays(-10),
-                    UpdatedAt = DateTime.Now.AddDays(-2)
-                },
-                new()
-                {
-                    Id = "exam_4",
-                    ClassId = "class_1",
-                    Title = "Luyện Tập: API Rest",
-                    Description = "Luyện tập xây dựng REST API với ASP.NET Core",
-                    Type = ExamType.Practice,
-                    TotalQuestions = 5,
-                    TimeLimitMinutes = 60,
-                    PassingScore = 50,
-                    IsActive = true,
-                    IsPublished = false,
-                    CreatedAt = DateTime.Now.AddDays(-1),
-                    UpdatedAt = DateTime.Now.AddHours(-2)
-                },
-                new()
-                {
-                    Id = "exam_5",
-                    ClassId = "class_1",
-                    Title = "Cuối Kỳ: Toàn Bộ Môn Học",
-                    Description = "Bài thi cuối kỳ bao gồm toàn bộ nội dung đã học",
-                    Type = ExamType.Final,
-                    TotalQuestions = 50,
-                    TimeLimitMinutes = 120,
-                    PassingScore = 60,
-                    IsActive = false,
-                    IsPublished = true,
-                    ScheduledDate = DateTime.Now.AddDays(30),
-                    CreatedAt = DateTime.Now.AddDays(-20),
-                    UpdatedAt = DateTime.Now.AddDays(-5)
+                    if (doc.Exists)
+                    {
+                        var exam = doc.ConvertTo<Exam>();
+                        _allExams.Add(exam);
+                    }
                 }
-            };
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải dữ liệu: {ex.Message}");
+            }
 
             Refresh();
         }
@@ -504,7 +447,7 @@ namespace e_learning_app.Views
             ShowEditExamDialog(exam);
         }
 
-        private void DeleteExam(Exam exam)
+        private async void DeleteExam(Exam exam)
         {
             var result = MessageBox.Show(
                 $"Bạn có chắc chắn muốn xóa bài thi:\n\n\"{exam.Title}\"?\n\nHành động này không thể hoàn tác.",
@@ -512,10 +455,22 @@ namespace e_learning_app.Views
 
             if (result == MessageBoxResult.Yes)
             {
-                _allExams.Remove(exam);
-                Refresh();
-                MessageBox.Show("✅ Xóa bài thi thành công!", "Thành Công",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                try
+                {
+                    if (_dbManager != null)
+                    {
+                        var docRef = _dbManager.GetDb.Collection("exams").Document(exam.Id);
+                        await docRef.DeleteAsync();
+                    }
+                    _allExams.Remove(exam);
+                    Refresh();
+                    MessageBox.Show("✅ Xóa bài thi thành công!", "Thành Công",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Lỗi xóa dữ liệu: {ex.Message}");
+                }
             }
         }
 
@@ -662,7 +617,7 @@ namespace e_learning_app.Views
                 FontWeight = FontWeights.SemiBold
             };
 
-            btnCreate.Click += (s, e) =>
+            btnCreate.Click += async (s, e) =>
             {
                 // Validation
                 if (string.IsNullOrWhiteSpace(txtTitle.Text))
@@ -683,17 +638,30 @@ namespace e_learning_app.Views
                     TimeLimitMinutes = int.Parse(cbTimeLimit.SelectedItem?.ToString() ?? "60"),
                     PassingScore = double.Parse(cbPassingScore.SelectedItem?.ToString()?.TrimEnd('%') ?? "50"),
                     IsActive = true,
-                    IsPublished = false,
+                    IsPublished = true, // We auto-publish as we're testing or the teacher can decide, currently ExamManagement creates with IsPublished=false.
                     TotalQuestions = 0,
                     QuestionIds = new List<string>()
                 };
 
-                _allExams.Add(newExam);
-                Refresh();
-                dialogWindow.Close();
+                try
+                {
+                    if (_dbManager != null)
+                    {
+                        var docRef = _dbManager.GetDb.Collection("exams").Document(newExam.Id);
+                        await docRef.SetAsync(newExam);
+                    }
 
-                MessageBox.Show($"✅ Tạo bài thi \"{newExam.Title}\" thành công!", "Thành Công",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                    _allExams.Add(newExam);
+                    Refresh();
+                    dialogWindow.Close();
+
+                    MessageBox.Show($"✅ Tạo bài thi \"{newExam.Title}\" thành công!", "Thành Công",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Lỗi tạo bài thi: {ex.Message}");
+                }
             };
 
             buttonRow.Children.Add(btnCancel);
@@ -817,7 +785,7 @@ namespace e_learning_app.Views
                 FontWeight = FontWeights.SemiBold
             };
 
-            btnSave.Click += (s, e) =>
+            btnSave.Click += async (s, e) =>
             {
                 // Update exam properties
                 exam.Title = txtTitle.Text;
@@ -826,13 +794,26 @@ namespace e_learning_app.Views
                 exam.TimeLimitMinutes = int.Parse(cbTimeLimit.SelectedItem?.ToString() ?? "60");
                 exam.PassingScore = double.Parse(cbPassingScore.SelectedItem?.ToString()?.TrimEnd('%') ?? "50");
                 exam.IsPublished = chkPublished.IsChecked ?? false;
-                exam.UpdatedAt = DateTime.Now;
+                exam.UpdatedAt = DateTime.UtcNow;
 
-                Refresh();
-                dialogWindow.Close();
+                try
+                {
+                    if (_dbManager != null)
+                    {
+                        var docRef = _dbManager.GetDb.Collection("exams").Document(exam.Id);
+                        await docRef.SetAsync(exam);
+                    }
 
-                MessageBox.Show("✅ Cập nhật bài thi thành công!", "Thành Công",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                    Refresh();
+                    dialogWindow.Close();
+
+                    MessageBox.Show("✅ Cập nhật bài thi thành công!", "Thành Công",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Lỗi cập nhật bài thi: {ex.Message}");
+                }
             };
 
             buttonRow.Children.Add(btnCancel);
@@ -856,9 +837,9 @@ namespace e_learning_app.Views
         /// <summary>
         /// Refresh dữ liệu từ Firebase
         /// </summary>
-        public void RefreshData()
+        public async void RefreshData()
         {
-            LoadSampleData();
+            await LoadDataFromFirebaseAsync();
         }
     }
 }

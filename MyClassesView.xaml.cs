@@ -18,14 +18,24 @@ namespace e_learning_app.Views
         private string _filterMode = "all";
         private string _searchText = "";
 
-        public MyClassesView(DatabaseManager dbManager)
+        private string _userRole;
+
+        public MyClassesView(DatabaseManager dbManager, string role = "Teacher")
         {
             _dbManager = dbManager;
+            _userRole = role;
             InitializeComponent();
         }
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_userRole == "Student" && typeof(MyClassesView).GetField("BtnCreateClass", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null || FindName("BtnCreateClass") != null)
+            {
+                if (FindName("BtnCreateClass") is Button btnCreate)
+                {
+                    btnCreate.Visibility = Visibility.Collapsed;
+                }
+            }
             await LoadDataAsync();
             ApplyFilter();
         }
@@ -79,7 +89,9 @@ namespace e_learning_app.Views
         private void UpdateUI(List<Course> courses)
         {
             ClassesPanel.Children.Clear();
-            TxtSubtitle.Text = $"Bạn đang phụ trách {_allClasses.Count(c => c.IsActive)} lớp học đang hoạt động.";
+            TxtSubtitle.Text = _userRole == "Teacher" 
+                ? $"Bạn đang phụ trách {_allClasses.Count(c => c.IsActive)} lớp học đang hoạt động."
+                : $"Bạn đang tham gia {_allClasses.Count(c => c.IsActive)} lớp học đang hoạt động.";
 
             foreach (var course in courses)
                 ClassesPanel.Children.Add(CreateCourseCard(course));
@@ -159,13 +171,21 @@ namespace e_learning_app.Views
 
                 if (selectedCourse != null)
                 {
-                    // 2. Find the MainWindow
-                    var mainWin = Window.GetWindow(this) as MainWindow;
-
-                    if (mainWin != null)
+                    if (_userRole == "Teacher")
                     {
-                        // 3. Navigate to the Detail View
-                        mainWin.MainContentArea.Content = new CourseDetailView(_dbManager, selectedCourse);
+                        var mainWin = Window.GetWindow(this) as MainWindow;
+                        if (mainWin != null)
+                        {
+                            mainWin.MainContentArea.Content = new CourseDetailView(_dbManager, selectedCourse);
+                        }
+                    }
+                    else if (_userRole == "Student")
+                    {
+                        var studentWin = Window.GetWindow(this) as StudentMainWindow;
+                        if (studentWin != null)
+                        {
+                            studentWin.StudentContentArea.Content = new StudentCourseView(_dbManager, selectedCourse);
+                        }
                     }
                 }
             }
@@ -225,9 +245,14 @@ namespace e_learning_app.Views
             body.Children.Add(stats);
             body.Children.Add(new Separator { Margin = new Thickness(0, 0, 0, 15) });
 
-            var btns = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
-            btns.Children.Add(CreateBtn("Vào lớp", accent, Brushes.White, c.Id, BtnEnterClass_Click));
-            btns.Children.Add(CreateBtn("Điểm danh", new SolidColorBrush(Color.FromRgb(248, 250, 252)), Brushes.SlateGray, c.Id, BtnAttendance_Click));
+            var btns = new System.Windows.Controls.Primitives.UniformGrid { Columns = _userRole == "Teacher" ? 2 : 1 };
+            string enterClassText = _userRole == "Teacher" ? "Vào lớp" : "Vào học";
+            btns.Children.Add(CreateBtn(enterClassText, accent, Brushes.White, c.Id, BtnEnterClass_Click));
+            
+            if (_userRole == "Teacher")
+            {
+                btns.Children.Add(CreateBtn("Điểm danh", new SolidColorBrush(Color.FromRgb(248, 250, 252)), Brushes.SlateGray, c.Id, BtnAttendance_Click));
+            }
             body.Children.Add(btns);
 
             stack.Children.Add(bodyBorder);

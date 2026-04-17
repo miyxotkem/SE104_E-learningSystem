@@ -50,7 +50,7 @@ namespace e_learning_app
                 
                 if (role == "Teacher")
                 {
-                    MainWindow main = new MainWindow();
+                    MainWindow main = new MainWindow(userId);
                     main.Show();
                     main.Activate();
                 }
@@ -102,7 +102,7 @@ namespace e_learning_app
                     
                     if (role == "Teacher")
                     {
-                        MainWindow main = new MainWindow();
+                        MainWindow main = new MainWindow(userId);
                         main.Show();
                         main.Activate();
                     }
@@ -164,7 +164,7 @@ namespace e_learning_app
                     
                         if (role == "Teacher")
                         {
-                            MainWindow main = new MainWindow();
+                            MainWindow main = new MainWindow(userId);
                             main.Show();
                             main.Activate();
                         }

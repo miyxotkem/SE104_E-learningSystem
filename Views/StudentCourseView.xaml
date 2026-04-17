@@ -72,14 +72,14 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Back button -->
-                <Border Grid.Column="0" Background="#F1F5F9" CornerRadius="10" Padding="12,8" Cursor="Hand">
+                <Border x:Name="BtnBack" Grid.Column="0" Background="#F1F5F9" CornerRadius="10" Padding="12,8" Cursor="Hand" MouseLeftButtonDown="BtnBack_Click">
                     <TextBlock Text="← Quay lại" FontSize="13" FontWeight="SemiBold" Foreground="#64748B"/>
                 </Border>
 
                 <!-- Course info -->
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                    <TextBlock Text="Toán cao cấp A1" FontSize="16" FontWeight="Bold" Foreground="#1E293B"/>
-                    <TextBlock Text="Bài 14: Giới hạn hàm số  ·  GV: Nguyễn Văn An" FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
+                    <TextBlock x:Name="TxtCourseTitle" Text="Toán cao cấp A1" FontSize="16" FontWeight="Bold" Foreground="#1E293B"/>
+                    <TextBlock x:Name="TxtCourseSubtitle" Text="Bài 14: Giới hạn hàm số  ·  GV: Nguyễn Văn An" FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
                 </StackPanel>
 
                 <!-- Progress info -->

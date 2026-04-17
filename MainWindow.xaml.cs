@@ -1,4 +1,4 @@
-﻿using e_learning_app.Views;
+using e_learning_app.Views;
 using Google.Cloud.Firestore;
 using System;
 using System.Windows;
@@ -9,13 +9,19 @@ namespace e_learning_app
     public partial class MainWindow : Window
     {
         private readonly DatabaseManager _dbManager;
+        private readonly string _userId;
 
-        public MainWindow()
+        public MainWindow() : this(null)
+        {
+        }
+
+        public MainWindow(string userId)
         {
             InitializeComponent();
 
             _dbManager = new DatabaseManager();
             _dbManager.Initialize();
+            _userId = userId;
 
             MainContentArea.Content = new TeacherDashboardView(_dbManager);
             btnDashBoard.Focus();
@@ -25,9 +31,25 @@ namespace e_learning_app
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            Query query = _dbManager.GetDb.Collection("Users").WhereEqualTo("Email", "john@example.com");
-            QuerySnapshot snapshot = await query.GetSnapshotAsync();
-            _dbManager.SetCurrentUser(snapshot.Documents[0].ConvertTo<User>());
+            if (string.IsNullOrEmpty(_userId))
+            {
+                // Fallback for visual designer or tests if no user logged in
+                Query query = _dbManager.GetDb.Collection("Users").WhereEqualTo("Email", "john@example.com");
+                QuerySnapshot snapshot = await query.GetSnapshotAsync();
+                if (snapshot.Documents.Count > 0)
+                {
+                    _dbManager.SetCurrentUser(snapshot.Documents[0].ConvertTo<User>());
+                }
+            }
+            else
+            {
+                var docRef = _dbManager.GetDb.Collection("Users").Document(_userId);
+                var snapshot = await docRef.GetSnapshotAsync();
+                if (snapshot.Exists)
+                {
+                    _dbManager.SetCurrentUser(snapshot.ConvertTo<User>());
+                }
+            }
 
             this.DataContext = _dbManager.GetCurrentUser();
         }
