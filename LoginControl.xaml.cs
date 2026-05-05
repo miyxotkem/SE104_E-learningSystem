@@ -41,7 +41,7 @@ namespace e_learning_app
             {
                 await FirebaseService.CreateUserInFirestore(userId);
                 var current_window = Window.GetWindow(this) as LoginWindow;
-                MainWindow main = new MainWindow();
+                StudentMainWindow main = new StudentMainWindow();
                 main.Show();
                 main.Activate();
                 current_window?.Close();

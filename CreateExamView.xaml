@@ -289,7 +289,7 @@
                                 <ColumnDefinition Width="140"/>
                             </Grid.ColumnDefinitions>
 
-                            <Button Grid.Column="0" x:Name="BtnSubmit" Content="✅ Tạo Bài Kiểm Tra" Height="50" Background="#3B82F6" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnSubmit_Click" FontSize="13">
+                            <Button Grid.Column="0" x:Name="BtnSubmit" Content="Tiếp theo: Soạn câu hỏi ➡️" Height="50" Background="#3B82F6" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnSubmit_Click" FontSize="13">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
                                         <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="12">

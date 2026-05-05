@@ -381,12 +381,10 @@ namespace e_learning_app
 
         private void ViewExam(Exam exam)
         {
-            MessageBox.Show(
-                $"Xem bài thi: {exam.Title}\n\n" +
-                $"📊 {exam.TotalQuestions} câu hỏi\n" +
-                $"⏱️ {exam.TimeLimitMinutes} phút\n" +
-                $"🎯 Điểm qua: {exam.PassingScore}%",
-                "Chi Tiết Bài Thi", MessageBoxButton.OK, MessageBoxImage.Information);
+            if (Window.GetWindow(this) is MainWindow mw)
+            {
+                mw.NavigateTo(new e_learning_app.ExamReportView(exam, _dbManager));
+            }
         }
 
         private void EditExam(Exam exam)

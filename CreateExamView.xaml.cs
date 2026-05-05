@@ -138,7 +138,7 @@ namespace e_learning_app
         }
 
         // ========== SUBMIT ==========
-        private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
+        private void BtnSubmit_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedCourse == null)
             {
@@ -154,9 +154,6 @@ namespace e_learning_app
 
             try
             {
-                BtnSubmit.IsEnabled = false;
-                BtnSubmit.Content = "⏳ Đang tạo...";
-
                 string examTypeStr = CbExamType.SelectedItem is ComboBoxItem itemType ? itemType.Content?.ToString() : "📝 Quiz";
 
                 var newExam = new Exam
@@ -182,31 +179,15 @@ namespace e_learning_app
                     UpdatedAt = DateTime.Now
                 };
 
-                bool success = false;
-                if (_dbManager != null)
+                if (Window.GetWindow(this) is MainWindow mw)
                 {
-                    success = await _dbManager.CreateExamAsync(newExam);
-                }
-
-                if (success || _dbManager == null)
-                {
-                    MessageBox.Show(
-                        $"✅ Tạo bài thi \"{newExam.Title}\" cho lớp \"{_selectedCourse.Title}\" thành công!",
-                        "Thành Công", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    NavigateBack();
-                }
-                else
-                {
-                    throw new Exception("Firebase từ chối thao tác lưu.");
+                    mw.NavigateTo(new e_learning_app.CreateExamQuestionsView(_dbManager, newExam));
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Submit Error: {ex.Message}");
                 MessageBox.Show($"❌ Lỗi: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                BtnSubmit.IsEnabled = true;
-                BtnSubmit.Content = "✅ Tạo Bài Kiểm Tra";
             }
         }
 

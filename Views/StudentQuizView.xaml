@@ -328,7 +328,7 @@
                             <TextBlock Text="7 câu" FontSize="12" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Right"/>
                         </Grid>
 
-                        <Button Margin="0,14,0,0" Background="#DC2626" Foreground="White" FontWeight="Bold"
+                        <Button x:Name="BtnSubmitTest" Click="BtnSubmitTest_Click" Margin="0,14,0,0" Background="#DC2626" Foreground="White" FontWeight="Bold"
                                 FontSize="13" Height="44" BorderThickness="0" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
