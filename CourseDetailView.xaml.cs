@@ -214,6 +214,9 @@ namespace e_learning_app.Views
             TxtClassInfo.Text = $"{_course.ClassName}  •  {_course.Semester}";
             TxtCategory.Text = string.IsNullOrWhiteSpace(_course.Category) ? "Chung" : _course.Category;
             TxtCourseType.Text = string.IsNullOrWhiteSpace(_course.CourseType) ? "Đại cương" : _course.CourseType;
+            TxtSchedule.Text = _course.DayOfWeek == "Hình thức 2"
+                               ? "Hình thức 2"
+                               : $"{_course.DayOfWeek} (Tiết {_course.StartPeriod}-{_course.EndPeriod})";
             TxtDescription.Text = string.IsNullOrWhiteSpace(_course.Description) ? "Chưa có mô tả chi tiết." : _course.Description;
 
             TxtStudentCount.Text = _course.StudentCount.ToString();
@@ -238,6 +241,20 @@ namespace e_learning_app.Views
                 MenuToggleStatus.Header = "Kích hoạt lại lớp";
                 MenuToggleIcon.Text = "▶️";
                 MenuToggleStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
+            }
+            LoadInstructorName();
+        }
+
+        private async void LoadInstructorName()
+        {
+            try
+            {
+                var doc = await _dbManager.GetDb.Collection("Users").Document(_course.InstructorId).GetSnapshotAsync();
+                TxtInstructorName.Text = doc.Exists ? doc.GetValue<string>("FullName") : "Không xác định";
+            }
+            catch
+            {
+                TxtInstructorName.Text = "Lỗi tải tên";
             }
         }
 
@@ -1399,6 +1416,9 @@ namespace e_learning_app.Views
             EditTitleInput.Text = _course.Title; EditDescInput.Text = _course.Description;
             EditClassInput.Text = _course.ClassName; EditEmojiInput.Text = _course.Emoji;
             EditCategoryInput.Text = _course.Category;
+            SetComboBoxByContent(EditCbDay, _course.DayOfWeek);
+            EditTxtStartPeriod.Text = _course.StartPeriod.ToString();
+            EditTxtEndPeriod.Text = _course.EndPeriod.ToString();
             SetSelectedColor(_course.AccentColor);
             SetComboBoxByContent(EditTypeInput, _course.CourseType);
 
@@ -1423,10 +1443,26 @@ namespace e_learning_app.Views
 
         private async void ConfirmEdit_Click(object sender, RoutedEventArgs e)
         {
+            string day = (EditCbDay.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Hình thức 2";
+            int startP = 0, endP = 0;
+
+            if (day != "Hình thức 2")
+            {
+                if (!int.TryParse(EditTxtStartPeriod.Text, out startP) || !int.TryParse(EditTxtEndPeriod.Text, out endP) ||
+                    startP >= endP || !((startP >= 1 && endP <= 5) || (startP >= 6 && endP <= 10)))
+                {
+                    MessageBox.Show("Tiết học không hợp lệ!\n- Tiết bắt đầu phải nhỏ hơn tiết kết thúc.\n- Cùng thuộc 1 buổi (Sáng: 1-5, Chiều: 6-10).", "Lỗi nhập liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
             _course.Title = EditTitleInput.Text; _course.Description = EditDescInput.Text;
             _course.ClassName = EditClassInput.Text; _course.Emoji = EditEmojiInput.Text;
             _course.Category = EditCategoryInput.Text; _course.AccentColor = GetSelectedColor();
             _course.CourseType = (EditTypeInput.SelectedItem as ComboBoxItem)?.Content.ToString();
+            _course.DayOfWeek = day;
+            _course.StartPeriod = startP;
+            _course.EndPeriod = endP;
             string sem = (EditSemesterInput.SelectedItem as ComboBoxItem)?.Content.ToString();
             string year = EditYearInput.SelectedItem?.ToString();
             _course.Semester = $"{sem} - {year}";
@@ -1483,19 +1519,31 @@ namespace e_learning_app.Views
             try
             {
                 Color targetColor = (Color)ColorConverter.ConvertFromString(hexColor);
-                var radioButtons = FindVisualChildren<RadioButton>(EditDrawer).Where(r => r.GroupName == "ThemeColors");
-                foreach (var rb in radioButtons)
-                    if (rb.Background is SolidColorBrush brush && brush.Color == targetColor) { rb.IsChecked = true; break; }
+
+                foreach (var child in EditThemeColorsPanel.Children)
+                {
+                    if (child is RadioButton rb && rb.Background is SolidColorBrush brush)
+                    {
+                        if (brush.Color == targetColor)
+                        {
+                            rb.IsChecked = true;
+                            break;
+                        }
+                    }
+                }
             }
             catch { }
         }
 
         private string GetSelectedColor()
         {
-            var radioButtons = FindVisualChildren<RadioButton>(EditDrawer).Where(r => r.GroupName == "ThemeColors");
-            foreach (var rb in radioButtons)
-                if (rb.IsChecked == true && rb.Background is SolidColorBrush brush)
+            foreach (var child in EditThemeColorsPanel.Children)
+            {
+                if (child is RadioButton rb && rb.IsChecked == true && rb.Background is SolidColorBrush brush)
+                {
                     return $"#{brush.Color.R:X2}{brush.Color.G:X2}{brush.Color.B:X2}";
+                }
+            }
             return "#3B82F6";
         }
 
@@ -1782,6 +1830,29 @@ namespace e_learning_app.Views
                         MessageBox.Show("Lỗi khi xử lý: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                         btn.IsEnabled = true;
                     }
+                }
+            }
+        }
+
+        private void EditCbDay_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (EditCbDay.SelectedItem is ComboBoxItem item && EditTxtStartPeriod != null && EditTxtEndPeriod != null)
+            {
+                if (item.Content.ToString() == "Hình thức 2")
+                {
+                    EditTxtStartPeriod.Text = "0";
+                    EditTxtEndPeriod.Text = "0";
+                    EditTxtStartPeriod.IsEnabled = false;
+                    EditTxtEndPeriod.IsEnabled = false;
+                    EditTxtStartPeriod.Opacity = 0.5;
+                    EditTxtEndPeriod.Opacity = 0.5;
+                }
+                else
+                {
+                    EditTxtStartPeriod.IsEnabled = true;
+                    EditTxtEndPeriod.IsEnabled = true;
+                    EditTxtStartPeriod.Opacity = 1;
+                    EditTxtEndPeriod.Opacity = 1;
                 }
             }
         }

@@ -229,10 +229,18 @@
                         <Border Background="#F5F3FF" CornerRadius="6" Padding="8,4" BorderBrush="#DDD6FE" BorderThickness="1" Margin="8,0,0,0">
                             <TextBlock x:Name="TxtCourseType" Text="Loại môn" FontSize="12" Foreground="#8B5CF6" FontWeight="SemiBold"/>
                         </Border>
+                        <Border Background="#FFF7ED" CornerRadius="6" Padding="8,4" BorderBrush="#FFEDD5" BorderThickness="1" Margin="8,0,0,0">
+                            <TextBlock x:Name="TxtSchedule" Text="Hình thức 2" FontSize="12" Foreground="#F97316" FontWeight="SemiBold"/>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,20" Orientation="Horizontal">
+                        <TextBlock FontSize="15" Foreground="#475569" Text="Giảng viên phụ trách: " FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtInstructorName" FontSize="15" Foreground="#1E293B" Text="Đang tải..." VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <TextBlock x:Name="TxtDescription" FontSize="15" Foreground="#475569" TextWrapping="Wrap" Margin="0,10,0,30" LineHeight="24"/>
-
+                    <TextBlock Text="Mô tả chi tiết" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,8"/>
+                    <TextBlock x:Name="TxtDescription" FontSize="15" Foreground="#475569" TextWrapping="Wrap" Margin="0,0,0,30" LineHeight="24"/>
+                    
                     <UniformGrid Columns="2" Margin="0,0,0,20" HorizontalAlignment="Left">
                         <StackPanel Width="150">
                             <TextBlock Text="Sinh viên" FontSize="12" Foreground="#94A3B8"/>
@@ -616,10 +624,13 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="30">
                         <TextBlock Text="Chỉnh sửa thông tin" FontSize="22" FontWeight="Bold" Margin="0,0,0,25"/>
+
                         <TextBlock Text="Tên môn học" Foreground="#64748B" Margin="0,0,0,5"/>
                         <TextBox x:Name="EditTitleInput" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,15"/>
+
                         <TextBlock Text="Mô tả chi tiết" Foreground="#64748B" Margin="0,0,0,5"/>
                         <TextBox x:Name="EditDescInput" Style="{StaticResource ModernTextBox}" Height="120" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="12,10" Margin="0,0,0,15"/>
+
                         <Grid Margin="0,0,0,15">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
@@ -640,8 +651,33 @@
                                 </ComboBox>
                             </StackPanel>
                         </Grid>
+
                         <TextBlock Text="Khoa" Foreground="#64748B" Margin="0,0,0,5"/>
                         <TextBox x:Name="EditCategoryInput" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,15"/>
+
+                        <TextBlock Text="Lịch học" Foreground="#64748B" Margin="0,0,0,5"/>
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="EditCbDay" Grid.Column="0" Style="{StaticResource ModernComboBox}" SelectionChanged="EditCbDay_SelectionChanged">
+                                <ComboBoxItem Content="Hình thức 2"/>
+                                <ComboBoxItem Content="Thứ 2"/>
+                                <ComboBoxItem Content="Thứ 3"/>
+                                <ComboBoxItem Content="Thứ 4"/>
+                                <ComboBoxItem Content="Thứ 5"/>
+                                <ComboBoxItem Content="Thứ 6"/>
+                                <ComboBoxItem Content="Thứ 7"/>
+                                <ComboBoxItem Content="Chủ nhật"/>
+                            </ComboBox>
+                            <TextBox x:Name="EditTxtStartPeriod" Grid.Column="2" Style="{StaticResource ModernTextBox}" Tag="Từ tiết"/>
+                            <TextBox x:Name="EditTxtEndPeriod" Grid.Column="4" Style="{StaticResource ModernTextBox}" Tag="Đến tiết"/>
+                        </Grid>
+
                         <Grid Margin="0,0,0,15">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
@@ -661,17 +697,20 @@
                                 <ComboBox x:Name="EditYearInput" Tag="Chọn năm học" Style="{StaticResource ModernComboBox}"/>
                             </StackPanel>
                         </Grid>
+
                         <TextBlock Text="Emoji" Foreground="#64748B" Margin="0,0,0,5"/>
                         <TextBox x:Name="EditEmojiInput" Style="{StaticResource ModernTextBox}" Width="60" Height="42" HorizontalAlignment="Left" Margin="0,0,0,15"/>
+
                         <TextBlock Text="Màu sắc chủ đề" Foreground="#64748B" Margin="0,0,0,5"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,25">
-                            <RadioButton GroupName="ThemeColors" Background="#3B82F6" Style="{StaticResource ColorRadioStyle}" IsChecked="True"/>
+                        <StackPanel x:Name="EditThemeColorsPanel" Orientation="Horizontal" Margin="0,0,0,25">
+                            <RadioButton GroupName="ThemeColors" Background="#3B82F6" Style="{StaticResource ColorRadioStyle}"/>
                             <RadioButton GroupName="ThemeColors" Background="#8B5CF6" Style="{StaticResource ColorRadioStyle}"/>
                             <RadioButton GroupName="ThemeColors" Background="#F59E0B" Style="{StaticResource ColorRadioStyle}"/>
                             <RadioButton GroupName="ThemeColors" Background="#10B981" Style="{StaticResource ColorRadioStyle}"/>
                             <RadioButton GroupName="ThemeColors" Background="#EC4899" Style="{StaticResource ColorRadioStyle}"/>
                             <RadioButton GroupName="ThemeColors" Background="#64748B" Style="{StaticResource ColorRadioStyle}"/>
                         </StackPanel>
+
                         <StackPanel Orientation="Horizontal">
                             <Button Content="Lưu thay đổi" Width="140" Height="42" Background="{Binding CourseAccentBrush, ElementName=Root}" Foreground="White" Click="ConfirmEdit_Click">
                                 <Button.Template>

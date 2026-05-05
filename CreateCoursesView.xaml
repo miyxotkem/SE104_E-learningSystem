@@ -198,6 +198,41 @@
                         <TextBlock Text="Khoa" Style="{StaticResource FieldLabelStyle}"/>
                         <TextBox x:Name="TxtCategory" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,18" TextChanged="Sync_UI"/>
 
+                        <!-- LỊCH HỌC -->
+                        <Grid Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="15"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="15"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Ngày học"/>
+                                <ComboBox SelectedIndex="0" SelectionChanged="CbDayOfWeek_SelectionChanged" Style="{StaticResource ModernComboBox}" x:Name="CbDayOfWeek">
+                                    <ComboBoxItem Content="Hình thức 2"/>
+                                    <ComboBoxItem Content="Thứ 2"/>
+                                    <ComboBoxItem Content="Thứ 3"/>
+                                    <ComboBoxItem Content="Thứ 4"/>
+                                    <ComboBoxItem Content="Thứ 5"/>
+                                    <ComboBoxItem Content="Thứ 6"/>
+                                    <ComboBoxItem Content="Thứ 7"/>
+                                    <ComboBoxItem Content="Chủ nhật"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Tiết bắt đầu"/>
+                                <TextBox Height="42" Style="{StaticResource ModernTextBox}" Tag="Từ tiết" Text="0" TextChanged="Sync_UI" x:Name="TxtStartPeriod"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Tiết kết thúc"/>
+                                <TextBox Height="42" Style="{StaticResource ModernTextBox}" Tag="Đến tiết" Text="0" TextChanged="Sync_UI" x:Name="TxtEndPeriod"/>
+                            </StackPanel>
+                        </Grid>
+
                         <Grid Margin="0,0,0,18">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>

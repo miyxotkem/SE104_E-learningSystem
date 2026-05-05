@@ -9,14 +9,12 @@ namespace e_learning_app
 {
     public partial class CreateCoursesView : UserControl
     {
-        // Private field to hold the passed manager
         private readonly DatabaseManager _dbManager;
 
         private string _selectedColor = "#3B82F6";
         private readonly List<string> _vibeColors = new() { "#3B82F6", "#8B5CF6", "#F59E0B", "#10B981", "#EC4899", "#64748B" };
         private bool _isInitialized = false;
 
-        // Constructor now explicitly requires DatabaseManager
         public CreateCoursesView(DatabaseManager dbManager)
         {
             InitializeComponent();
@@ -26,21 +24,20 @@ namespace e_learning_app
 
             _isInitialized = true;
             UpdatePreview();
+
+            CbDayOfWeek_SelectionChanged(CbDayOfWeek, null);
         }
 
         private void PopulateYears()
         {
             if (CbYear == null) return;
 
-            // Set the specific pivot date: August 1, 2025
             DateTime pivotDate = new DateTime(2025, 8, 1);
 
-            // If today is before the pivot date, start at 2024. Otherwise, start at 2025.
             int startYear = DateTime.Now < pivotDate ? 2024 : 2025;
 
             CbYear.Items.Clear();
 
-            // Generate 4 academic years based on that exact start year
             for (int i = -1; i < 4; i++)
             {
                 CbYear.Items.Add($"{startYear + i} - {startYear + i + 1}");
@@ -49,14 +46,12 @@ namespace e_learning_app
             CbYear.SelectedIndex = 0;
         }
 
-        // Live updating color from XAML RadioButtons
         private void ColorRadio_Checked(object sender, RoutedEventArgs e)
         {
             if (!_isInitialized || PreviewHeader == null) return;
 
             if (sender is RadioButton rb && rb.Background is SolidColorBrush brush)
             {
-                // Convert Brush to Hex
                 _selectedColor = $"#{brush.Color.R:X2}{brush.Color.G:X2}{brush.Color.B:X2}";
                 PreviewHeader.Background = brush;
             }
@@ -79,7 +74,6 @@ namespace e_learning_app
             string year = CbYear.SelectedItem?.ToString() ?? $"{DateTime.Now.Year} - {DateTime.Now.Year + 1}";
             string cls = string.IsNullOrWhiteSpace(TxtClass.Text) ? "Lớp học" : TxtClass.Text;
 
-            // Show category in preview if available, otherwise just standard info
             string cat = string.IsNullOrWhiteSpace(TxtCategory.Text) ? "" : $" • {TxtCategory.Text}";
 
             PreviewClass.Text = $"{cls} • {sem} • {year}{cat}";
@@ -87,7 +81,6 @@ namespace e_learning_app
 
         private async void BtnCreate_Click(object sender, RoutedEventArgs e)
         {
-            // Validation: Ensure all fields are filled out before proceeding
             if (string.IsNullOrWhiteSpace(TxtTitle.Text) ||
                 string.IsNullOrWhiteSpace(TxtClass.Text) ||
                 string.IsNullOrWhiteSpace(TxtCategory.Text) ||
@@ -98,9 +91,24 @@ namespace e_learning_app
                 return;
             }
 
-            // UI Feedback
             BtnSubmit.IsEnabled = false;
             BtnSubmit.Content = "Đang xử lý...";
+
+            string day = (CbDayOfWeek.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Hình thức 2";
+            int startP = 0, endP = 0;
+
+            if (day != "Hình thức 2")
+            {
+                if (!int.TryParse(TxtStartPeriod.Text, out startP) || !int.TryParse(TxtEndPeriod.Text, out endP) ||
+                    startP >= endP || !((startP >= 1 && endP <= 5) || (startP >= 6 && endP <= 10)))
+                {
+                    MessageBox.Show("Tiết học không hợp lệ!\n- Tiết bắt đầu phải nhỏ hơn tiết kết thúc.\n- Cùng thuộc 1 buổi (Sáng: 1-5, Chiều: 6-10).",
+                                    "Lỗi nhập liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    BtnSubmit.IsEnabled = true;
+                    BtnSubmit.Content = "Hoàn tất và Tạo lớp";
+                    return;
+                }
+            }
 
             try
             {
@@ -111,9 +119,12 @@ namespace e_learning_app
                     Description = TxtDescription.Text.Trim(),
                     ClassName = TxtClass.Text.Trim(),
 
-                    // Added new features mapped to the database structure
                     CourseType = (CbCourseType.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Đại cương",
                     Category = TxtCategory.Text.Trim(),
+
+                    DayOfWeek = day,
+                    StartPeriod = startP,
+                    EndPeriod = endP,
 
                     Semester = $"{(CbSemester.SelectedItem as ComboBoxItem).Content} - {CbYear.SelectedItem}",
                     Emoji = PreviewEmoji.Text,
@@ -127,7 +138,7 @@ namespace e_learning_app
 
                 if (success)
                 {
-                    NavigateBack(); // Use the unified navigation method
+                    NavigateBack();
                 }
                 else
                 {
@@ -142,11 +153,6 @@ namespace e_learning_app
             }
         }
 
-        // ==========================================
-        // Navigation Logic (FIXED)
-        // ==========================================
-
-        // Wire both the "Hủy bỏ" button and the floating "← Quay lại" button to the same method
         private void BtnCancel_Click(object sender, RoutedEventArgs e) => NavigateBack();
         private void BtnBack_Click(object sender, RoutedEventArgs e) => NavigateBack();
 
@@ -155,9 +161,35 @@ namespace e_learning_app
             var mainWin = Window.GetWindow(this) as MainWindow;
             if (mainWin != null)
             {
-                // IMPORTANT: We must pass the current user ID to MyClassesView now!
                 string currentUserId = _dbManager.GetCurrentUser()?.Id;
                 mainWin.MainContentArea.Content = new Views.MyClassesView(_dbManager, currentUserId);
+            }
+        }
+
+        private void CbDayOfWeek_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isInitialized || TxtStartPeriod == null || TxtEndPeriod == null) return;
+
+            if (CbDayOfWeek.SelectedItem is ComboBoxItem item)
+            {
+                if (item.Content.ToString() == "Hình thức 2")
+                {
+                    TxtStartPeriod.Text = "0";
+                    TxtEndPeriod.Text = "0";
+                    TxtStartPeriod.IsEnabled = false;
+                    TxtEndPeriod.IsEnabled = false;
+                    TxtStartPeriod.Opacity = 0.5;
+                    TxtEndPeriod.Opacity = 0.5;
+                }
+                else
+                {
+                    if (TxtStartPeriod.Text == "0") TxtStartPeriod.Text = "";
+                    if (TxtEndPeriod.Text == "0") TxtEndPeriod.Text = "";
+                    TxtStartPeriod.IsEnabled = true;
+                    TxtEndPeriod.IsEnabled = true;
+                    TxtStartPeriod.Opacity = 1;
+                    TxtEndPeriod.Opacity = 1;
+                }
             }
         }
     }

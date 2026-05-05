@@ -47,5 +47,14 @@ namespace e_learning_app
 
         [FirestoreProperty]
         public string InstructorId { get; set; } = null!;
+
+        [FirestoreProperty]
+        public string DayOfWeek { get; set; } = "Hình thức 2";
+
+        [FirestoreProperty]
+        public int StartPeriod { get; set; }
+
+        [FirestoreProperty]
+        public int EndPeriod { get; set; }
     }
 }
