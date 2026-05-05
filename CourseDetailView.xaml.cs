@@ -987,7 +987,19 @@ namespace e_learning_app.Views
                             {
                                 StudentGradePanel.Visibility = Visibility.Visible;
                                 TxtStudentScore.Text = $"{snapshot.GetValue<double>("Score")}/10";
-                                TxtStudentComment.Text = snapshot.ContainsField("Comment") ? snapshot.GetValue<string>("Comment") : "Không có nhận xét.";
+
+                                string comment = snapshot.ContainsField("Comment") ? snapshot.GetValue<string>("Comment") : "";
+                                TxtStudentComment.Text = string.IsNullOrWhiteSpace(comment) ? "Không có" : comment;
+
+                                DropZoneGrid.Visibility = Visibility.Collapsed;
+                                BtnDetailSubmit.Visibility = Visibility.Collapsed;
+                                TxtFormatHint.Visibility = Visibility.Collapsed;
+                            }
+                            else
+                            {
+                                DropZoneGrid.Visibility = Visibility.Visible;
+                                BtnDetailSubmit.Visibility = Visibility.Visible;
+                                TxtFormatHint.Visibility = Visibility.Visible;
                             }
                         }
                         else
@@ -1229,9 +1241,7 @@ namespace e_learning_app.Views
         private void CloseGradingDrawer_Click(object sender, RoutedEventArgs e)
         {
             GradingDrawer.Visibility = Visibility.Collapsed;
-            MainScrollViewer.Effect = null;
             _currentGradingItem = null;
-            AssignmentItem_Click(null, null);
         }
 
         private void BtnDownloadCurrentGradeFile_Click(object sender, RoutedEventArgs e)
