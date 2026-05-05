@@ -1,5 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -9,256 +14,310 @@ namespace e_learning_app.Views
     public partial class TeacherDashboardView : UserControl
     {
         private readonly DatabaseManager _dbManager;
-        // ── Models ───────────────────────────────────────────────────
-        public class TodoItem
-        {
-            public int Index { get; set; }
-            public string Text { get; set; }
-            public string Deadline { get; set; }
-            public bool IsDone { get; set; }
-            public bool IsUrgent { get; set; }
-        }
+        private static HashSet<string> _readNotifKeys = new HashSet<string>();
 
         public class ScheduleItem
         {
-            public string ClassName { get; set; }
-            public string Subject { get; set; }
+            public Course TargetCourse { get; set; }
+            public string TitleDisplay { get; set; }
             public string TimeSlot { get; set; }
             public string Room { get; set; }
-            public int Students { get; set; }
-            public string Status { get; set; }  // "ongoing" | "upcoming" | "afternoon"
-            public string Color { get; set; }
+            public string InfoDisplay { get; set; }
+            public string Status { get; set; }
+            public Brush ThemeBrush { get; set; }
+            public Brush StatusBg { get; set; }
+            public Brush StatusFg { get; set; }
         }
 
-        public class NotifItem
+        public class NotifItem : INotifyPropertyChanged
         {
-            public int Id { get; set; }
+            public string NotifKey { get; set; }
+            public Course TargetCourse { get; set; }
             public string Title { get; set; }
             public string Time { get; set; }
-            public bool IsUnread { get; set; }
-        }
 
-        // ── Data ─────────────────────────────────────────────────────
-        private readonly List<TodoItem> _todos = new();
-        private readonly List<ScheduleItem> _schedule = new();
-        private readonly List<NotifItem> _notifs = new();
+            private bool _isUnread;
+            public bool IsUnread
+            {
+                get => _isUnread;
+                set
+                {
+                    if (_isUnread != value)
+                    {
+                        _isUnread = value;
+                        OnPropertyChanged();
+                        OnPropertyChanged(nameof(UnreadDotColor));
+                        OnPropertyChanged(nameof(BackgroundBrush));
+                        OnPropertyChanged(nameof(TitleWeight));
+                        OnPropertyChanged(nameof(TitleBrush));
+                        OnPropertyChanged(nameof(TimeBrush));
+                    }
+                }
+            }
 
-        private int _totalStudents = 247;
-        private int _totalClasses = 8;
-        private int _pendingGrading = 12;
-        private double _avgScore = 7.8;
+            public Brush UnreadDotColor => IsUnread ? new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)) : Brushes.Transparent;
+            public Brush BackgroundBrush => IsUnread ? new SolidColorBrush(Color.FromRgb(0xF0, 0xF9, 0xFF)) : Brushes.Transparent;
+            public FontWeight TitleWeight => IsUnread ? FontWeights.Bold : FontWeights.SemiBold;
+            public Brush TitleBrush => IsUnread ? new SolidColorBrush(Color.FromRgb(0x0F, 0x17, 0x2A)) : new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69));
+            public Brush TimeBrush => IsUnread ? new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)) : new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
 
-        // ── Constructor ──────────────────────────────────────────────
-        public TeacherDashboardView()
-        {
-            InitializeComponent();
-            LoadData();
-            _dbManager = new DatabaseManager();
+            public event PropertyChangedEventHandler PropertyChanged;
+            protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
 
         public TeacherDashboardView(DatabaseManager dbManager)
         {
             InitializeComponent();
-            LoadData();
             _dbManager = dbManager;
         }
 
-        // ── Loaded ───────────────────────────────────────────────────
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            RenderAll();
-        }
-
-        // ── Data ─────────────────────────────────────────────────────
-        private void LoadData()
-        {
-            _todos.AddRange(new[]
-            {
-                new TodoItem { Index=0, Text="Chấm bài kiểm tra 1 tiết – 12A1", Deadline="Hôm nay",  IsDone=false, IsUrgent=true  },
-                new TodoItem { Index=1, Text="Cập nhật điểm danh tuần 14",       Deadline="05/04",    IsDone=false, IsUrgent=false },
-                new TodoItem { Index=2, Text="Soạn đề thi giữa kỳ – 11B3",       Deadline="Hoàn thành", IsDone=true, IsUrgent=false },
-                new TodoItem { Index=3, Text="Gửi thông báo họp phụ huynh",      Deadline="07/04",    IsDone=false, IsUrgent=false },
-            });
-
-            _schedule.AddRange(new[]
-            {
-                new ScheduleItem { ClassName="12A1", Subject="Toán Giải Tích",    TimeSlot="🕐 07:30 – 09:00", Room="B201", Students=38, Status="ongoing",   Color="#3B82F6" },
-                new ScheduleItem { ClassName="11B3", Subject="Vật Lý Đại Cương", TimeSlot="🕙 09:30 – 11:00", Room="A105", Students=42, Status="upcoming",  Color="#8B5CF6" },
-                new ScheduleItem { ClassName="12C2", Subject="Hóa Hữu Cơ",       TimeSlot="🕑 13:00 – 14:30", Room="C304", Students=35, Status="afternoon", Color="#F59E0B" },
-            });
-
-            _notifs.AddRange(new[]
-            {
-                new NotifItem { Id=1, Title="Học sinh Minh Anh nộp bài trễ",     Time="2 phút trước", IsUnread=true  },
-                new NotifItem { Id=2, Title="Lịch họp khoa đã được cập nhật",    Time="1 giờ trước",  IsUnread=false },
-                new NotifItem { Id=3, Title="Kết quả thi học kỳ đã có",          Time="Hôm qua 15:30",IsUnread=false },
-            });
-        }
-
-        // ── Render ───────────────────────────────────────────────────
-        private void RenderAll()
-        {
-            // Header
+            TxtTodayDate.Text = DateTime.Now.ToString("dddd, dd/MM/yyyy");
             var hour = DateTime.Now.Hour;
             string greeting = hour < 12 ? "buổi sáng" : hour < 18 ? "buổi chiều" : "buổi tối";
-            TxtGreeting.Text = $"👋  Chào {greeting}, Trọng Nguyên!";
-            TxtTodayDate.Text = DateTime.Now.ToString("dddd, dd/MM/yyyy");
-            int pendingTasks = _todos.FindAll(t => !t.IsDone).Count;
-            TxtTodayInfo.Text = $"Hôm nay bạn có {_schedule.Count} lớp học và {pendingTasks} việc cần làm.";
 
-            // Stat cards
-            TxtTotalStudents.Text = _totalStudents.ToString();
-            TxtTotalClasses.Text = _totalClasses.ToString();
-            TxtPendingGrading.Text = _pendingGrading.ToString();
-            TxtAvgScore.Text = _avgScore.ToString("0.0");
-            TxtStudentTrend.Text = "↑ 4%";
-            TxtSemesterBadge.Text = "Học kỳ 2";
-            TxtScoreTrend.Text = "↑ 0.3";
+            var user = _dbManager.GetCurrentUser();
+            string name = user != null ? user.FullName : "Thầy/Cô";
+            TxtGreeting.Text = $"👋  Chào {greeting}, {name}!";
 
-            // Schedule cards
-            BindScheduleCard(0, BarClass1, TxtClass1Name, TxtClass1Time, TxtClass1Room, TxtClass1Students, PillClass1, TxtClass1Status);
-            BindScheduleCard(1, BarClass2, TxtClass2Name, TxtClass2Time, TxtClass2Room, TxtClass2Students, PillClass2, TxtClass2Status);
-            BindScheduleCard(2, BarClass3, TxtClass3Name, TxtClass3Time, TxtClass3Room, TxtClass3Students, PillClass3, TxtClass3Status);
-
-            // Todo list
-            RenderTodos();
-
-            // Notifications
-            RenderNotifs();
+            LoadingOverlay.Visibility = Visibility.Visible;
+            await LoadDashboardDataAsync();
+            LoadingOverlay.Visibility = Visibility.Collapsed;
         }
 
-        private void BindScheduleCard(int i, Border bar,
-            TextBlock name, TextBlock time, TextBlock room, TextBlock students,
-            Border pill, TextBlock status)
+        private async Task LoadDashboardDataAsync()
         {
-            if (i >= _schedule.Count) return;
-            var s = _schedule[i];
-            var clr = (SolidColorBrush)new BrushConverter().ConvertFromString(s.Color)!;
+            var currentUser = _dbManager.GetCurrentUser();
+            if (currentUser == null) return;
 
-            bar.Background = clr;
-            name.Text = $"{s.Subject} – {s.ClassName}";
-            time.Text = s.TimeSlot;
-            room.Text = $"Phòng {s.Room}";
-            students.Text = $"{s.Students} học sinh";
-
-            var (bg, fg, label) = s.Status switch
+            try
             {
-                "ongoing" => ("#DCFCE7", "#16A34A", "Đang diễn ra"),
-                "upcoming" => ("#EDE9FE", "#7C3AED", "Sắp bắt đầu"),
-                _ => ("#FEF3C7", "#D97706", "Chiều"),
+                var coursesSnap = await _dbManager.GetDb.Collection("Courses")
+                    .WhereEqualTo("InstructorId", currentUser.Id)
+                    .WhereEqualTo("IsActive", true)
+                    .GetSnapshotAsync();
+
+                List<Course> myCourses = new List<Course>();
+                int totalStudents = 0;
+
+                foreach (var doc in coursesSnap.Documents)
+                {
+                    var c = doc.ConvertTo<Course>();
+                    c.Id = doc.Id;
+                    myCourses.Add(c);
+                    totalStudents += c.StudentCount;
+                }
+
+                TxtTotalClasses.Text = myCourses.Count.ToString();
+                TxtTotalStudents.Text = totalStudents.ToString();
+
+                string todayStr = GetDayString(DateTime.Now);
+                var todayCourses = myCourses.Where(c => c.DayOfWeek == todayStr).OrderBy(c => c.StartPeriod).ToList();
+
+                TxtTodayInfo.Text = $"Hôm nay bạn có {todayCourses.Count} lớp lên lịch. Chúc một ngày tốt lành! 🚀";
+
+                var scheduleList = new ObservableCollection<ScheduleItem>();
+                if (todayCourses.Count > 0)
+                {
+                    foreach (var c in todayCourses)
+                    {
+                        bool isMorning = c.StartPeriod <= 5;
+                        scheduleList.Add(new ScheduleItem
+                        {
+                            TargetCourse = c,
+                            TitleDisplay = $"{c.Title} ({c.ClassName})",
+                            TimeSlot = $"Tiết {c.StartPeriod} - {c.EndPeriod}",
+                            Room = string.IsNullOrWhiteSpace(c.Category) ? "Online" : c.Category,
+                            InfoDisplay = $"{c.StudentCount} học viên",
+                            Status = isMorning ? "Ca Sáng" : "Ca Chiều",
+                            ThemeBrush = GetSolidColorBrush(c.AccentColor, "#3B82F6"),
+                            StatusBg = GetSolidColorBrush(isMorning ? "#DCFCE7" : "#FEF3C7"),
+                            StatusFg = GetSolidColorBrush(isMorning ? "#16A34A" : "#D97706")
+                        });
+                    }
+                }
+                else
+                {
+                    scheduleList.Add(new ScheduleItem
+                    {
+                        TargetCourse = null,
+                        TitleDisplay = "Hôm nay không có lịch dạy.",
+                        TimeSlot = "N/A",
+                        Room = "N/A",
+                        InfoDisplay = "0 học viên",
+                        Status = "Nghỉ",
+                        ThemeBrush = GetSolidColorBrush("#E2E8F0"),
+                        StatusBg = GetSolidColorBrush("#F8FAFC"),
+                        StatusFg = GetSolidColorBrush("#64748B")
+                    });
+                }
+                ScheduleItemsControl.ItemsSource = scheduleList;
+
+                var upcomingScheduleList = new ObservableCollection<ScheduleItem>();
+                for (int i = 1; i <= 3; i++)
+                {
+                    DateTime futureDate = DateTime.Now.AddDays(i);
+                    string dayStr = GetDayString(futureDate);
+                    string shortDate = futureDate.ToString("dd/MM");
+
+                    var futureCourses = myCourses.Where(c => c.DayOfWeek == dayStr).OrderBy(c => c.StartPeriod).ToList();
+
+                    foreach (var c in futureCourses)
+                    {
+                        upcomingScheduleList.Add(new ScheduleItem
+                        {
+                            TargetCourse = c,
+                            TitleDisplay = $"{c.Title} ({c.ClassName})",
+                            TimeSlot = $"Tiết {c.StartPeriod} - {c.EndPeriod}",
+                            Room = string.IsNullOrWhiteSpace(c.Category) ? "Online" : c.Category,
+                            InfoDisplay = $"{c.StudentCount} học viên",
+                            Status = $"{dayStr} ({shortDate})",
+                            ThemeBrush = GetSolidColorBrush(c.AccentColor, "#3B82F6"),
+                            StatusBg = GetSolidColorBrush("#F1F5F9"),
+                            StatusFg = GetSolidColorBrush("#475569")
+                        });
+                    }
+                }
+
+                if (upcomingScheduleList.Count == 0)
+                {
+                    upcomingScheduleList.Add(new ScheduleItem
+                    {
+                        TargetCourse = null,
+                        TitleDisplay = "Không có lịch dạy trong 3 ngày tới.",
+                        TimeSlot = "N/A",
+                        Room = "N/A",
+                        InfoDisplay = "0 học viên",
+                        Status = "Trống",
+                        ThemeBrush = GetSolidColorBrush("#E2E8F0"),
+                        StatusBg = GetSolidColorBrush("#F8FAFC"),
+                        StatusFg = GetSolidColorBrush("#64748B")
+                    });
+                }
+                UpcomingScheduleItemsControl.ItemsSource = upcomingScheduleList;
+
+                var notifList = new ObservableCollection<NotifItem>();
+                int pendingGradingCount = 0;
+
+                foreach (var c in myCourses)
+                {
+                    var pendingSnap = await _dbManager.GetDb.Collection("courseRegistrations")
+                        .WhereEqualTo("courseId", c.Id)
+                        .WhereEqualTo("status", "pending")
+                        .GetSnapshotAsync();
+
+                    if (pendingSnap.Count > 0)
+                    {
+                        string notifKey = $"req_{c.Id}";
+                        notifList.Add(new NotifItem
+                        {
+                            NotifKey = notifKey,
+                            TargetCourse = c,
+                            Title = $"Có yêu cầu mới từ {pendingSnap.Count} sinh viên muốn tham gia lớp {c.ClassName}.",
+                            Time = "Chờ phê duyệt",
+                            IsUnread = !_readNotifKeys.Contains(notifKey)
+                        });
+                    }
+
+                    var assigns = await _dbManager.GetDb.Collection("Courses").Document(c.Id).Collection("Assignments").GetSnapshotAsync();
+                    foreach (var asm in assigns.Documents)
+                    {
+                        if (asm.ContainsField("Deadline"))
+                        {
+                            var title = asm.GetValue<string>("Title");
+                            var deadlineUtc = asm.GetValue<DateTime>("Deadline");
+                            var deadlineLocal = deadlineUtc.ToLocalTime();
+
+                            if (deadlineLocal < DateTime.Now)
+                            {
+                                pendingGradingCount++;
+                                string notifKey = $"grade_{c.Id}_{asm.Id}";
+                                bool isRecent = (DateTime.Now - deadlineLocal).TotalDays <= 7;
+
+                                if (isRecent)
+                                {
+                                    notifList.Add(new NotifItem
+                                    {
+                                        NotifKey = notifKey,
+                                        TargetCourse = c,
+                                        Title = $"Đã hết hạn nộp bài '{title}' của lớp {c.ClassName}. Vui lòng chấm điểm.",
+                                        Time = $"Hạn nộp: {deadlineLocal:dd/MM/yyyy}",
+                                        IsUnread = !_readNotifKeys.Contains(notifKey)
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
+                TxtPendingGrading.Text = pendingGradingCount.ToString();
+
+                if (notifList.Count == 0)
+                {
+                    notifList.Add(new NotifItem { NotifKey = "empty", TargetCourse = null, Title = "Tuyệt vời! Không có yêu cầu hay bài tập nào cần xử lý.", Time = "", IsUnread = false });
+                }
+
+                NotifItemsControl.ItemsSource = notifList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi load Dashboard: " + ex.Message);
+            }
+        }
+
+        private string GetDayString(DateTime date)
+        {
+            return date.DayOfWeek switch
+            {
+                DayOfWeek.Monday => "Thứ 2",
+                DayOfWeek.Tuesday => "Thứ 3",
+                DayOfWeek.Wednesday => "Thứ 4",
+                DayOfWeek.Thursday => "Thứ 5",
+                DayOfWeek.Friday => "Thứ 6",
+                DayOfWeek.Saturday => "Thứ 7",
+                DayOfWeek.Sunday => "Chủ nhật",
+                _ => "Thứ 2"
             };
-            pill.Background = (Brush)new BrushConverter().ConvertFromString(bg)!;
-            status.Text = label;
-            status.Foreground = (Brush)new BrushConverter().ConvertFromString(fg)!;
         }
 
-        private void RenderTodos()
+        private SolidColorBrush GetSolidColorBrush(string hexCode, string defaultHex = "#3B82F6")
         {
-            TodoPanel.Children.Clear();
-            for (int i = 0; i < _todos.Count; i++)
+            try { return (SolidColorBrush)new BrushConverter().ConvertFromString(hexCode); }
+            catch { return (SolidColorBrush)new BrushConverter().ConvertFromString(defaultHex); }
+        }
+
+        private void BtnNavigateToCourse_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is Course course)
             {
-                var t = _todos[i];
-                var row = new StackPanel
+                if (Window.GetWindow(this) is MainWindow mw)
                 {
-                    Orientation = Orientation.Horizontal,
-                    Margin = new Thickness(0, 0, 0, i < _todos.Count - 1 ? 14 : 0)
-                };
-
-                var cb = new CheckBox
-                {
-                    VerticalAlignment = VerticalAlignment.Center,
-                    IsChecked = t.IsDone,
-                    Tag = i
-                };
-                cb.Checked += TodoCheckBox_Changed;
-                cb.Unchecked += TodoCheckBox_Changed;
-
-                var inner = new StackPanel { Margin = new Thickness(10, 0, 0, 0) };
-
-                var txtMain = new TextBlock
-                {
-                    Text = t.Text,
-                    FontSize = 13,
-                    Foreground = t.IsDone
-                        ? new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
-                        : new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B)),
-                    TextDecorations = t.IsDone ? TextDecorations.Strikethrough : null
-                };
-                var txtDead = new TextBlock
-                {
-                    Text = t.IsDone ? "Hoàn thành" : $"Hạn: {t.Deadline}",
-                    FontSize = 11,
-                    Foreground = t.IsDone
-                        ? new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E))
-                        : t.IsUrgent
-                            ? new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44))
-                            : new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B))
-                };
-                inner.Children.Add(txtMain);
-                inner.Children.Add(txtDead);
-                row.Children.Add(cb);
-                row.Children.Add(inner);
-                TodoPanel.Children.Add(row);
+                    mw.MainContentArea.Content = new CourseDetailView(_dbManager, course);
+                }
             }
         }
 
-        private void RenderNotifs()
+        private void BtnNotifItem_Click(object sender, RoutedEventArgs e)
         {
-            NotifPanel.Children.Clear();
-            for (int i = 0; i < _notifs.Count; i++)
+            if (sender is Button btn && btn.DataContext is NotifItem n)
             {
-                var n = _notifs[i];
-                var isLast = i == _notifs.Count - 1;
-
-                var btn = new Button
+                if (n.IsUnread)
                 {
-                    Background = n.IsUnread
-                        ? new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF))
-                        : new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC)),
-                    BorderThickness = new Thickness(0),
-                    Cursor = System.Windows.Input.Cursors.Hand,
-                    Margin = new Thickness(0, 0, 0, isLast ? 0 : 10),
-                    Tag = n.Id
-                };
-                btn.Click += BtnNotifItem_Click;
+                    n.IsUnread = false;
+                    _readNotifKeys.Add(n.NotifKey);
+                }
 
-                var tpl = new ControlTemplate(typeof(Button));
-                var f = new FrameworkElementFactory(typeof(Border));
-                f.SetBinding(Border.BackgroundProperty,
-                    new System.Windows.Data.Binding("Background")
-                    { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
-                f.SetValue(Border.CornerRadiusProperty, new CornerRadius(10));
-                f.SetValue(Border.PaddingProperty, new Thickness(12));
-                var cp = new FrameworkElementFactory(typeof(ContentPresenter));
-                f.AppendChild(cp);
-                tpl.VisualTree = f;
-                btn.Template = tpl;
-
-                var sp = new StackPanel();
-                sp.Children.Add(new TextBlock
+                if (n.TargetCourse != null && Window.GetWindow(this) is MainWindow mw)
                 {
-                    Text = n.Title,
-                    FontSize = 12,
-                    FontWeight = n.IsUnread ? FontWeights.SemiBold : FontWeights.Normal,
-                    Foreground = n.IsUnread
-                        ? new SolidColorBrush(Color.FromRgb(0x1E, 0x40, 0xAF))
-                        : new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69)),
-                    TextWrapping = TextWrapping.Wrap
-                });
-                sp.Children.Add(new TextBlock
-                {
-                    Text = n.Time,
-                    FontSize = 11,
-                    Foreground = n.IsUnread
-                        ? new SolidColorBrush(Color.FromRgb(0x93, 0xC5, 0xFD))
-                        : new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
-                });
-                btn.Content = sp;
-                NotifPanel.Children.Add(btn);
+                    mw.MainContentArea.Content = new CourseDetailView(_dbManager, n.TargetCourse);
+                }
             }
         }
 
-        // ── Event handlers ───────────────────────────────────────────
         private void BtnCreateClass_Click(object sender, RoutedEventArgs e)
         {
             if (Window.GetWindow(this) is MainWindow mw)
@@ -267,46 +326,9 @@ namespace e_learning_app.Views
 
         private void BtnCreateExam_Click(object sender, RoutedEventArgs e)
         {
-            if (Window.GetWindow(this) is MainWindow mw)
-                mw.NavigateTo(new CreateExamView(_dbManager));
+            MessageBox.Show("Tính năng soạn bài kiểm tra trắc nghiệm đang được cập nhật.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void BtnScheduleClass_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is not Button btn) return;
-            string cls = btn.Tag?.ToString() ?? "";
-            var item = _schedule.Find(s => s.ClassName == cls);
-            if (item == null) return;
-            MessageBox.Show(
-                $"Mở lớp: {item.Subject} – {item.ClassName}\nPhòng {item.Room}  |  {item.TimeSlot}",
-                "Vào lớp", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void TodoCheckBox_Changed(object sender, RoutedEventArgs e)
-        {
-            if (sender is not CheckBox cb || cb.Tag is not int idx) return;
-            if (idx < 0 || idx >= _todos.Count) return;
-            _todos[idx].IsDone = cb.IsChecked == true;
-            RenderTodos();
-        }
-
-        private void BtnNotifItem_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is not Button btn || btn.Tag is not int id) return;
-            var n = _notifs.Find(x => x.Id == id);
-            if (n == null) return;
-            n.IsUnread = false;
-            RenderNotifs();
-            MessageBox.Show(n.Title, "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void BtnViewAllNotif_Click(object sender, RoutedEventArgs e)
-        {
-            if (Window.GetWindow(this) is MainWindow mw)
-                mw.NavigateTo(new NotificationsView());
-        }
-
-        // ── Public API ───────────────────────────────────────────────
-        public void UpdatePendingGrading(int count) { _pendingGrading = count; RenderAll(); }
+        private void BtnViewAllNotif_Click(object sender, RoutedEventArgs e) { }
     }
 }

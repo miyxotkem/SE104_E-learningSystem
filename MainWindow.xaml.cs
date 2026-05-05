@@ -16,7 +16,8 @@ namespace e_learning_app
 
             _dbManager = new DatabaseManager();
 
-            MainContentArea.Content = new TeacherDashboardView(_dbManager);
+            // XÓA PHẦN IF/ELSE CHECK ROLE Ở ĐÂY VÌ USER CHƯA LOAD XONG
+
             btnDashBoard.Focus();
 
             this.Loaded += MainWindow_Loaded;
@@ -24,53 +25,72 @@ namespace e_learning_app
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            Query query = _dbManager.GetDb.Collection("Users").WhereEqualTo("Email", "instructortest@example.com");
-            QuerySnapshot snapshot = await query.GetSnapshotAsync();
-            _dbManager.SetCurrentUser(snapshot.Documents[0].ConvertTo<User>());
+            try
+            {
+                Query query = _dbManager.GetDb.Collection("Users").WhereEqualTo("Email", "instructortest@example.com");
+                QuerySnapshot snapshot = await query.GetSnapshotAsync();
 
-            this.DataContext = _dbManager.GetCurrentUser();
+                if (snapshot.Documents.Count > 0)
+                {
+                    _dbManager.SetCurrentUser(snapshot.Documents[0].ConvertTo<User>());
+                    this.DataContext = _dbManager.GetCurrentUser();
+
+                    // ĐƯA LOGIC MỞ GIAO DIỆN VÀO ĐÂY (SAU KHI ĐÃ CÓ USER)
+                    if (_dbManager.GetCurrentUser().Role == "Instructor")
+                        MainContentArea.Content = new TeacherDashboardView(_dbManager);
+                    else
+                        MainContentArea.Content = new StudentDashboardView(_dbManager);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi load User: " + ex.Message);
+            }
         }
 
-        // ─── Navigation Logic ──────────────────────────────────────────
+        // ─── Navigation Logic (ĐÃ ĐỔI THÀNH PUBLIC ĐỂ CÁC VIEW KHÁC CÓ THỂ GỌI) ──────────
 
-        private void NavDashboard_Click(object sender, RoutedEventArgs e)
+        public void NavDashboard_Click(object sender, RoutedEventArgs e)
         {
-            MainContentArea.Content = new TeacherDashboardView(_dbManager);
+            if (_dbManager.GetCurrentUser()?.Role == "Instructor")
+                MainContentArea.Content = new TeacherDashboardView(_dbManager);
+            else
+                MainContentArea.Content = new StudentDashboardView(_dbManager);
         }
 
-        private void NavClasses_Click(object sender, RoutedEventArgs e)
+        public void NavClasses_Click(object sender, RoutedEventArgs e)
         {
             MainContentArea.Content = new MyClassesView(_dbManager);
         }
 
-        private void NavQuestions_Click(object sender, RoutedEventArgs e)
+        public void NavQuestions_Click(object sender, RoutedEventArgs e)
         {
             MainContentArea.Content = new QuestionBankView();
         }
 
-        private void NavExams_Click(object sender, RoutedEventArgs e)
+        public void NavExams_Click(object sender, RoutedEventArgs e)
         {
             MainContentArea.Content = new ExamManagementView(_dbManager);
         }
 
-        private void NavReports_Click(object sender, RoutedEventArgs e)
+        public void NavReports_Click(object sender, RoutedEventArgs e)
         {
             MainContentArea.Content = new ReportsView(_dbManager);
         }
 
-        private void NavNotifications_Click(object sender, RoutedEventArgs e)
+        public void NavNotifications_Click(object sender, RoutedEventArgs e)
         {
             MainContentArea.Content = new NotificationsView();
         }
 
-        private void NavSemestersettings_Click(object sender, RoutedEventArgs e)
+        public void NavSemestersettings_Click(object sender, RoutedEventArgs e)
         {
             MainContentArea.Content = new SemesterSettingsView();
         }
 
         public void NavigateTo(UserControl view) => MainContentArea.Content = view;
 
-        private void OpenProfile_Click(object sender, RoutedEventArgs e)
+        public void OpenProfile_Click(object sender, RoutedEventArgs e)
         {
             MainContentArea.Content = new ProfileManage(_dbManager);
         }
