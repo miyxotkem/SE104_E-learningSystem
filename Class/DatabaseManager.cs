@@ -3,9 +3,8 @@ using Firebase.Auth;
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using System.IO;
-using static Google.Cloud.Firestore.V1.StructuredQuery.Types;
 using System.Windows;
 
 namespace e_learning_app
@@ -22,28 +21,18 @@ namespace e_learning_app
 
         public void Initialize()
         {
-            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "firebase", "firebase_json.json");
-            if (File.Exists(path))
-            {
-                Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", path);
-            }
             if (_db != null) return;
 
-            string jsonPath = path;
-            if (!File.Exists(jsonPath))
+            // Dùng lại FirestoreDb đã được khởi tạo từ FirebaseService
+            // (JSON đã được nhúng vào trong .exe, không cần đọc file ngoài nữa)
+            if (FirebaseService.Db != null)
             {
-                MessageBox.Show($"CẢNH BÁO: Không tìm thấy file JSON tại:\n{jsonPath}\n\nHãy kiểm tra lại đường dẫn!",
-                                "Lỗi Đường Dẫn File", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                _db = FirebaseService.Db;
             }
-
-            try
+            else
             {
-                _db = FirestoreDb.Create("e-learning-cd1b3");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Lỗi khởi tạo Firestore: " + ex.Message);
+                MessageBox.Show("Firestore chưa được khởi tạo. Hãy đảm bảo FirebaseService.Initialize() đã được gọi trước.",
+                                "Lỗi Kết Nối", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -114,6 +103,112 @@ namespace e_learning_app
                 System.Diagnostics.Debug.WriteLine($"Delete Error: {ex.Message}");
                 return false;
             }
+        }
+
+        // --- Lesson Methods ---
+        public async Task<string> AddLessonAsync(Lesson lesson)
+        {
+            try
+            {
+                CollectionReference lessonsRef = _db.Collection("Lessons");
+                DocumentReference docRef = await lessonsRef.AddAsync(lesson);
+                return docRef.Id;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Add Lesson Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<List<Lesson>> GetLessonsByCourseAsync(string courseId)
+        {
+            var lessons = new List<Lesson>();
+            try
+            {
+                // Remove OrderBy to avoid missing composite index errors on Firestore. Order in-memory instead.
+                Query query = _db.Collection("Lessons").WhereEqualTo("CourseId", courseId);
+                QuerySnapshot snapshot = await query.GetSnapshotAsync();
+
+                foreach (DocumentSnapshot document in snapshot.Documents)
+                {
+                    if (document.Exists)
+                    {
+                        var lesson = document.ConvertTo<Lesson>();
+                        lesson.Id = document.Id;
+                        lessons.Add(lesson);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Get Lessons Error: {ex.Message}");
+            }
+            // Order by CreatedAt in memory
+            return lessons.OrderBy(l => l.CreatedAt).ToList();
+        }
+
+        public async Task<bool> DeleteLessonAsync(string lessonId)
+        {
+            try
+            {
+                DocumentReference docRef = _db.Collection("Lessons").Document(lessonId);
+                await docRef.DeleteAsync();
+
+                // Optional: Xóa luôn comments của bài học này (nếu cần)
+                // var commentsQuery = _db.Collection("Comments").WhereEqualTo("LessonId", lessonId);
+                // var snapshot = await commentsQuery.GetSnapshotAsync();
+                // foreach(var doc in snapshot.Documents) await doc.Reference.DeleteAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Delete Lesson Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        // --- Comment Methods ---
+        public async Task<string> AddCommentAsync(Comment comment)
+        {
+            try
+            {
+                CollectionReference commentsRef = _db.Collection("Comments");
+                DocumentReference docRef = await commentsRef.AddAsync(comment);
+                return docRef.Id;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Add Comment Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<List<Comment>> GetCommentsByLessonAsync(string lessonId)
+        {
+            var comments = new List<Comment>();
+            try
+            {
+                Query query = _db.Collection("Comments").WhereEqualTo("LessonId", lessonId);
+                QuerySnapshot snapshot = await query.GetSnapshotAsync();
+
+                foreach (DocumentSnapshot document in snapshot.Documents)
+                {
+                    if (document.Exists)
+                    {
+                        var comment = document.ConvertTo<Comment>();
+                        comment.Id = document.Id;
+                        comments.Add(comment);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Get Comments Error: {ex.Message}");
+            }
+            // Order by CreatedAt descending to show newest first, or ascending for chronological. We use descending here.
+            return comments.OrderByDescending(c => c.CreatedAt).ToList();
         }
     }
 }

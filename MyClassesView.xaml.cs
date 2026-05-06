@@ -176,7 +176,7 @@ namespace e_learning_app.Views
                         var mainWin = Window.GetWindow(this) as MainWindow;
                         if (mainWin != null)
                         {
-                            mainWin.MainContentArea.Content = new CourseDetailView(_dbManager, selectedCourse);
+                            mainWin.MainContentArea.Content = new CourseDetailView(_dbManager, selectedCourse, "Teacher");
                         }
                     }
                     else if (_userRole == "Student")
@@ -184,7 +184,7 @@ namespace e_learning_app.Views
                         var studentWin = Window.GetWindow(this) as StudentMainWindow;
                         if (studentWin != null)
                         {
-                            studentWin.StudentContentArea.Content = new StudentCourseView(_dbManager, selectedCourse);
+                            studentWin.StudentContentArea.Content = new CourseDetailView(_dbManager, selectedCourse, "Student");
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.Views.CourseDetailView"
+<UserControl x:Class="e_learning_app.Views.CourseDetailView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="White">
@@ -271,8 +271,19 @@
                             <ColumnDefinition Width="1*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,30,0">
-                            <TextBlock Text="Tài liệu &amp; Nội dung" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
-                            <ItemsControl x:Name="DocumentsList" Margin="0,20"/>
+                            <Grid Margin="0,0,0,20">
+                                <TextBlock Text="Tài liệu &amp; Nội dung" FontSize="20" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                                <Button x:Name="BtnAddLesson" Content="+ Thêm bài học" HorizontalAlignment="Right" Background="#3B82F6" Foreground="White" Padding="12,6" BorderThickness="0" Click="BtnAddLesson_Click" Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
+                            <ItemsControl x:Name="DocumentsList" Margin="0,0"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1">
                             <TextBlock Text="Bài tập sắp tới" FontSize="20" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,20"/>
@@ -326,6 +337,60 @@
                             </Button.Template>
                         </Button>
                     </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="AddLessonOverlay" Visibility="Collapsed">
+            <Border Background="#A60F172A" MouseLeftButtonDown="CloseAddLessonOverlay_Click"/>
+            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" Width="500" CornerRadius="16" Padding="30">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.15" Color="Black"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Thêm bài học mới" FontSize="22" FontWeight="Bold" Margin="0,0,0,25"/>
+
+                    <TextBlock Text="Tên bài học" Foreground="#64748B" Margin="0,0,0,5"/>
+                    <TextBox x:Name="InputLessonTitle" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,15"/>
+
+                    <TextBlock Text="Mô tả" Foreground="#64748B" Margin="0,0,0,5"/>
+                    <TextBox x:Name="InputLessonDesc" Style="{StaticResource ModernTextBox}" Height="80" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="12,10" Margin="0,0,0,15"/>
+
+                    <TextBlock Text="Video bài giảng" Foreground="#64748B" Margin="0,0,0,5"/>
+                    <Grid Margin="0,0,0,25">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="InputVideoPath" Style="{StaticResource ModernTextBox}" Height="42" IsReadOnly="True" Text="Chưa chọn file..." Foreground="#94A3B8"/>
+                        <Button Grid.Column="1" Content="Chọn file" Background="#F1F5F9" Foreground="#3B82F6" FontWeight="SemiBold" Margin="10,0,0,0" Padding="15,0" Click="BtnSelectVideo_Click" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Hủy" Background="Transparent" Foreground="#64748B" BorderThickness="0" Margin="0,0,15,0" Click="CloseAddLessonOverlay_Click" Cursor="Hand"/>
+                        <Button x:Name="BtnSaveLesson" Content="Lưu bài học" Width="140" Height="42" Background="#3B82F6" Foreground="White" Click="BtnSaveLesson_Click" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel x:Name="UploadProgressPanel" Visibility="Collapsed" Margin="0,20,0,0">
+                        <TextBlock Text="Đang tải video lên Cloudinary, vui lòng chờ..." Foreground="#3B82F6" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                        <ProgressBar IsIndeterminate="True" Height="4" Foreground="#3B82F6" Background="#E2E8F0" BorderThickness="0"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>

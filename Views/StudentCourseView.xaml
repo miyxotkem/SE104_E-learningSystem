@@ -107,26 +107,24 @@
                 </Grid.RowDefinitions>
 
                 <!-- Video/Content area -->
-                <Border Grid.Row="0" Background="#0F172A" CornerRadius="0" Margin="0">
-                    <Grid>
-                        <!-- Video placeholder / Focus mode -->
-                        <Rectangle Fill="#0F172A"/>
+                <Border x:Name="VideoContainerBorder" Grid.Row="0" Background="#0F172A" CornerRadius="0" Margin="0">
+                    <Grid x:Name="VideoGrid">
+                        <!-- Video Player -->
+                        <MediaElement x:Name="LessonVideoPlayer" LoadedBehavior="Manual" Stretch="Uniform" Margin="0" />
 
                         <!-- Video overlay controls -->
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <StackPanel x:Name="OverlayPlayPanel" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
                             <!-- Play button -->
-                            <Border Width="70" Height="70" CornerRadius="35"
-                                    Background="#3B82F6" HorizontalAlignment="Center" Cursor="Hand">
+                            <Border x:Name="BtnOverlayPlay" Width="70" Height="70" CornerRadius="35"
+                                    Background="#3B82F6" HorizontalAlignment="Center" Cursor="Hand" MouseLeftButtonDown="BtnPlayPause_Click">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.4" Color="#3B82F6"/>
                                 </Border.Effect>
                                 <TextBlock Text="▶" FontSize="28" Foreground="White"
                                            HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5,0,0,0"/>
                             </Border>
-                            <TextBlock Text="Bài 14: Giới hạn hàm số" FontSize="18" FontWeight="Bold"
+                            <TextBlock x:Name="OverlayLessonTitle" Text="Bài học" FontSize="18" FontWeight="Bold"
                                        Foreground="White" HorizontalAlignment="Center" Margin="0,20,0,6"/>
-                            <TextBlock Text="Thời lượng: 42:15" FontSize="13" Foreground="#94A3B8"
-                                       HorizontalAlignment="Center"/>
                         </StackPanel>
 
                         <!-- Bottom controls bar -->
@@ -139,22 +137,23 @@
                                 </Grid.RowDefinitions>
 
                                 <!-- Seek bar -->
-                                <Border Grid.Row="0" Height="4" CornerRadius="2" Background="#FFFFFF33">
-                                    <Border HorizontalAlignment="Left" Width="180" Height="4" CornerRadius="2" Background="#3B82F6"/>
-                                </Border>
+                                <Slider x:Name="ProgressSlider" Grid.Row="0" Minimum="0" Maximum="100" Value="0"
+                                        Cursor="Hand" IsMoveToPointEnabled="True"
+                                        PreviewMouseLeftButtonDown="ProgressSlider_PreviewMouseLeftButtonDown"
+                                        PreviewMouseLeftButtonUp="ProgressSlider_PreviewMouseLeftButtonUp"
+                                        ValueChanged="ProgressSlider_ValueChanged"
+                                        VerticalAlignment="Center"/>
 
                                 <!-- Controls -->
                                 <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                    <TextBlock Text="⏮" FontSize="16" Foreground="White" Margin="0,0,16,0" Cursor="Hand" VerticalAlignment="Center"/>
-                                    <TextBlock Text="▶" FontSize="16" Foreground="White" Margin="0,0,16,0" Cursor="Hand" VerticalAlignment="Center"/>
-                                    <TextBlock Text="⏭" FontSize="16" Foreground="White" Margin="0,0,24,0" Cursor="Hand" VerticalAlignment="Center"/>
-                                    <TextBlock Text="14:22 / 42:15" FontSize="12" Foreground="#CBD5E1" VerticalAlignment="Center"/>
-                                    <TextBlock Text="🔊" FontSize="16" Foreground="White" Margin="20,0,0,0" Cursor="Hand" VerticalAlignment="Center"/>
-                                    <TextBlock Text="⛶" FontSize="16" Foreground="White" HorizontalAlignment="Right"
+                                    <TextBlock x:Name="BtnRewind" Text="⏮" FontSize="16" Foreground="White" Margin="0,0,16,0" Cursor="Hand" VerticalAlignment="Center" MouseLeftButtonDown="BtnRewind_Click"/>
+                                    <TextBlock x:Name="BtnPlayPause" Text="▶" FontSize="16" Foreground="White" Margin="0,0,16,0" Cursor="Hand" VerticalAlignment="Center" MouseLeftButtonDown="BtnPlayPause_Click"/>
+                                    <TextBlock x:Name="BtnForward" Text="⏭" FontSize="16" Foreground="White" Margin="0,0,24,0" Cursor="Hand" VerticalAlignment="Center" MouseLeftButtonDown="BtnForward_Click"/>
+                                    <TextBlock x:Name="TxtTime" Text="00:00 / 00:00" FontSize="12" Foreground="#CBD5E1" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="BtnMute" Text="🔊" FontSize="16" Foreground="White" Margin="20,0,0,0" Cursor="Hand" VerticalAlignment="Center" MouseLeftButtonDown="BtnMute_Click"/>
+                                    <TextBlock x:Name="BtnFullscreen" Text="⛶" FontSize="16" Foreground="White" HorizontalAlignment="Right"
                                                Margin="20,0,0,0" Cursor="Hand" VerticalAlignment="Center"
-                                               Panel.ZIndex="1"/>
-                                    <TextBlock Text="1x" FontSize="12" Foreground="White" Background="#FFFFFF22"
-                                               Padding="6,2" Margin="12,0,0,0" VerticalAlignment="Center" Cursor="Hand"/>
+                                               Panel.ZIndex="1" MouseLeftButtonDown="BtnFullscreen_Click"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -174,28 +173,6 @@
                 <ScrollViewer Grid.Row="1" MaxHeight="260" VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="20,16,20,16">
 
-                        <!-- Tải tài liệu -->
-                        <TextBlock Text="📎  Tài liệu bài giảng" FontSize="14" FontWeight="Bold"
-                                   Foreground="#1E293B" Margin="0,0,0,10"/>
-                        <WrapPanel Margin="0,0,0,14">
-                            <Button Style="{StaticResource DownloadBtn}" Margin="0,0,8,8">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📄" FontSize="14" VerticalAlignment="Center"/>
-                                    <TextBlock Text="  Slide_Bai14.pdf" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="#3B82F6" VerticalAlignment="Center"/>
-                                    <TextBlock Text="  ↓" FontSize="12" Foreground="#3B82F6" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            <Button Style="{StaticResource DownloadBtn}" Background="#F0FDF4" Margin="0,0,8,8">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📊" FontSize="14" VerticalAlignment="Center"/>
-                                    <TextBlock Text="  BaiTap_Bai14.xlsx" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="#10B981" VerticalAlignment="Center"/>
-                                    <TextBlock Text="  ↓" FontSize="12" Foreground="#10B981" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                        </WrapPanel>
-
                         <!-- Bình luận -->
                         <TextBlock Text="💬  Thảo luận &amp; Hỏi đáp" FontSize="14" FontWeight="Bold"
                                    Foreground="#1E293B" Margin="0,0,0,10"/>
@@ -210,61 +187,59 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" BorderThickness="0" FontSize="13" Foreground="#64748B"
-                                         Text="Đặt câu hỏi hoặc để lại nhận xét..." Background="Transparent"
-                                         VerticalAlignment="Center"/>
-                                <Border Grid.Column="1" Background="#3B82F6" CornerRadius="10" Padding="10,6" Cursor="Hand">
+                                <TextBox x:Name="InputComment" Grid.Column="0" BorderThickness="0" FontSize="13" Foreground="#1E293B"
+                                         Background="Transparent" VerticalAlignment="Center"
+                                         GotFocus="InputComment_GotFocus" LostFocus="InputComment_LostFocus"/>
+                                <TextBlock x:Name="InputCommentPlaceholder" Text="Đặt câu hỏi hoặc để lại nhận xét..." Foreground="#64748B" FontSize="13" VerticalAlignment="Center" IsHitTestVisible="False" Margin="4,0,0,0"/>
+                                <Border x:Name="BtnSendComment" Grid.Column="1" Background="#3B82F6" CornerRadius="10" Padding="10,6" Cursor="Hand" MouseLeftButtonDown="BtnSendComment_Click">
                                     <TextBlock Text="Gửi" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
                                 </Border>
                             </Grid>
                         </Border>
 
-                        <!-- Comment 1 -->
-                        <Border Background="White" CornerRadius="12" Padding="12" Margin="0,0,0,8">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.04" Color="Black"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                    <Border Width="30" Height="30" CornerRadius="8" Background="#8B5CF6">
-                                        <TextBlock Text="NH" Foreground="White" FontSize="11" FontWeight="Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Margin="8,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Ngọc Hà" FontWeight="SemiBold" FontSize="12" Foreground="#1E293B"/>
-                                        <TextBlock Text="30 phút trước" FontSize="10" Foreground="#94A3B8"/>
-                                    </StackPanel>
-                                </StackPanel>
-                                <TextBlock Text="Thầy ơi, phần ε-δ em chưa hiểu lắm, thầy có thể giải thích thêm không ạ?"
-                                           FontSize="12" Foreground="#475569" TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Comment 2 - Teacher reply -->
-                        <Border Background="#EFF6FF" CornerRadius="12" Padding="12">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.04" Color="Black"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                    <Border Width="30" Height="30" CornerRadius="8" Background="#3B82F6">
-                                        <TextBlock Text="GV" Foreground="White" FontSize="11" FontWeight="Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Margin="8,0,0,0" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Nguyễn Văn An" FontWeight="SemiBold" FontSize="12" Foreground="#1E293B"/>
-                                            <Border Background="#3B82F6" CornerRadius="6" Padding="5,2" Margin="6,0,0,0">
-                                                <TextBlock Text="Giảng viên" FontSize="9" Foreground="White" FontWeight="SemiBold"/>
-                                            </Border>
+                        <!-- Comments List -->
+                        <ItemsControl x:Name="CommentsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Comment Item -->
+                                    <Border Background="White" CornerRadius="12" Padding="12" Margin="0,0,0,8">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.04" Color="Black"/>
+                                        </Border.Effect>
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                <Border Width="30" Height="30" CornerRadius="8" Background="#8B5CF6">
+                                                    <TextBlock Text="{Binding UserName[0]}" Foreground="White" FontSize="11" FontWeight="Bold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Margin="8,0,0,0" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding UserName}" FontWeight="SemiBold" FontSize="12" Foreground="#1E293B"/>
+                                                        <Border CornerRadius="6" Padding="5,2" Margin="6,0,0,0">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="#3B82F6"/>
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding UserRole}" Value="Teacher">
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <TextBlock Text="Giảng viên" FontSize="9" Foreground="White" FontWeight="SemiBold"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding CreatedAt, StringFormat='dd/MM/yyyy HH:mm'}" FontSize="10" Foreground="#94A3B8"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Content}"
+                                                       FontSize="12" Foreground="#475569" TextWrapping="Wrap"/>
                                         </StackPanel>
-                                        <TextBlock Text="15 phút trước" FontSize="10" Foreground="#94A3B8"/>
-                                    </StackPanel>
-                                </StackPanel>
-                                <TextBlock Text="Em xem lại phần 35:20 trong video nhé, thầy có giải thích kỹ hơn ở đó 😊"
-                                           FontSize="12" Foreground="#1E293B" TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Border>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
@@ -291,149 +266,7 @@
 
                     <!-- Playlist Items -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="12,12,12,12">
-                            <!-- Chapter 1 -->
-                            <TextBlock Text="CHƯƠNG 1 – ĐẠO HÀM" FontSize="10" FontWeight="Bold"
-                                       Foreground="#94A3B8" Margin="8,0,0,10"/>
-
-                            <!-- Lesson - completed -->
-                            <Button Style="{StaticResource PlaylistItem}" Background="#F0FDF4">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="32"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#DCFCE7">
-                                        <TextBlock Text="✓" FontSize="14" Foreground="#16A34A" FontWeight="Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Bài 1: Khái niệm đạo hàm" FontSize="13" FontWeight="SemiBold" Foreground="#16A34A"/>
-                                        <TextBlock Text="38:20" FontSize="11" Foreground="#64748B"/>
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="3" Text="✅" FontSize="14" VerticalAlignment="Center"/>
-                                </Grid>
-                            </Button>
-
-                            <!-- Lesson - completed -->
-                            <Button Style="{StaticResource PlaylistItem}" Background="#F0FDF4">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="32"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#DCFCE7">
-                                        <TextBlock Text="✓" FontSize="14" Foreground="#16A34A" FontWeight="Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Bài 2: Quy tắc tính đạo hàm" FontSize="13" FontWeight="SemiBold" Foreground="#16A34A"/>
-                                        <TextBlock Text="45:10" FontSize="11" Foreground="#64748B"/>
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="3" Text="✅" FontSize="14" VerticalAlignment="Center"/>
-                                </Grid>
-                            </Button>
-
-                            <!-- Chapter 2 -->
-                            <TextBlock Text="CHƯƠNG 2 – TÍCH PHÂN" FontSize="10" FontWeight="Bold"
-                                       Foreground="#94A3B8" Margin="8,14,0,10"/>
-
-                            <!-- Lesson - in progress (active) -->
-                            <Button Style="{StaticResource PlaylistItem}" Background="#EFF6FF">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="32"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#3B82F6">
-                                        <TextBlock Text="▶" FontSize="12" Foreground="White" FontWeight="Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
-                                    </Border>
-                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Bài 14: Giới hạn hàm số" FontSize="13" FontWeight="Bold" Foreground="#3B82F6"/>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="42:15" FontSize="11" Foreground="#64748B"/>
-                                            <TextBlock Text="  · Đang xem" FontSize="11" Foreground="#3B82F6" FontWeight="SemiBold"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                    <Border Grid.Column="3" Background="#3B82F6" CornerRadius="8" Padding="6,3">
-                                        <TextBlock Text="Live" FontSize="10" Foreground="White" FontWeight="Bold"/>
-                                    </Border>
-                                </Grid>
-                            </Button>
-
-                            <!-- Lesson - locked -->
-                            <Button Style="{StaticResource PlaylistItem}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="32"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#F1F5F9">
-                                        <TextBlock Text="15" FontSize="13" Foreground="#94A3B8" FontWeight="Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Bài 15: Tích phân xác định" FontSize="13" Foreground="#94A3B8"/>
-                                        <TextBlock Text="50:30" FontSize="11" Foreground="#CBD5E1"/>
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="3" Text="🔒" FontSize="13" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                </Grid>
-                            </Button>
-
-                            <Button Style="{StaticResource PlaylistItem}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="32"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#F1F5F9">
-                                        <TextBlock Text="16" FontSize="13" Foreground="#94A3B8" FontWeight="Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Bài 16: Ứng dụng tích phân" FontSize="13" Foreground="#94A3B8"/>
-                                        <TextBlock Text="38:45" FontSize="11" Foreground="#CBD5E1"/>
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="3" Text="🔒" FontSize="13" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                </Grid>
-                            </Button>
-
-                            <!-- Quiz item -->
-                            <TextBlock Text="KIỂM TRA" FontSize="10" FontWeight="Bold"
-                                       Foreground="#94A3B8" Margin="8,14,0,10"/>
-                            <Button Style="{StaticResource PlaylistItem}" Background="#FFF7ED">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="32"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#FED7AA">
-                                        <TextBlock Text="📝" FontSize="16"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Quiz cuối chương 2" FontSize="13" FontWeight="SemiBold" Foreground="#C2410C"/>
-                                        <TextBlock Text="15 câu · 20 phút" FontSize="11" Foreground="#64748B"/>
-                                    </StackPanel>
-                                    <Border Grid.Column="3" Background="#FEF9C3" CornerRadius="8" Padding="6,3">
-                                        <TextBlock Text="Sắp tới" FontSize="10" Foreground="#CA8A04" FontWeight="SemiBold"/>
-                                    </Border>
-                                </Grid>
-                            </Button>
-                        </StackPanel>
+                        <ItemsControl x:Name="PlaylistItems" Margin="12,12,12,12"/>
                     </ScrollViewer>
                 </Grid>
             </Border>

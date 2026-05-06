@@ -26,11 +26,30 @@ namespace e_learning_app
         private static FirebaseAuthClient ?_authClient;
         public static FirestoreDb ?Db { get; private set; }
 
+        /// <summary>
+        /// Đọc file JSON được nhúng vào trong .exe (Embedded Resource)
+        /// </summary>
+        private static string GetEmbeddedJson(string resourceName)
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            string fullName = assembly.GetManifestResourceNames()
+                .FirstOrDefault(n => n.EndsWith(resourceName, StringComparison.OrdinalIgnoreCase)) ?? "";
+
+            if (string.IsNullOrEmpty(fullName)) return "";
+
+            using (Stream? stream = assembly.GetManifestResourceStream(fullName))
+            {
+                if (stream == null) return "";
+                using (StreamReader reader = new StreamReader(stream))
+                    return reader.ReadToEnd();
+            }
+        }
+
         public static void Initialize()
         {
             try
             {
-                // 1. Khởi tạo Auth Client 
+                // 1. Khởi tạo Auth Client
                 var config = new FirebaseAuthConfig
                 {
                     ApiKey = ApiKey,
@@ -43,17 +62,30 @@ namespace e_learning_app
                 };
                 _authClient = new FirebaseAuthClient(config);
 
-                // 2. Khởi tạo Firestore 
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "firebase", "firebase_json.json");
-                if (File.Exists(path))
+                // 2. Khởi tạo Firestore bằng JSON nhúng trong .exe
+                string serviceAccountJson = GetEmbeddedJson("firebase_json.json");
+                if (!string.IsNullOrEmpty(serviceAccountJson))
                 {
-                    Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", path);
-                    Db = FirestoreDb.Create(ProjectId);
+                    var credential = GoogleCredential
+                        .FromJson(serviceAccountJson)
+                        .CreateScoped("https://www.googleapis.com/auth/cloud-platform",
+                                      "https://www.googleapis.com/auth/datastore");
+
+                    var firestoreClient = new Google.Cloud.Firestore.V1.FirestoreClientBuilder
+                    {
+                        Credential = credential
+                    }.Build();
+
+                    Db = FirestoreDb.Create(ProjectId, firestoreClient);
+                }
+                else
+                {
+                    MessageBox.Show("Không tìm thấy file cấu hình Firebase trong ứng dụng!", "Lỗi");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi Init: " + ex.Message);
+                MessageBox.Show("Lỗi khởi tạo Firebase: " + ex.Message);
             }
         }
 
@@ -98,12 +130,28 @@ namespace e_learning_app
                 // Xóa cache cũ để có thể chọn tài khoản Google khác
                 await dataStore.ClearAsync();
 
-                string[] scopes = { "openid", "email", "profile" };
-                var secrets = new ClientSecrets
+                // Đọc Client Secret từ file được nhúng trong .exe
+                string googleJsonContent = GetEmbeddedJson("google_json.json");
+                ClientSecrets secrets;
+
+                if (!string.IsNullOrEmpty(googleJsonContent))
                 {
-                    ClientId = GoogleClientId,
-                    ClientSecret = GoogleClientSecret
-                };
+                    // Đọc trực tiếp từ JSON nhúng trong .exe
+                    using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(googleJsonContent));
+                    var clientSecrets = await GoogleClientSecrets.FromStreamAsync(stream);
+                    secrets = clientSecrets.Secrets;
+                }
+                else
+                {
+                    // Fallback: dùng hardcoded (phòng trường hợp resource không tìm thấy)
+                    secrets = new ClientSecrets
+                    {
+                        ClientId = GoogleClientId,
+                        ClientSecret = GoogleClientSecret
+                    };
+                }
+
+                string[] scopes = { "openid", "email", "profile" };
                 var googleCredential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                     secrets,
                     scopes,
@@ -112,12 +160,10 @@ namespace e_learning_app
                     dataStore);
 
                 string idToken = googleCredential.Token.IdToken;
-                string accessToken = googleCredential.Token.AccessToken;
 
                 if (_authClient == null) return null;
 
                 var credential = GoogleProvider.GetCredential(idToken, OAuthCredentialTokenType.IdToken);
-                
                 var authResult = await _authClient.SignInWithCredentialAsync(credential);
                 return authResult.User;
             }
@@ -130,7 +176,7 @@ namespace e_learning_app
                 }
                 else
                 {
-                    MessageBox.Show("Lỗi: " + ex.Message);
+                    MessageBox.Show("Lỗi đăng nhập Google: " + ex.Message);
                 }
                 return null;
             }
@@ -178,7 +224,7 @@ namespace e_learning_app
                     return false;
                 }
 
-                DocumentReference docRef = Db.Collection("userss").Document(uid);
+                DocumentReference docRef = Db.Collection("users").Document(uid);
                 DocumentSnapshot snapshot = await docRef.GetSnapshotAsync();
 
                 string role = email == "buitrantrongnguyen@gmail.com" ? "Teacher" : "Student";
