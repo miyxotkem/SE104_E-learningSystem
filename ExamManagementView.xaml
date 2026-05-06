@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.Views.ExamManagementView"
+﻿<UserControl x:Class="e_learning_app.ExamManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -78,13 +78,57 @@
                    Padding="20">
 
 				<ScrollViewer VerticalScrollBarVisibility="Auto">
-					<StackPanel>
+										<StackPanel>
 						<!-- Filter Title -->
-						<TextBlock Text="🔍 BỘ LỌC"
+						<TextBlock Text="🔍 BỘ LỌC TÌM KIẾM"
                                  FontSize="13"
                                  FontWeight="Bold"
                                  Foreground="#1E293B"
                                  Margin="0,0,0,16"/>
+
+						<!-- Search -->
+						<TextBlock Text="TÌM KIẾM"
+                                 FontSize="11"
+                                 FontWeight="SemiBold"
+                                 Foreground="#475569"
+                                 Margin="0,0,0,8"/>
+						<Border Background="#F1F5F9" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
+							<TextBox x:Name="TxtSearch"
+                                    Height="36"
+                                    Padding="10,0"
+                                    FontSize="13"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    VerticalContentAlignment="Center"
+                                    TextChanged="TxtSearch_TextChanged"/>
+						</Border>
+
+						<!-- Divider -->
+						<Rectangle Height="1" Fill="#E2E8F0" Margin="0,0,0,16"/>
+
+						<!-- Subject Filter -->
+						<TextBlock Text="MÔN HỌC"
+                                 FontSize="11"
+                                 FontWeight="SemiBold"
+                                 Foreground="#475569"
+                                 Margin="0,0,0,8"/>
+						<Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
+							<ComboBox x:Name="CboSubject"
+                                     Height="36"
+                                     Padding="10,0"
+                                     FontSize="13"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     VerticalContentAlignment="Center"
+                                     SelectionChanged="Filter_Changed">
+								<ComboBoxItem Content="Tất cả môn học" IsSelected="True"/>
+								<ComboBoxItem Content="SE104.O21 - Công nghệ phần mềm"/>
+								<ComboBoxItem Content="CS101 - Nhập môn lập trình"/>
+							</ComboBox>
+						</Border>
+
+						<!-- Divider -->
+						<Rectangle Height="1" Fill="#E2E8F0" Margin="0,0,0,16"/>
 
 						<!-- Status Filter -->
 						<TextBlock Text="TRẠNG THÁI"
@@ -94,30 +138,31 @@
                                  Margin="0,0,0,10"/>
 						<CheckBox x:Name="ChkActive"
                                  Content="✅ Đang Mở"
-                                 Margin="0,0,0,8"
-                                 FontSize="12"
+                                 Margin="0,0,0,10"
+                                 FontSize="13"
+                                 Foreground="#1E293B"
                                  Checked="Filter_Changed"
                                  Unchecked="Filter_Changed"
                                  Tag="active"/>
 						<CheckBox x:Name="ChkClosed"
                                  Content="🔒 Đã Khóa"
-                                 Margin="0,0,0,8"
-                                 FontSize="12"
+                                 Margin="0,0,0,10"
+                                 FontSize="13"
+                                 Foreground="#1E293B"
                                  Checked="Filter_Changed"
                                  Unchecked="Filter_Changed"
                                  Tag="closed"/>
 						<CheckBox x:Name="ChkDraft"
                                  Content="📝 Nháp"
                                  Margin="0,0,0,16"
-                                 FontSize="12"
+                                 FontSize="13"
+                                 Foreground="#1E293B"
                                  Checked="Filter_Changed"
                                  Unchecked="Filter_Changed"
                                  Tag="draft"/>
 
 						<!-- Divider -->
-						<Rectangle Height="1"
-                                 Fill="#E2E8F0"
-                                 Margin="0,8,0,16"/>
+						<Rectangle Height="1" Fill="#E2E8F0" Margin="0,0,0,16"/>
 
 						<!-- Exam Type Filter -->
 						<TextBlock Text="LOẠI BÀI THI"
@@ -127,53 +172,36 @@
                                  Margin="0,0,0,10"/>
 						<CheckBox x:Name="ChkQuiz"
                                  Content="🎯 Quiz"
-                                 Margin="0,0,0,8"
-                                 FontSize="12"
+                                 Margin="0,0,0,10"
+                                 FontSize="13"
+                                 Foreground="#1E293B"
                                  Checked="Filter_Changed"
                                  Unchecked="Filter_Changed"
                                  Tag="Quiz"/>
 						<CheckBox x:Name="ChkMidterm"
                                  Content="📚 Giữa Kỳ"
-                                 Margin="0,0,0,8"
-                                 FontSize="12"
+                                 Margin="0,0,0,10"
+                                 FontSize="13"
+                                 Foreground="#1E293B"
                                  Checked="Filter_Changed"
                                  Unchecked="Filter_Changed"
                                  Tag="Midterm"/>
 						<CheckBox x:Name="ChkFinal"
                                  Content="🏆 Cuối Kỳ"
-                                 Margin="0,0,0,8"
-                                 FontSize="12"
+                                 Margin="0,0,0,10"
+                                 FontSize="13"
+                                 Foreground="#1E293B"
                                  Checked="Filter_Changed"
                                  Unchecked="Filter_Changed"
                                  Tag="Final"/>
 						<CheckBox x:Name="ChkPractice"
                                  Content="💪 Luyện Tập"
-                                 Margin="0,0,0,16"
-                                 FontSize="12"
+                                 Margin="0,0,0,10"
+                                 FontSize="13"
+                                 Foreground="#1E293B"
                                  Checked="Filter_Changed"
                                  Unchecked="Filter_Changed"
                                  Tag="Practice"/>
-
-						<!-- Divider -->
-						<Rectangle Height="1"
-                                 Fill="#E2E8F0"
-                                 Margin="0,8,0,16"/>
-
-						<!-- Search -->
-						<TextBlock Text="TÌM KIẾM"
-                                 FontSize="11"
-                                 FontWeight="SemiBold"
-                                 Foreground="#475569"
-                                 Margin="0,0,0,10"/>
-						<TextBox x:Name="TxtSearch"
-                                Height="38"
-                                Padding="12,10"
-                                FontSize="12"
-                                Background="#F1F5F9"
-                                BorderBrush="#E2E8F0"
-                                BorderThickness="1"
-                                VerticalContentAlignment="Center"
-                                TextChanged="TxtSearch_TextChanged"/>
 					</StackPanel>
 				</ScrollViewer>
 			</Border>

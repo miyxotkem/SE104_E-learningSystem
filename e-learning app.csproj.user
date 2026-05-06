@@ -8,6 +8,9 @@
     <Compile Update="CreateCoursesView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="CreateExamView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="CurrentPassword.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         ResizeMode="CanResize"
-        Title="Teacher panel" Height="600" Width="1200"
+        Title="EduFlow - Modern Learning Experience" Height="900" Width="1500"
         Background="#F0F2F5" WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI Variable Display, Segoe UI, Arial">
 
@@ -22,7 +22,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
-            <Setter Property="Height" Value="42"/>
+            <Setter Property="Height" Value="50"/>
             <Setter Property="Margin" Value="0,4"/>
             <Setter Property="Padding" Value="20,0"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -63,20 +63,20 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="20,0,0,40">
                     <Border Width="40" Height="40" Background="{StaticResource PrimaryBlue}" CornerRadius="10">
                         <TextBlock Text="E" Foreground="White" FontWeight="Bold" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <TextBlock Text="EduSmart" VerticalAlignment="Center" Margin="12,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                    <TextBlock Text="EduFlow" VerticalAlignment="Center" Margin="12,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1">
                     <Button x:Name="btnDashBoard" Content="🏠   Bảng điều khiển" Style="{StaticResource NavButtonStyle}" Click="NavDashboard_Click"/>
                     <Button Content="🎓   Lớp học của tôi" Style="{StaticResource NavButtonStyle}" Click="NavClasses_Click"/>
                     <Button Content="📝   Ngân hàng câu hỏi" Style="{StaticResource NavButtonStyle}" Click="NavQuestions_Click"/>
+                    <Button Content="📋   Quản lý bài thi" Style="{StaticResource NavButtonStyle}" Click="NavExams_Click"/>
                     <Button Content="📊   Báo cáo &amp; Điểm" Style="{StaticResource NavButtonStyle}" Click="NavReports_Click"/>
                     <Button Content="🔔   Thông báo lớp" Style="{StaticResource NavButtonStyle}" Click="NavNotifications_Click"/>
                     <Button Content="⚙️   Thiết lập học kỳ" Style="{StaticResource NavButtonStyle}" Click="NavSemestersettings_Click"/>
@@ -104,8 +104,6 @@
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
-                <Button Grid.Row="4" Content="🚪   Đăng xuất" Style="{StaticResource LogoutBtn}"
-                                    Click="BtnLogout_Click" Margin="0,0,0,4"/>
             </Grid>
         </Border>
 
