@@ -55,7 +55,9 @@ namespace e_learning_app
         private void BtnDashboard_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnDashboard);
+
             StudentContentArea.Content = new StudentDashboardView(_dbManager);
+
         }
 
         private void BtnCourses_Click(object sender, RoutedEventArgs e)

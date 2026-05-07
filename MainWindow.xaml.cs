@@ -1,3 +1,4 @@
+
 using e_learning_app.Views;
 using System;
 using System.Windows;
@@ -50,6 +51,11 @@ namespace e_learning_app
                 MainContentArea.Content = new TeacherDashboardView(_dbManager);
             else
                 MainContentArea.Content = new StudentDashboardView(_dbManager);
+        }
+
+        private void NavSchedule_Click(object sender, RoutedEventArgs e)
+        {
+            MainContentArea.Content = new TeachingScheduleView();
         }
 
         public void NavClasses_Click(object sender, RoutedEventArgs e)
@@ -105,4 +111,5 @@ namespace e_learning_app
             }
         }
     }
-}
+}
+

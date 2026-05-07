@@ -366,7 +366,145 @@ namespace e_learning_app
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"CreateExamAsync Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Lưu bài thi và danh sách câu hỏi cùng lúc sử dụng WriteBatch
+        /// </summary>
+        public async Task<bool> SaveExamWithQuestionsAsync(Exam exam, List<ExamQuestion> questions)
+        {
+            try
+            {
+                if (_db == null) return false;
+
+                WriteBatch batch = _db.StartBatch();
+
+                // Lưu thông tin bài thi chính
+                DocumentReference examRef = _db.Collection("exams").Document(exam.Id);
+                batch.Set(examRef, exam);
+
+                // Lưu từng câu hỏi vào subcollection 'questions' của bài thi
+                CollectionReference questionsRef = examRef.Collection("questions");
+                foreach (var q in questions)
+                {
+                    DocumentReference qRef = questionsRef.Document(q.Id);
+                    batch.Set(qRef, q);
+                }
+
+                await batch.CommitAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SaveExamWithQuestionsAsync Error: {ex.Message}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Lấy tất cả câu hỏi của một bài thi
+        /// </summary>
+        public async Task<List<ExamQuestion>> GetExamQuestionsAsync(string examId)
+        {
+            try
+            {
+                if (_db == null) return new List<ExamQuestion>();
+
+                var query = await _db.Collection("exams").Document(examId).Collection("questions").GetSnapshotAsync();
+                return query.Documents.Select(doc => doc.ConvertTo<ExamQuestion>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetExamQuestionsAsync Error: {ex.Message}");
+                return new List<ExamQuestion>();
+            }
+        }
+
+        /// <summary>
+        /// Tự động chấm điểm bài trắc nghiệm và lưu kết quả
+        /// </summary>
+        public async Task<ExamSubmission> AutoGradeAndSubmitExamAsync(ExamSubmission submission)
+        {
+            try
+            {
+                if (_db == null) return submission;
+
+                // 1. Tải danh sách câu hỏi gốc từ Firebase
+                var questions = await GetExamQuestionsAsync(submission.ExamId);
+                
+                double totalScore = 0;
+                
+                // 2. Chấm từng câu trả lời
+                foreach (var answer in submission.Answers)
+                {
+                    var question = questions.FirstOrDefault(q => q.Id == answer.QuestionId);
+                    if (question != null && question.Type == QuestionType.MultipleChoice)
+                    {
+                        if (int.TryParse(answer.StudentAnswer, out int studentChoice))
+                        {
+                            if (studentChoice == question.CorrectAnswerIndex)
+                            {
+                                answer.IsCorrect = true;
+                                answer.PointsEarned = question.Points;
+                            }
+                            else
+                            {
+                                answer.IsCorrect = false;
+                                answer.PointsEarned = 0;
+                            }
+                        }
+                        else
+                        {
+                            answer.IsCorrect = false;
+                            answer.PointsEarned = 0;
+                        }
+                    }
+                    totalScore += answer.PointsEarned;
+                }
+
+                // 3. Cập nhật tổng điểm và trạng thái
+                submission.Score = totalScore;
+                
+                // Tính phần trăm điểm. Giả sử tổng điểm tối đa là tổng điểm của tất cả câu hỏi
+                double maxPossibleScore = questions.Sum(q => q.Points);
+                submission.Percentage = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
+                
+                submission.Status = SubmissionStatus.Graded;
+                submission.GradedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+
+                // 4. Lưu bài nộp lên Firestore (vì ExamSubmission đã có [FirestoreData] nên có thể lưu trực tiếp)
+                await _db.Collection("exam_submissions").Document(submission.Id).SetAsync(submission);
+
+                return submission;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"AutoGradeAndSubmitExamAsync Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Lấy tất cả bài nộp của một bài thi
+        /// </summary>
+        public async Task<List<ExamSubmission>> GetSubmissionsByExamAsync(string examId)
+        {
+            try
+            {
+                if (_db == null) return new List<ExamSubmission>();
+
+                var query = await _db.Collection("exam_submissions")
+                    .WhereEqualTo("ExamId", examId)
+                    .GetSnapshotAsync();
+
+                return query.Documents.Select(doc => doc.ConvertTo<ExamSubmission>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetSubmissionsByExamAsync Error: {ex.Message}");
+                return new List<ExamSubmission>();
             }
         }
 
@@ -380,7 +518,7 @@ namespace e_learning_app
                 if (_db == null) return new List<Exam>();
 
                 var query = await _db.Collection("exams")
-                    .WhereEqualTo("classId", classId)
+                    .WhereEqualTo("ClassId", classId)
                     .GetSnapshotAsync();
 
                 return query.Documents
@@ -395,6 +533,41 @@ namespace e_learning_app
         }
 
         /// <summary>
+        /// Lấy tất cả bài thi của giảng viên
+        /// </summary>
+        public async Task<List<Exam>> GetAllExamsForInstructorAsync()
+        {
+            try
+            {
+                if (_db == null) return new List<Exam>();
+                
+                var courses = await GetAllCoursesAsync();
+                if (courses == null || courses.Count == 0) return new List<Exam>();
+
+                var courseIds = courses.Select(c => c.Id).ToList();
+                var allExams = new List<Exam>();
+
+                // Firestore 'in' query supports max 10 items. So we chunk it.
+                for (int i = 0; i < courseIds.Count; i += 10)
+                {
+                    var chunk = courseIds.Skip(i).Take(10).ToList();
+                    var query = await _db.Collection("exams")
+                        .WhereIn("ClassId", chunk)
+                        .GetSnapshotAsync();
+
+                    allExams.AddRange(query.Documents.Select(doc => doc.ConvertTo<Exam>()));
+                }
+
+                return allExams;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetAllExamsForInstructorAsync Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Cập nhật bài thi
         /// </summary>
         public async Task<bool> UpdateExamAsync(Exam exam)
@@ -403,7 +576,7 @@ namespace e_learning_app
             {
                 if (_db == null) return false;
 
-                exam.UpdatedAt = DateTime.Now;
+                exam.UpdatedAt = DateTime.UtcNow;
                 await _db.Collection("exams").Document(exam.Id).SetAsync(exam, SetOptions.Overwrite);
                 return true;
             }

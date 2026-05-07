@@ -74,6 +74,7 @@
 
                 <StackPanel Grid.Row="1">
                     <Button x:Name="btnDashBoard" Content="🏠   Bảng điều khiển" Style="{StaticResource NavButtonStyle}" Click="NavDashboard_Click"/>
+                    <Button Content="📅   Lịch giảng dạy" Style="{StaticResource NavButtonStyle}" Click="NavSchedule_Click"/>
                     <Button Content="🎓   Lớp học của tôi" Style="{StaticResource NavButtonStyle}" Click="NavClasses_Click"/>
                     <Button Content="📝   Ngân hàng câu hỏi" Style="{StaticResource NavButtonStyle}" Click="NavQuestions_Click"/>
                     <Button Content="📋   Quản lý bài thi" Style="{StaticResource NavButtonStyle}" Click="NavExams_Click"/>

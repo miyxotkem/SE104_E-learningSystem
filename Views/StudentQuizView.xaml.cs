@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+
 using e_learning_app.Class;
 
 namespace e_learning_app.Views

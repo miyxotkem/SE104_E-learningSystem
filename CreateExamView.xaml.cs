@@ -14,11 +14,13 @@ namespace e_learning_app
         private bool _isInitialized = false;
         private List<Course> _allCourses = new();
         private Course _selectedCourse = null;
+        private Exam _existingExam = null;
 
-        public CreateExamView(DatabaseManager dbManager)
+        public CreateExamView(DatabaseManager dbManager, Exam existingExam = null)
         {
             InitializeComponent();
             _dbManager = dbManager;
+            _existingExam = existingExam;
             _isInitialized = true;
             UpdatePreview();
             Loaded += async (s, e) => await LoadCoursesAsync();
@@ -52,13 +54,49 @@ namespace e_learning_app
                 
                 CbClass.ItemsSource = displayList;
                 _isInitialized = true;
-                CbClass.SelectedIndex = 0;
+                
+                if (_existingExam != null)
+                {
+                    int index = _allCourses.FindIndex(c => c.Id == _existingExam.ClassId);
+                    CbClass.SelectedIndex = index >= 0 ? index : 0;
+
+                    TxtTitle.Text = _existingExam.Title;
+                    TxtDescription.Text = _existingExam.Description;
+                    TxtTotalQuestions.Text = _existingExam.TotalQuestions.ToString();
+
+                    SelectComboBoxItemByContent(CbTimeLimit, _existingExam.TimeLimitMinutes.ToString());
+                    SelectComboBoxItemByContent(CbPassingScore, _existingExam.PassingScore.ToString() + "%");
+
+                    if (ChkPublished != null) ChkPublished.IsChecked = _existingExam.IsPublished;
+                    if (ChkAllowReview != null) ChkAllowReview.IsChecked = _existingExam.AllowReview;
+                    if (ChkRandomize != null) ChkRandomize.IsChecked = _existingExam.RandomizeQuestions;
+                    if (ChkShowScore != null) ChkShowScore.IsChecked = _existingExam.ShowScore;
+                    if (ChkMultipleAttempts != null) ChkMultipleAttempts.IsChecked = _existingExam.AllowMultipleAttempts;
+                }
+                else
+                {
+                    CbClass.SelectedIndex = 0;
+                }
+                
                 UpdatePreview();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ LoadCoursesAsync: {ex.Message}");
                 CbClass.Items.Add($"❌ Lỗi: {ex.Message}");
+            }
+        }
+
+        private void SelectComboBoxItemByContent(ComboBox cb, string contentPart)
+        {
+            if (cb == null) return;
+            foreach (var item in cb.Items)
+            {
+                if (item is ComboBoxItem cbi && cbi.Content != null && cbi.Content.ToString().Contains(contentPart))
+                {
+                    cb.SelectedItem = item;
+                    return;
+                }
             }
         }
 
@@ -88,8 +126,6 @@ namespace e_learning_app
 
             try
             {
-                string examTypeStr = CbExamType?.SelectedItem is ComboBoxItem itemType ? itemType.Content?.ToString() : "📝 Quiz";
-
                 int questions = 0;
                 if (TxtTotalQuestions != null && int.TryParse(TxtTotalQuestions.Text, out int q))
                     questions = q;
@@ -100,13 +136,12 @@ namespace e_learning_app
                     Title = (TxtTitle != null && !string.IsNullOrWhiteSpace(TxtTitle.Text)) ? TxtTitle.Text : "Tên bài thi",
                     Description = (TxtDescription != null && !string.IsNullOrWhiteSpace(TxtDescription.Text)) ? TxtDescription.Text : "Mô tả bài thi...",
                     ClassName = _selectedCourse != null ? $"{_selectedCourse.ClassName} - {_selectedCourse.Title}" : "Tên lớp",
-                    Type = ParseExamType(examTypeStr),
                     TimeLimitMinutes = int.TryParse((CbTimeLimit?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "60", out int t) ? t : 60,
                     PassingScore = double.TryParse((CbPassingScore?.SelectedItem as ComboBoxItem)?.Content?.ToString()?.TrimEnd('%') ?? "50", out double s) ? s : 50,
                     TotalQuestions = questions,
                     IsActive = true, // Force active for preview styling
                     IsPublished = ChkPublished?.IsChecked ?? false,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 if (PreviewExamCard != null)
@@ -138,7 +173,7 @@ namespace e_learning_app
         }
 
         // ========== SUBMIT ==========
-        private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
+        private void BtnSubmit_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedCourse == null)
             {
@@ -154,11 +189,6 @@ namespace e_learning_app
 
             try
             {
-                BtnSubmit.IsEnabled = false;
-                BtnSubmit.Content = "⏳ Đang tạo...";
-
-                string examTypeStr = CbExamType.SelectedItem is ComboBoxItem itemType ? itemType.Content?.ToString() : "📝 Quiz";
-
                 var newExam = new Exam
                 {
                     Id = Guid.NewGuid().ToString("N"),
@@ -166,7 +196,6 @@ namespace e_learning_app
                     ClassName = $"{_selectedCourse.ClassName} - {_selectedCourse.Title}",
                     Title = TxtTitle.Text.Trim(),
                     Description = TxtDescription.Text.Trim(),
-                    Type = ParseExamType(examTypeStr),
                     TimeLimitMinutes = int.Parse((CbTimeLimit?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "60"),
                     PassingScore = double.Parse((CbPassingScore?.SelectedItem as ComboBoxItem)?.Content?.ToString()?.TrimEnd('%') ?? "50"),
                     TotalQuestions = int.Parse(TxtTotalQuestions.Text ?? "0"),
@@ -178,49 +207,20 @@ namespace e_learning_app
                     AllowMultipleAttempts = ChkMultipleAttempts?.IsChecked ?? true,
                     MaxAttempts = 3,
                     QuestionIds = new List<string>(),
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
-                bool success = false;
-                if (_dbManager != null)
+                if (Window.GetWindow(this) is MainWindow mw)
                 {
-                    success = await _dbManager.CreateExamAsync(newExam);
-                }
-
-                if (success || _dbManager == null)
-                {
-                    MessageBox.Show(
-                        $"✅ Tạo bài thi \"{newExam.Title}\" cho lớp \"{_selectedCourse.Title}\" thành công!",
-                        "Thành Công", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    NavigateBack();
-                }
-                else
-                {
-                    throw new Exception("Firebase từ chối thao tác lưu.");
+                    mw.NavigateTo(new e_learning_app.CreateExamQuestionsView(_dbManager, newExam));
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Submit Error: {ex.Message}");
                 MessageBox.Show($"❌ Lỗi: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                BtnSubmit.IsEnabled = true;
-                BtnSubmit.Content = "✅ Tạo Bài Kiểm Tra";
             }
-        }
-
-        // ========== PARSE EXAM TYPE ==========
-        private ExamType ParseExamType(string typeStr)
-        {
-            if (string.IsNullOrEmpty(typeStr)) return ExamType.Quiz;
-            if (typeStr.Contains("Quiz")) return ExamType.Quiz;
-            if (typeStr.Contains("Giữa kỳ")) return ExamType.Midterm;
-            if (typeStr.Contains("Cuối kỳ")) return ExamType.Final;
-            if (typeStr.Contains("Luyện tập")) return ExamType.Practice;
-            if (typeStr.Contains("Bài tập")) return ExamType.Assignment;
-            
-            return ExamType.Quiz;
         }
 
         // ========== NAVIGATION ==========
