@@ -14,19 +14,8 @@ namespace e_learning_app
         private readonly DatabaseManager _dbManager;
         private List<Exam> _allExams = new();
         private HashSet<string> _statusFilters = new();
-        private HashSet<string> _typeFilters = new();
-        private string _searchText = "";
+        private string _searchText = string.Empty;
         private string _currentClassId = "";
-
-        // Color Dictionary for Exam Types
-        private static readonly Dictionary<ExamType, (string bg, string fg, string icon)> TypeColors = new()
-        {
-            { ExamType.Quiz, ("#EFF6FF", "#3B82F6", "🎯") },
-            { ExamType.Midterm, ("#FEF3C7", "#D97706", "📚") },
-            { ExamType.Final, ("#F0F9FF", "#0369A1", "🏆") },
-            { ExamType.Practice, ("#F0FDF4", "#16A34A", "💪") },
-            { ExamType.Assignment, ("#FCE7F3", "#EC4899", "📋") }
-        };
 
         // ==================== CONSTRUCTOR ====================
 
@@ -60,16 +49,11 @@ namespace e_learning_app
         private void InitializeFilters()
         {
             _statusFilters.Clear();
-            _typeFilters.Clear();
 
             // All unchecked by default
             ChkActive.IsChecked = false;
             ChkClosed.IsChecked = false;
             ChkDraft.IsChecked = false;
-            ChkQuiz.IsChecked = false;
-            ChkMidterm.IsChecked = false;
-            ChkFinal.IsChecked = false;
-            ChkPractice.IsChecked = false;
         }
 
         // ==================== DATA LOADING ====================
@@ -85,7 +69,6 @@ namespace e_learning_app
                     ClassName = "SE104.O21 - Công nghệ phần mềm",
                     Title = "Quiz Chương 1: Giới Thiệu Lập Trình",
                     Description = "Kiểm tra kiến thức cơ bản về C# và OOP",
-                    Type = ExamType.Quiz,
                     TotalQuestions = 10,
                     TimeLimitMinutes = 30,
                     PassingScore = 50,
@@ -101,7 +84,6 @@ namespace e_learning_app
                     ClassName = "SE104.O21 - Công nghệ phần mềm",
                     Title = "Bài Tập: Xây Dựng Ứng Dụng WPF",
                     Description = "Tạo ứng dụng WPF đơn giản với MVVM pattern",
-                    Type = ExamType.Assignment,
                     TotalQuestions = 1,
                     TimeLimitMinutes = 120,
                     PassingScore = 60,
@@ -117,7 +99,6 @@ namespace e_learning_app
                     ClassName = "SE104.O21 - Công nghệ phần mềm",
                     Title = "Giữa Kỳ: Database & ORM",
                     Description = "Bài thi giữa kỳ về cơ sở dữ liệu và Entity Framework",
-                    Type = ExamType.Midterm,
                     TotalQuestions = 25,
                     TimeLimitMinutes = 90,
                     PassingScore = 55,
@@ -134,7 +115,6 @@ namespace e_learning_app
                     ClassName = "CS101 - Nhập môn lập trình",
                     Title = "Luyện Tập: API Rest",
                     Description = "Luyện tập xây dựng REST API với ASP.NET Core",
-                    Type = ExamType.Practice,
                     TotalQuestions = 5,
                     TimeLimitMinutes = 60,
                     PassingScore = 50,
@@ -150,7 +130,6 @@ namespace e_learning_app
                     ClassName = "CS101 - Nhập môn lập trình",
                     Title = "Cuối Kỳ: Toàn Bộ Môn Học",
                     Description = "Bài thi cuối kỳ bao gồm toàn bộ nội dung đã học",
-                    Type = ExamType.Final,
                     TotalQuestions = 50,
                     TimeLimitMinutes = 120,
                     PassingScore = 60,
@@ -227,10 +206,6 @@ namespace e_learning_app
                 });
             }
 
-            // Type filter
-            if (_typeFilters.Count > 0)
-                filtered = filtered.Where(e => _typeFilters.Contains(e.Type.ToString()));
-
             // Search filter
             if (!string.IsNullOrWhiteSpace(_searchText))
                 filtered = filtered.Where(e =>
@@ -238,10 +213,13 @@ namespace e_learning_app
                     e.Description.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
 
             // Subject filter
-            if (CboSubject != null && CboSubject.SelectedItem is ComboBoxItem selectedItem)
+            if (CboSubject != null && CboSubject.SelectedItem != null)
             {
-                var subject = selectedItem.Content.ToString();
-                if (subject != "Tất cả môn học")
+                string subject = "";
+                if (CboSubject.SelectedItem is ComboBoxItem cbi) subject = cbi.Content?.ToString();
+                else subject = CboSubject.SelectedItem.ToString();
+
+                if (subject != "Tất cả môn học" && !string.IsNullOrEmpty(subject))
                 {
                     filtered = filtered.Where(e => e.ClassName == subject);
                 }
@@ -358,26 +336,23 @@ namespace e_learning_app
 
         private void Filter_Changed(object sender, RoutedEventArgs e)
         {
-            if (sender is CheckBox checkbox)
-            {
-                string tag = checkbox.Tag?.ToString() ?? "";
+            var cb = sender as CheckBox;
+            if (cb == null) return;
 
-                // Status filters
-                if (tag == "active" || tag == "closed" || tag == "draft")
-                {
-                    if (checkbox.IsChecked == true)
-                        _statusFilters.Add(tag);
-                    else
-                        _statusFilters.Remove(tag);
-                }
-                // Type filters
-                else if (!string.IsNullOrEmpty(tag))
-                {
-                    if (checkbox.IsChecked == true)
-                        _typeFilters.Add(tag);
-                    else
-                        _typeFilters.Remove(tag);
-                }
+             if (cb.Name == "ChkActive")
+            {
+                if (cb.IsChecked == true) _statusFilters.Add("active");
+                else _statusFilters.Remove("active");
+            }
+            else if (cb.Name == "ChkClosed")
+            {
+                if (cb.IsChecked == true) _statusFilters.Add("closed");
+                else _statusFilters.Remove("closed");
+            }
+            else if (cb.Name == "ChkDraft")
+            {
+                if (cb.IsChecked == true) _statusFilters.Add("draft");
+                else _statusFilters.Remove("draft");
             }
 
             Refresh();
@@ -497,9 +472,7 @@ namespace e_learning_app
                     configGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
             }
 
-            var cbExamType = CreateComboBox(new[] { "Quiz", "Midterm", "Final", "Practice", "Assignment" });
-            cbExamType.SelectedItem = exam.Type.ToString();
-            Grid.SetColumn(cbExamType, 0);
+            // Removed cbExamType
 
             var cbTimeLimit = CreateComboBox(new[] { "15", "30", "45", "60", "90", "120" });
             cbTimeLimit.SelectedItem = exam.TimeLimitMinutes.ToString();
@@ -509,7 +482,6 @@ namespace e_learning_app
             cbPassingScore.SelectedItem = $"{(int)exam.PassingScore}%";
             Grid.SetColumn(cbPassingScore, 4);
 
-            configGrid.Children.Add(cbExamType);
             configGrid.Children.Add(cbTimeLimit);
             configGrid.Children.Add(cbPassingScore);
             mainStack.Children.Add(configGrid);
@@ -569,7 +541,6 @@ namespace e_learning_app
                     // Update exam properties
                     exam.Title = txtTitle.Text;
                     exam.Description = txtDescription.Text;
-                    exam.Type = Enum.Parse<ExamType>(cbExamType.SelectedItem?.ToString() ?? "Quiz");
                     exam.TimeLimitMinutes = int.Parse(cbTimeLimit.SelectedItem?.ToString() ?? "60");
                     exam.PassingScore = double.Parse(cbPassingScore.SelectedItem?.ToString()?.TrimEnd('%') ?? "50");
                     exam.IsPublished = chkPublished.IsChecked ?? false;

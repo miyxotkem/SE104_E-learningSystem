@@ -64,14 +64,6 @@ namespace e_learning_app
                     TxtDescription.Text = _existingExam.Description;
                     TxtTotalQuestions.Text = _existingExam.TotalQuestions.ToString();
 
-                    string typeStr = _existingExam.Type switch {
-                        ExamType.Midterm => "Giữa kỳ",
-                        ExamType.Final => "Cuối kỳ",
-                        ExamType.Practice => "Luyện tập",
-                        ExamType.Assignment => "Bài tập",
-                        _ => "Quiz"
-                    };
-                    SelectComboBoxItemByContent(CbExamType, typeStr);
                     SelectComboBoxItemByContent(CbTimeLimit, _existingExam.TimeLimitMinutes.ToString());
                     SelectComboBoxItemByContent(CbPassingScore, _existingExam.PassingScore.ToString() + "%");
 
@@ -134,8 +126,6 @@ namespace e_learning_app
 
             try
             {
-                string examTypeStr = CbExamType?.SelectedItem is ComboBoxItem itemType ? itemType.Content?.ToString() : "📝 Quiz";
-
                 int questions = 0;
                 if (TxtTotalQuestions != null && int.TryParse(TxtTotalQuestions.Text, out int q))
                     questions = q;
@@ -146,13 +136,12 @@ namespace e_learning_app
                     Title = (TxtTitle != null && !string.IsNullOrWhiteSpace(TxtTitle.Text)) ? TxtTitle.Text : "Tên bài thi",
                     Description = (TxtDescription != null && !string.IsNullOrWhiteSpace(TxtDescription.Text)) ? TxtDescription.Text : "Mô tả bài thi...",
                     ClassName = _selectedCourse != null ? $"{_selectedCourse.ClassName} - {_selectedCourse.Title}" : "Tên lớp",
-                    Type = ParseExamType(examTypeStr),
                     TimeLimitMinutes = int.TryParse((CbTimeLimit?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "60", out int t) ? t : 60,
                     PassingScore = double.TryParse((CbPassingScore?.SelectedItem as ComboBoxItem)?.Content?.ToString()?.TrimEnd('%') ?? "50", out double s) ? s : 50,
                     TotalQuestions = questions,
                     IsActive = true, // Force active for preview styling
                     IsPublished = ChkPublished?.IsChecked ?? false,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 if (PreviewExamCard != null)
@@ -200,8 +189,6 @@ namespace e_learning_app
 
             try
             {
-                string examTypeStr = CbExamType.SelectedItem is ComboBoxItem itemType ? itemType.Content?.ToString() : "📝 Quiz";
-
                 var newExam = new Exam
                 {
                     Id = Guid.NewGuid().ToString("N"),
@@ -209,7 +196,6 @@ namespace e_learning_app
                     ClassName = $"{_selectedCourse.ClassName} - {_selectedCourse.Title}",
                     Title = TxtTitle.Text.Trim(),
                     Description = TxtDescription.Text.Trim(),
-                    Type = ParseExamType(examTypeStr),
                     TimeLimitMinutes = int.Parse((CbTimeLimit?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "60"),
                     PassingScore = double.Parse((CbPassingScore?.SelectedItem as ComboBoxItem)?.Content?.ToString()?.TrimEnd('%') ?? "50"),
                     TotalQuestions = int.Parse(TxtTotalQuestions.Text ?? "0"),
@@ -221,8 +207,8 @@ namespace e_learning_app
                     AllowMultipleAttempts = ChkMultipleAttempts?.IsChecked ?? true,
                     MaxAttempts = 3,
                     QuestionIds = new List<string>(),
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 if (Window.GetWindow(this) is MainWindow mw)
@@ -235,19 +221,6 @@ namespace e_learning_app
                 System.Diagnostics.Debug.WriteLine($"❌ Submit Error: {ex.Message}");
                 MessageBox.Show($"❌ Lỗi: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        // ========== PARSE EXAM TYPE ==========
-        private ExamType ParseExamType(string typeStr)
-        {
-            if (string.IsNullOrEmpty(typeStr)) return ExamType.Quiz;
-            if (typeStr.Contains("Quiz")) return ExamType.Quiz;
-            if (typeStr.Contains("Giữa kỳ")) return ExamType.Midterm;
-            if (typeStr.Contains("Cuối kỳ")) return ExamType.Final;
-            if (typeStr.Contains("Luyện tập")) return ExamType.Practice;
-            if (typeStr.Contains("Bài tập")) return ExamType.Assignment;
-            
-            return ExamType.Quiz;
         }
 
         // ========== NAVIGATION ==========

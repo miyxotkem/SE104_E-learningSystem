@@ -270,7 +270,7 @@ namespace e_learning_app
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"CreateExamAsync Error: {ex.Message}");
-                return false;
+                throw;
             }
         }
 
@@ -467,7 +467,7 @@ namespace e_learning_app
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"GetAllExamsForInstructorAsync Error: {ex.Message}");
-                return new List<Exam>();
+                throw;
             }
         }
 
@@ -480,7 +480,7 @@ namespace e_learning_app
             {
                 if (_db == null) return false;
 
-                exam.UpdatedAt = DateTime.Now;
+                exam.UpdatedAt = DateTime.UtcNow;
                 await _db.Collection("exams").Document(exam.Id).SetAsync(exam, SetOptions.Overwrite);
                 return true;
             }

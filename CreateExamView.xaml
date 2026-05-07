@@ -221,17 +221,6 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Loại bài thi" Style="{StaticResource FieldLabelStyle}"/>
-                                <ComboBox x:Name="CbExamType" Style="{StaticResource ModernComboBox}" SelectionChanged="Sync_UI_Selection">
-                                    <ComboBoxItem Content="📝 Quiz" IsSelected="True"/>
-                                    <ComboBoxItem Content="📚 Giữa kỳ"/>
-                                    <ComboBoxItem Content="🏆 Cuối kỳ"/>
-                                    <ComboBoxItem Content="💪 Luyện tập"/>
-                                    <ComboBoxItem Content="📋 Bài tập"/>
-                                </ComboBox>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2">
                                 <TextBlock Text="Thời gian (phút)" Style="{StaticResource FieldLabelStyle}"/>
                                 <ComboBox x:Name="CbTimeLimit" Style="{StaticResource ModernComboBox}" SelectionChanged="Sync_UI_Selection">
                                     <ComboBoxItem Content="15"/>
@@ -242,16 +231,8 @@
                                     <ComboBoxItem Content="120"/>
                                 </ComboBox>
                             </StackPanel>
-                        </Grid>
 
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0">
+                            <StackPanel Grid.Column="2">
                                 <TextBlock Text="Điểm qua (%)" Style="{StaticResource FieldLabelStyle}"/>
                                 <ComboBox x:Name="CbPassingScore" Style="{StaticResource ModernComboBox}" SelectionChanged="Sync_UI_Selection">
                                     <ComboBoxItem Content="40%"/>
@@ -261,12 +242,12 @@
                                     <ComboBoxItem Content="80%"/>
                                 </ComboBox>
                             </StackPanel>
-
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Tổng số câu" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBox x:Name="TxtTotalQuestions" Style="{StaticResource ModernTextBox}" Height="42" Text="0" TextChanged="Sync_UI"/>
-                            </StackPanel>
                         </Grid>
+
+                        <StackPanel Margin="0,0,0,16">
+                            <TextBlock Text="Tổng số câu" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox x:Name="TxtTotalQuestions" Style="{StaticResource ModernTextBox}" Height="42" Text="0" TextChanged="Sync_UI"/>
+                        </StackPanel>
 
                         <!-- Section 4: Advanced Settings -->
                         <TextBlock Text="🔧 CÀI ĐẶT NÂNG CAO" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14"/>

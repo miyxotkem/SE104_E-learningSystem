@@ -157,48 +157,6 @@
                                  Checked="Filter_Changed"
                                  Unchecked="Filter_Changed"
                                  Tag="draft"/>
-
-						<!-- Divider -->
-						<Rectangle Height="1" Fill="#E2E8F0" Margin="0,0,0,16"/>
-
-						<!-- Exam Type Filter -->
-						<TextBlock Text="LOẠI BÀI THI"
-                                 FontSize="11"
-                                 FontWeight="SemiBold"
-                                 Foreground="#475569"
-                                 Margin="0,0,0,10"/>
-						<CheckBox x:Name="ChkQuiz"
-                                 Content="🎯 Quiz"
-                                 Margin="0,0,0,10"
-                                 FontSize="13"
-                                 Foreground="#1E293B"
-                                 Checked="Filter_Changed"
-                                 Unchecked="Filter_Changed"
-                                 Tag="Quiz"/>
-						<CheckBox x:Name="ChkMidterm"
-                                 Content="📚 Giữa Kỳ"
-                                 Margin="0,0,0,10"
-                                 FontSize="13"
-                                 Foreground="#1E293B"
-                                 Checked="Filter_Changed"
-                                 Unchecked="Filter_Changed"
-                                 Tag="Midterm"/>
-						<CheckBox x:Name="ChkFinal"
-                                 Content="🏆 Cuối Kỳ"
-                                 Margin="0,0,0,10"
-                                 FontSize="13"
-                                 Foreground="#1E293B"
-                                 Checked="Filter_Changed"
-                                 Unchecked="Filter_Changed"
-                                 Tag="Final"/>
-						<CheckBox x:Name="ChkPractice"
-                                 Content="💪 Luyện Tập"
-                                 Margin="0,0,0,10"
-                                 FontSize="13"
-                                 Foreground="#1E293B"
-                                 Checked="Filter_Changed"
-                                 Unchecked="Filter_Changed"
-                                 Tag="Practice"/>
 					</StackPanel>
 				</ScrollViewer>
 			</Border>

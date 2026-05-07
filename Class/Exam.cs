@@ -38,9 +38,6 @@ namespace e_learning_app.Class
         [FirestoreProperty]
         public double PassingScore { get; set; }
 
-        [FirestoreProperty]
-        public ExamType Type { get; set; }
-
         // ========== Các câu hỏi ==========
         [FirestoreProperty]
         public List<string> QuestionIds { get; set; }
@@ -81,29 +78,16 @@ namespace e_learning_app.Class
         {
             Id = Guid.NewGuid().ToString();
             QuestionIds = new List<string>();
-            CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-            UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            CreatedAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
             TotalQuestions = 0;
             TimeLimitMinutes = 60;
             PassingScore = 50;
-            Type = ExamType.Quiz;
             AllowReview = true;
             RandomizeQuestions = false;
             ShowScore = true;
             AllowMultipleAttempts = true;
             MaxAttempts = 3;
         }
-    }
-
-    /// <summary>
-    /// Loại bài thi
-    /// </summary>
-    public enum ExamType
-    {
-        Quiz,           // Kiểm tra nhanh
-        Midterm,        // Giữa kỳ
-        Final,          // Cuối kỳ
-        Practice,       // Luyện tập
-        Assignment      // Bài tập
     }
 }
