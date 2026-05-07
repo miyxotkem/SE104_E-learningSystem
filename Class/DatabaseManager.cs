@@ -422,7 +422,7 @@ namespace e_learning_app
                 if (_db == null) return new List<Exam>();
 
                 var query = await _db.Collection("exams")
-                    .WhereEqualTo("classId", classId)
+                    .WhereEqualTo("ClassId", classId)
                     .GetSnapshotAsync();
 
                 return query.Documents
@@ -432,6 +432,41 @@ namespace e_learning_app
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"GetExamsByClassAsync Error: {ex.Message}");
+                return new List<Exam>();
+            }
+        }
+
+        /// <summary>
+        /// Lấy tất cả bài thi của giảng viên
+        /// </summary>
+        public async Task<List<Exam>> GetAllExamsForInstructorAsync()
+        {
+            try
+            {
+                if (_db == null) return new List<Exam>();
+                
+                var courses = await GetAllCoursesAsync();
+                if (courses == null || courses.Count == 0) return new List<Exam>();
+
+                var courseIds = courses.Select(c => c.Id).ToList();
+                var allExams = new List<Exam>();
+
+                // Firestore 'in' query supports max 10 items. So we chunk it.
+                for (int i = 0; i < courseIds.Count; i += 10)
+                {
+                    var chunk = courseIds.Skip(i).Take(10).ToList();
+                    var query = await _db.Collection("exams")
+                        .WhereIn("ClassId", chunk)
+                        .GetSnapshotAsync();
+
+                    allExams.AddRange(query.Documents.Select(doc => doc.ConvertTo<Exam>()));
+                }
+
+                return allExams;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetAllExamsForInstructorAsync Error: {ex.Message}");
                 return new List<Exam>();
             }
         }

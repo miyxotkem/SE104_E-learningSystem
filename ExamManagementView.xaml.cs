@@ -47,7 +47,7 @@ namespace e_learning_app
         {
             InitializeFilters();
 
-            if (_dbManager != null && !string.IsNullOrEmpty(_currentClassId))
+            if (_dbManager != null)
             {
                 await LoadDataFromFirebaseAsync();
             }
@@ -179,11 +179,27 @@ namespace e_learning_app
                 }
 
                 // Lấy bài thi từ Firebase
-                _allExams = await _dbManager.GetExamsByClassAsync(_currentClassId);
-
-                if (_allExams == null || _allExams.Count == 0)
+                if (!string.IsNullOrEmpty(_currentClassId))
                 {
-                    _allExams = new List<Exam>();
+                    _allExams = await _dbManager.GetExamsByClassAsync(_currentClassId);
+                }
+                else
+                {
+                    _allExams = await _dbManager.GetAllExamsForInstructorAsync();
+                }
+
+                if (_allExams == null) _allExams = new List<Exam>();
+
+                // Update combo box subjects if available
+                if (CboSubject != null)
+                {
+                    CboSubject.ItemsSource = null;
+                    CboSubject.Items.Clear();
+
+                    var subjects = _allExams.Select(e => e.ClassName).Distinct().ToList();
+                    subjects.Insert(0, "Tất cả môn học");
+                    CboSubject.ItemsSource = subjects;
+                    CboSubject.SelectedIndex = 0;
                 }
 
                 Refresh();

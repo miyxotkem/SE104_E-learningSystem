@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.ExamManagementView"
+<UserControl x:Class="e_learning_app.ExamManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -121,9 +121,6 @@
                                      BorderThickness="0"
                                      VerticalContentAlignment="Center"
                                      SelectionChanged="Filter_Changed">
-								<ComboBoxItem Content="Tất cả môn học" IsSelected="True"/>
-								<ComboBoxItem Content="SE104.O21 - Công nghệ phần mềm"/>
-								<ComboBoxItem Content="CS101 - Nhập môn lập trình"/>
 							</ComboBox>
 						</Border>
 

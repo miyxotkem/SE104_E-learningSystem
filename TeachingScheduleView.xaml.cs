@@ -1,14 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace e_learning_app
 {
     public partial class TeachingScheduleView : UserControl
     {
+        private readonly DatabaseManager _dbManager;
         public class ScheduleEvent
         {
             public int DayOfWeek { get; set; } // 1: Monday, ..., 7: Sunday
@@ -19,89 +23,209 @@ namespace e_learning_app
             public string ColorHex { get; set; }
         }
 
-        private List<ScheduleEvent> _mockSchedule = new();
+        private List<ScheduleEvent> _currentSchedule = new();
 
-        public TeachingScheduleView()
+        public TeachingScheduleView(DatabaseManager dbManager = null)
         {
             InitializeComponent();
+            _dbManager = dbManager;
         }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadMockData();
+            await LoadDataFromFirebaseAsync();
             RenderTimetable();
         }
 
-        private void LoadMockData()
+        private async Task LoadDataFromFirebaseAsync()
         {
-            // Create some fake classes scattered across the week
-            _mockSchedule = new List<ScheduleEvent>
+            if (_dbManager == null) return;
+            var currentUser = _dbManager.GetCurrentUser();
+            if (currentUser == null) return;
+
+            try
             {
-                // Monday
-                new() { DayOfWeek = 1, Subject = "Toán Giải Tích", ClassName = "12A1", Room = "B201", Time = "07:30 - 09:00", ColorHex = "#DBEAFE" },
-                new() { DayOfWeek = 1, Subject = "Toán Hình Học", ClassName = "12A2", Room = "B202", Time = "09:30 - 11:00", ColorHex = "#DBEAFE" },
-                
-                // Tuesday
-                new() { DayOfWeek = 2, Subject = "Vật Lý Đại Cương", ClassName = "11B3", Room = "A105", Time = "13:00 - 14:30", ColorHex = "#F3E8FF" },
-                new() { DayOfWeek = 2, Subject = "Vật Lý Đại Cương", ClassName = "11B4", Room = "A106", Time = "15:00 - 16:30", ColorHex = "#F3E8FF" },
-                
-                // Wednesday
-                new() { DayOfWeek = 3, Subject = "Hóa Hữu Cơ", ClassName = "12C2", Room = "C304", Time = "07:30 - 09:00", ColorHex = "#FEF3C7" },
-                
-                // Thursday
-                new() { DayOfWeek = 4, Subject = "Toán Giải Tích", ClassName = "12A1", Room = "B201", Time = "09:30 - 11:00", ColorHex = "#DBEAFE" },
-                new() { DayOfWeek = 4, Subject = "Toán Hình Học", ClassName = "12A2", Room = "B202", Time = "13:00 - 14:30", ColorHex = "#DBEAFE" },
-                new() { DayOfWeek = 4, Subject = "Sinh Học Phân Tử", ClassName = "11A2", Room = "C101", Time = "15:00 - 16:30", ColorHex = "#D1FAE5" },
+                var coursesSnap = await _dbManager.GetDb.Collection("Courses")
+                    .WhereEqualTo("InstructorId", currentUser.Id)
+                    .WhereEqualTo("IsActive", true)
+                    .GetSnapshotAsync();
 
-                // Friday
-                new() { DayOfWeek = 5, Subject = "Vật Lý Nâng Cao", ClassName = "12B1", Room = "Lab Lý", Time = "07:30 - 09:45", ColorHex = "#FCE7F3" },
-                new() { DayOfWeek = 5, Subject = "Hóa Phân Tích", ClassName = "12C1", Room = "Lab Hóa", Time = "13:00 - 15:15", ColorHex = "#FEF3C7" },
+                _currentSchedule.Clear();
 
-                // Saturday
-                new() { DayOfWeek = 6, Subject = "Ôn thi Đại học", ClassName = "Lớp bồi dưỡng", Room = "Hội trường", Time = "18:00 - 20:30", ColorHex = "#FEE2E2" }
-                
-                // Sunday empty
+                foreach (var doc in coursesSnap.Documents)
+                {
+                    var c = doc.ConvertTo<Course>();
+                    
+                    int dayOfWeek = ConvertDayStringToNumber(c.DayOfWeek);
+                    string timeStr = ConvertPeriodsToTime(c.StartPeriod, c.EndPeriod);
+                    string colorHex = string.IsNullOrEmpty(c.AccentColor) ? "#DBEAFE" : c.AccentColor;
+
+                    _currentSchedule.Add(new ScheduleEvent
+                    {
+                        DayOfWeek = dayOfWeek,
+                        Subject = c.Title,
+                        ClassName = c.ClassName,
+                        Room = string.IsNullOrEmpty(c.Category) ? "Online" : c.Category,
+                        Time = timeStr,
+                        ColorHex = colorHex
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải lịch giảng dạy: {ex.Message}", "Lỗi");
+            }
+        }
+
+        private int ConvertDayStringToNumber(string dayStr)
+        {
+            return dayStr switch
+            {
+                "Thứ 2" => 1,
+                "Thứ 3" => 2,
+                "Thứ 4" => 3,
+                "Thứ 5" => 4,
+                "Thứ 6" => 5,
+                "Thứ 7" => 6,
+                "Chủ nhật" => 7,
+                _ => 1
             };
+        }
+
+        private string ConvertPeriodsToTime(int start, int end)
+        {
+            var periodStartTimes = new Dictionary<int, string>
+            {
+                {1, "07:30"}, {2, "08:15"}, {3, "09:00"}, {4, "10:00"}, {5, "10:45"},
+                {6, "13:00"}, {7, "13:45"}, {8, "14:30"}, {9, "15:30"}, {10, "16:15"}
+            };
+
+            var periodEndTimes = new Dictionary<int, string>
+            {
+                {1, "08:15"}, {2, "09:00"}, {3, "09:45"}, {4, "10:45"}, {5, "11:30"},
+                {6, "13:45"}, {7, "14:30"}, {8, "15:15"}, {9, "16:15"}, {10, "17:00"}
+            };
+
+            string startTime = periodStartTimes.ContainsKey(start) ? periodStartTimes[start] : "00:00";
+            string endTime = periodEndTimes.ContainsKey(end) ? periodEndTimes[end] : "00:00";
+
+            return $"{startTime} - {endTime}";
         }
 
         private void RenderTimetable()
         {
             // Clear current items
-            IcMonday.Items.Clear();
-            IcTuesday.Items.Clear();
-            IcWednesday.Items.Clear();
-            IcThursday.Items.Clear();
-            IcFriday.Items.Clear();
-            IcSaturday.Items.Clear();
-            IcSunday.Items.Clear();
+            CanvasMonday.Children.Clear();
+            CanvasTuesday.Children.Clear();
+            CanvasWednesday.Children.Clear();
+            CanvasThursday.Children.Clear();
+            CanvasFriday.Children.Clear();
+            CanvasSaturday.Children.Clear();
+            CanvasSunday.Children.Clear();
+            GridLinesCanvas.Children.Clear();
+            TimeLabelsCanvas.Children.Clear();
 
-            var columns = new[] { IcMonday, IcTuesday, IcWednesday, IcThursday, IcFriday, IcSaturday, IcSunday };
-
-            // Group by day and order by time
-            for (int day = 1; day <= 7; day++)
+            // 1. Draw Time Axis and Grid Lines (07:00 to 17:00 -> 10 hours)
+            for (int i = 0; i <= 10; i++)
             {
-                var eventsForDay = _mockSchedule
-                    .Where(e => e.DayOfWeek == day)
-                    .OrderBy(e => e.Time)
-                    .ToList();
-
-                foreach (var ev in eventsForDay)
+                double y = i * 60;
+                
+                // Draw Label
+                var lbl = new TextBlock
                 {
-                    var card = BuildScheduleCard(ev);
-                    columns[day - 1].Items.Add(card);
-                }
+                    Text = $"{i + 7:D2}:00",
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
+                    FontWeight = FontWeights.SemiBold
+                };
+                Canvas.SetTop(lbl, y - 8); // Offset to vertically center with line
+                Canvas.SetRight(lbl, 10);
+                TimeLabelsCanvas.Children.Add(lbl);
+
+                // Draw Grid Line
+                var line = new Line
+                {
+                    X1 = 0,
+                    Y1 = y,
+                    X2 = 2000, // Arbitrarily large width
+                    Y2 = y,
+                    Stroke = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9)),
+                    StrokeThickness = 1
+                };
+                GridLinesCanvas.Children.Add(line);
+            }
+
+            var columns = new[] { CanvasMonday, CanvasTuesday, CanvasWednesday, CanvasThursday, CanvasFriday, CanvasSaturday, CanvasSunday };
+
+            // 2. Draw Events
+            foreach (var ev in _currentSchedule)
+            {
+                if (ev.DayOfWeek < 1 || ev.DayOfWeek > 7) continue;
+
+                var card = BuildScheduleCard(ev, columns[ev.DayOfWeek - 1]);
+                columns[ev.DayOfWeek - 1].Children.Add(card);
+            }
+
+            // 3. Draw Current Time Indicator
+            var now = DateTime.Now;
+            int currentMinutes = (now.Hour - 7) * 60 + now.Minute;
+            
+            if (currentMinutes >= 0 && currentMinutes <= 660)
+            {
+                CurrentTimeLine.Visibility = Visibility.Visible;
+                CurrentTimeDot.Visibility = Visibility.Visible;
+                Canvas.SetTop(CurrentTimeLine, currentMinutes);
+                Canvas.SetTop(CurrentTimeDot, currentMinutes);
+            }
+            else
+            {
+                CurrentTimeLine.Visibility = Visibility.Collapsed;
+                CurrentTimeDot.Visibility = Visibility.Collapsed;
             }
         }
 
-        private UIElement BuildScheduleCard(ScheduleEvent ev)
+        private UIElement BuildScheduleCard(ScheduleEvent ev, Canvas parentCanvas)
         {
+            // Parse Time "07:30 - 09:00"
+            double top = 0;
+            double height = 60;
+            try
+            {
+                var parts = ev.Time.Split('-');
+                if (parts.Length == 2)
+                {
+                    var startParts = parts[0].Trim().Split(':');
+                    var endParts = parts[1].Trim().Split(':');
+
+                    int startHr = int.Parse(startParts[0]);
+                    int startMin = int.Parse(startParts[1]);
+                    int endHr = int.Parse(endParts[0]);
+                    int endMin = int.Parse(endParts[1]);
+
+                    top = (startHr - 7) * 60 + startMin;
+                    height = (endHr - startHr) * 60 + endMin - startMin;
+                }
+            }
+            catch { }
+
             var border = new Border
             {
-                Background = (Brush)new BrushConverter().ConvertFromString(ev.ColorHex),
-                CornerRadius = new CornerRadius(10),
-                Padding = new Thickness(14),
-                Margin = new Thickness(0, 0, 0, 12),
-                Cursor = System.Windows.Input.Cursors.Hand
+                Background = GetColorWithFallback(ev.ColorHex, "#DBEAFE"),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(8),
+                Margin = new Thickness(0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Height = height
+            };
+
+            // Bind width to parent canvas width
+            border.SetBinding(FrameworkElement.WidthProperty, new Binding("ActualWidth") { Source = parentCanvas });
+            Canvas.SetTop(border, top);
+
+            // Add ToolTip
+            border.ToolTip = new ToolTip 
+            { 
+                Content = $"Môn: {ev.Subject}\nLớp: {ev.ClassName}\nPhòng: {ev.Room}\nThời gian: {ev.Time}" 
             };
 
             var stack = new StackPanel();
@@ -110,10 +234,10 @@ namespace e_learning_app
             var txtTime = new TextBlock
             {
                 Text = ev.Time,
-                FontSize = 11,
+                FontSize = 10,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69)),
-                Margin = new Thickness(0, 0, 0, 8)
+                Margin = new Thickness(0, 0, 0, 4)
             };
             stack.Children.Add(txtTime);
 
@@ -121,11 +245,11 @@ namespace e_learning_app
             var txtSubject = new TextBlock
             {
                 Text = ev.Subject,
-                FontSize = 13,
+                FontSize = 12,
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B)),
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 0, 0, 4)
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Margin = new Thickness(0, 0, 0, 2)
             };
             stack.Children.Add(txtSubject);
 
@@ -134,15 +258,17 @@ namespace e_learning_app
             var txtClass = new TextBlock
             {
                 Text = $"🎓 {ev.ClassName}",
-                FontSize = 12,
+                FontSize = 11,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
-                Margin = new Thickness(0, 0, 8, 0)
+                Margin = new Thickness(0, 0, 8, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis
             };
             var txtRoom = new TextBlock
             {
                 Text = $"📍 P.{ev.Room}",
-                FontSize = 12,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B))
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
+                TextTrimming = TextTrimming.CharacterEllipsis
             };
             detailStack.Children.Add(txtClass);
             detailStack.Children.Add(txtRoom);
@@ -178,6 +304,12 @@ namespace e_learning_app
             {
                 pd.PrintVisual(this, "Thời khóa biểu giảng dạy");
             }
+        }
+
+        private Brush GetColorWithFallback(string hex, string defaultHex)
+        {
+            try { return (Brush)new BrushConverter().ConvertFromString(hex); }
+            catch { return (Brush)new BrushConverter().ConvertFromString(defaultHex); }
         }
     }
 }
