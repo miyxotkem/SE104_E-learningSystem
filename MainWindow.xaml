@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         ResizeMode="CanResize"
-        Title="EduFlow - Modern Learning Experience" Height="900" Width="1500"
+        Title="EduFlow - Modern Learning Experience" Height="600" Width="1200"
         Background="#F0F2F5" WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI Variable Display, Segoe UI, Arial">
 
@@ -82,28 +82,31 @@
                     <Button Content="⚙️   Thiết lập học kỳ" Style="{StaticResource NavButtonStyle}" Click="NavSemestersettings_Click"/>
                 </StackPanel>
 
-                <Button Grid.Row="2" Click="OpenProfile_Click" Background="Transparent" BorderThickness="0" Margin="10" Cursor="Hand">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="ProfileBorder" Background="#F8FAFC" CornerRadius="15" Padding="10">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Width="35" Height="35" CornerRadius="10" Background="#3B82F6">
-                                        <TextBlock Text="★" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold" FontSize="18"/>
-                                    </Border>
-                                    <StackPanel Margin="10,0" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding FullName, FallbackValue='Tài khoản của tôi'}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource TextDark}"/>
-                                        <TextBlock Text="Xem hồ sơ cá nhân" FontSize="10" Foreground="{StaticResource TextMuted}"/>
+                <StackPanel Grid.Row="2" VerticalAlignment="Bottom" Margin="10,0,10,10">
+                    <Button Content="🚪   Đăng xuất" Style="{StaticResource NavButtonStyle}" Click="BtnLogout_Click" Foreground="#EF4444" Margin="0,0,0,5"/>
+                    <Button Click="OpenProfile_Click" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ProfileBorder" Background="#F8FAFC" CornerRadius="15" Padding="10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="35" Height="35" CornerRadius="10" Background="#3B82F6">
+                                            <TextBlock Text="★" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold" FontSize="18"/>
+                                        </Border>
+                                        <StackPanel Margin="10,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding FullName, FallbackValue='Tài khoản của tôi'}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource TextDark}"/>
+                                            <TextBlock Text="Xem hồ sơ cá nhân" FontSize="10" Foreground="{StaticResource TextMuted}"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="ProfileBorder" Property="Background" Value="#F1F5F9"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ProfileBorder" Property="Background" Value="#F1F5F9"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 

@@ -51,6 +51,12 @@
             <Setter Property="Foreground" Value="{StaticResource PrimaryBlue}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
+
+        <!-- Logout button -->
+        <Style x:Key="LogoutBtn" TargetType="Button" BasedOn="{StaticResource StudentNavBtn}">
+            <Setter Property="Foreground" Value="#EF4444"/>
+            <Setter Property="Margin" Value="0,4,0,4"/>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -123,19 +129,15 @@
                                     <GradientStop Color="#A78BFA" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
-                            <TextBlock Text="MA" Foreground="White" VerticalAlignment="Center"
+                            <TextBlock x:Name="TxtAvatarInitials" Text="?" Foreground="White" VerticalAlignment="Center"
                                        HorizontalAlignment="Center" FontWeight="Bold" FontSize="13"/>
                         </Border>
                         <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="Trần Minh Anh" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource TextDark}"/>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="🎖️ Level 14" FontSize="10" Foreground="{StaticResource TextMuted}"/>
-                                <TextBlock Text=" · Học sinh" FontSize="10" Foreground="{StaticResource TextMuted}"/>
-                            </StackPanel>
+                            <TextBlock Text="{Binding FullName, FallbackValue='Học sinh'}" FontWeight="SemiBold" FontSize="12"
+                                       Foreground="{StaticResource TextDark}" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding Email, FallbackValue=''}" FontSize="10"
+                                       Foreground="{StaticResource TextMuted}" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
-                        <Border Grid.Column="2" Background="#EFF6FF" CornerRadius="8" Padding="6,4" Cursor="Hand">
-                            <TextBlock Text="↗" FontSize="12" Foreground="#3B82F6" FontWeight="Bold"/>
-                        </Border>
                         
                     </Grid>
                 </Border>
@@ -146,8 +148,6 @@
         </Border>
 
         <!-- ===== MAIN CONTENT AREA ===== -->
-        <ContentControl Grid.Column="1" x:Name="StudentContentArea">
-            <views:StudentDashboardView/>
-        </ContentControl>
+        <ContentControl Grid.Column="1" x:Name="StudentContentArea" />
     </Grid>
 </Window>

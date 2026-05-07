@@ -1,5 +1,4 @@
-﻿using e_learning_app.Views;
-using Google.Cloud.Firestore;
+using e_learning_app.Views;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,45 +9,40 @@ namespace e_learning_app
     {
         private readonly DatabaseManager _dbManager;
 
-        public MainWindow()
+        public MainWindow(User loggedInUser)
         {
             InitializeComponent();
 
             _dbManager = new DatabaseManager();
 
-            // XÓA PHẦN IF/ELSE CHECK ROLE Ở ĐÂY VÌ USER CHƯA LOAD XONG
+            if (loggedInUser != null)
+            {
+                _dbManager.SetCurrentUser(loggedInUser);
+                this.DataContext = loggedInUser;
+            }
 
             btnDashBoard.Focus();
 
             this.Loaded += MainWindow_Loaded;
         }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            try
+            var user = _dbManager.GetCurrentUser();
+            if (user == null)
             {
-                Query query = _dbManager.GetDb.Collection("Users").WhereEqualTo("Email", "instructortest@example.com");
-                QuerySnapshot snapshot = await query.GetSnapshotAsync();
-
-                if (snapshot.Documents.Count > 0)
-                {
-                    _dbManager.SetCurrentUser(snapshot.Documents[0].ConvertTo<User>());
-                    this.DataContext = _dbManager.GetCurrentUser();
-
-                    // ĐƯA LOGIC MỞ GIAO DIỆN VÀO ĐÂY (SAU KHI ĐÃ CÓ USER)
-                    if (_dbManager.GetCurrentUser().Role == "Instructor")
-                        MainContentArea.Content = new TeacherDashboardView(_dbManager);
-                    else
-                        MainContentArea.Content = new StudentDashboardView(_dbManager);
-                }
+                MessageBox.Show("Không thể xác định thông tin người dùng. Vui lòng đăng nhập lại.", "Lỗi");
+                BtnLogout_Click(null, null);
+                return;
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Lỗi load User: " + ex.Message);
-            }
+
+            if (user.Role == "Instructor")
+                MainContentArea.Content = new TeacherDashboardView(_dbManager);
+            else
+                MainContentArea.Content = new StudentDashboardView(_dbManager);
         }
 
-        // ─── Navigation Logic (ĐÃ ĐỔI THÀNH PUBLIC ĐỂ CÁC VIEW KHÁC CÓ THỂ GỌI) ──────────
+        // ─── Navigation Logic ─────────────────────────────────────────
 
         public void NavDashboard_Click(object sender, RoutedEventArgs e)
         {
@@ -94,5 +88,21 @@ namespace e_learning_app
         {
             MainContentArea.Content = new ProfileManage(_dbManager);
         }
+
+        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                        "Bạn có chắc muốn đăng xuất?",
+                        "Xác nhận đăng xuất",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                var loginWin = new LoginWindow();
+                loginWin.Show();
+                this.Close();
+            }
+        }
     }
-}
+}

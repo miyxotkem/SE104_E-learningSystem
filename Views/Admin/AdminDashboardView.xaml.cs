@@ -33,9 +33,8 @@ namespace e_learning_app.Views.Admin
                 // Count users created in last 7 days
                 var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
                 int newUsers = users.Count(u =>
-                    u.CreatedAt != null &&
-                    DateTime.TryParse(u.CreatedAt, out var dt) &&
-                    dt >= sevenDaysAgo);
+                    u.CreatedAt.HasValue &&
+                    u.CreatedAt.Value >= sevenDaysAgo);
 
                 // Update stat cards
                 TxtTotalUsers.Text    = totalUsers.ToString();

@@ -1,4 +1,5 @@
 using Google.Cloud.Firestore;
+using System;
 
 namespace e_learning_app
 {
@@ -30,6 +31,6 @@ namespace e_learning_app
         public string Role { get; set; }
 
         [FirestoreProperty]
-        public string CreatedAt { get; set; }
+        public System.DateTime? CreatedAt { get; set; }
     }
 }

@@ -200,7 +200,7 @@ namespace e_learning_app
             try
             {
                 if (Db == null) return "Student";
-                DocumentSnapshot snapshot = await Db.Collection("userss").Document(uid).GetSnapshotAsync();
+                DocumentSnapshot snapshot = await Db.Collection("Users").Document(uid).GetSnapshotAsync();
                 if (snapshot.Exists)
                 {
                     var data = snapshot.ToDictionary();
@@ -224,7 +224,7 @@ namespace e_learning_app
                     return false;
                 }
 
-                DocumentReference docRef = Db.Collection("users").Document(uid);
+                DocumentReference docRef = Db.Collection("Users").Document(uid);
                 DocumentSnapshot snapshot = await docRef.GetSnapshotAsync();
 
                 string role = email == "buitrantrongnguyen@gmail.com" ? "Teacher" : "Student";
@@ -236,7 +236,7 @@ namespace e_learning_app
                     {
                         { "Uid", uid },
                         { "Email", email },
-                        { "DisplayName", string.IsNullOrEmpty(displayName) ? "New User" : displayName },
+                        { "FullName", string.IsNullOrEmpty(displayName) ? "New User" : displayName },
                         { "CreatedAt", FieldValue.ServerTimestamp },
                         { "Role", role }
                     };

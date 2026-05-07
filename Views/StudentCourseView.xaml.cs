@@ -128,6 +128,13 @@ namespace e_learning_app.Views
 
                 border.MouseLeftButtonDown += (s, e) =>
                 {
+                    var mainWin = Window.GetWindow(this) as MainWindow;
+                    if (mainWin != null)
+                    {
+                        mainWin.MainContentArea.Content = new StudentCourseView(_dbManager, _course, lesson);
+                        return;
+                    }
+
                     var studentWin = Window.GetWindow(this) as StudentMainWindow;
                     if (studentWin != null)
                     {
@@ -174,10 +181,17 @@ namespace e_learning_app.Views
             if (_timer != null) _timer.Stop();
             LessonVideoPlayer.Stop();
 
+            var mainWin = Window.GetWindow(this) as MainWindow;
+            if (mainWin != null)
+            {
+                mainWin.MainContentArea.Content = new CourseDetailView(_dbManager, _course);
+                return;
+            }
+
             var studentWin = Window.GetWindow(this) as StudentMainWindow;
             if (studentWin != null)
             {
-                studentWin.StudentContentArea.Content = new CourseDetailView(_dbManager, _course, "Student");
+                studentWin.StudentContentArea.Content = new CourseDetailView(_dbManager, _course);
             }
         }
 
@@ -350,11 +364,13 @@ namespace e_learning_app.Views
             BtnSendComment.IsEnabled = false;
 
             // Determine role and name from Application State or DB.
-            // Since role isn't explicitly passed down to StudentCourseView, we assume Student for now.
-            // Wait, we need the user's name. Let's use MainWindow state.
-            string userId = "student_id_1";
-            string userName = "Sinh viên";
-            string role = "Student";
+            var currentUser = _dbManager.GetCurrentUser();
+            if (currentUser == null) return;
+
+            string userId = currentUser.Id;
+            string userName = !string.IsNullOrEmpty(currentUser.FullName) ? currentUser.FullName : 
+                              (!string.IsNullOrEmpty(currentUser.Username) ? currentUser.Username : "Học viên ẩn danh");
+            string role = _course.InstructorId == currentUser.Id ? "Teacher" : "Student";
 
             var newComment = new Comment
             {

@@ -51,7 +51,7 @@ namespace e_learning_app.Views.Admin
                         FullName  = u.FullName ?? u.Email,
                         Email     = u.Email,
                         Role      = u.Role ?? "Student",
-                        CreatedAt = u.CreatedAt
+                        CreatedAt = u.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A"
                     };
                 }).OrderBy(u => u.FullName).ToList();
 

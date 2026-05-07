@@ -38,6 +38,19 @@ namespace e_learning_app.Views
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
+            // Kiểm tra kết nối trước khi load
+            if (_dbManager?.GetDb == null)
+            {
+                MessageBox.Show("Chưa kết nối được Firestore. Vui lòng khởi động lại ứng dụng.", "Lỗi kết nối");
+                return;
+            }
+
+            if (_dbManager.GetCurrentUser() == null)
+            {
+                MessageBox.Show("Không xác định được người dùng. Vui lòng đăng nhập lại.", "Lỗi");
+                return;
+            }
+
             ApplyRolePermissions();
             await LoadDataAsync();
             ApplyFilter();
@@ -84,8 +97,11 @@ namespace e_learning_app.Views
                 // 2. Nếu là Sinh viên, tải toàn bộ dữ liệu đăng ký của người này
                 if (!_isInstructor)
                 {
+                    var currentUser = _dbManager.GetCurrentUser();
+                    if (currentUser == null) return;
+
                     var regSnap = await _dbManager.GetDb.Collection("courseRegistrations")
-                        .WhereEqualTo("userId", _dbManager.GetCurrentUser().Id)
+                        .WhereEqualTo("userId", currentUser.Id)
                         .GetSnapshotAsync();
 
                     _myRegistrations.Clear();
@@ -118,10 +134,13 @@ namespace e_learning_app.Views
 
                 // Lọc theo Phân quyền (QUAN TRỌNG)
                 bool roleMatch = false;
+                var currentUser = _dbManager.GetCurrentUser();
+                if (currentUser == null) return false;
+
                 if (_isInstructor)
                 {
                     // Giảng viên chỉ nhìn thấy lớp của mình tạo ra
-                    roleMatch = c.InstructorId == _dbManager.GetCurrentUser().Id;
+                    roleMatch = c.InstructorId == currentUser.Id;
                 }
                 else
                 {
@@ -219,10 +238,21 @@ namespace e_learning_app.Views
                 var selectedCourse = _allClasses.FirstOrDefault(c => c.Id == courseId);
                 if (selectedCourse == null) return;
 
+                string role = _isInstructor ? "Teacher" : "Student";
+
+                // Giáo viên dùng MainWindow
                 var mainWin = Window.GetWindow(this) as MainWindow;
                 if (mainWin != null)
                 {
                     mainWin.MainContentArea.Content = new CourseDetailView(_dbManager, selectedCourse);
+                    return;
+                }
+
+                // Học sinh dùng StudentMainWindow
+                var studentWin = Window.GetWindow(this) as StudentMainWindow;
+                if (studentWin != null)
+                {
+                    studentWin.StudentContentArea.Content = new CourseDetailView(_dbManager, selectedCourse);
                 }
             }
         }
@@ -245,9 +275,12 @@ namespace e_learning_app.Views
 
         private void PopulateUnregisteredList()
         {
+            var currentUser = _dbManager.GetCurrentUser();
+            if (currentUser == null) return;
+
             // Lấy danh sách các lớp học MÀ Sinh viên KHÔNG là Giảng viên, VÀ chưa đăng ký (hoặc đã bị từ chối)
             var unregistered = _allClasses.Where(c =>
-                c.InstructorId != _dbManager.GetCurrentUser().Id &&
+                c.InstructorId != currentUser.Id &&
                 (!_myRegistrations.ContainsKey(c.Id) || _myRegistrations[c.Id] == "rejected")
             ).ToList();
 
@@ -321,7 +354,9 @@ namespace e_learning_app.Views
                         btn.Content = "Đang hủy...";
 
                         // 2. Tìm ID và xóa document trên Firebase
-                        string regId = $"{_dbManager.GetCurrentUser().Id}_{courseId}";
+                        var currentUser = _dbManager.GetCurrentUser();
+                        if (currentUser == null) return;
+                        string regId = $"{currentUser.Id}_{courseId}";
                         await _dbManager.GetDb.Collection("courseRegistrations").Document(regId).DeleteAsync();
 
                         // 3. Cập nhật giao diện

@@ -1,75 +1,119 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace e_learning_app
 {
-    /// <summary>
-    /// Interaction logic for LoginControl.xaml
-    /// </summary>
     public partial class LoginControl : UserControl
     {
+        // Email duy nhất có role giáo viên
+        private const string TeacherEmail = "buitrantrongnguyen@gmail.com";
+
         public LoginControl()
         {
             InitializeComponent();
         }
-        private void GoToRegister_Click(object sender, MouseButtonEventArgs e)
+
+        // ─── Helper: xác định role theo email ───────────────────────
+        private static string GetRoleByEmail(string email)
         {
-            var parent = Window.GetWindow(this) as LoginWindow;
-            if (parent != null)
-            {
-                parent.MainContentHolder.Content = new RegisterControl();
-            }
+            return string.Equals(email?.Trim(), TeacherEmail, StringComparison.OrdinalIgnoreCase)
+                ? "Instructor"
+                : "Student";
         }
+
+        // ─── Helper: mở cửa sổ chính với user đã xác thực ───────────
+        private void OpenMainWindow(User user)
+        {
+            var loginWin = Window.GetWindow(this) as LoginWindow;
+
+            if (user.Role == "Instructor")
+            {
+                var mainWin = new MainWindow(user);
+                mainWin.Show();
+                mainWin.Activate();
+            }
+            else
+            {
+                var studentWin = new StudentMainWindow(user);
+                studentWin.Show();
+                studentWin.Activate();
+            }
+
+            loginWin?.Close();
+        }
+
+        // ─── Đăng nhập bằng Google ─────────────────────────────────
         private async void login_google(object sender, RoutedEventArgs e)
         {
             btnLogin.IsEnabled = false;
-            var user = await FirebaseService.LoginWithGoogleAsync();
-
-            if (user != null)
+            try
             {
-                string userId = user.Uid;
-                string email = user.Info?.Email ?? "No Email";
-                string displayName = user.Info?.DisplayName ?? "No Name";
-
-                await FirebaseService.CreateUserInFirestore(userId, email, displayName);
-
-                var current_window = Window.GetWindow(this) as LoginWindow;
-                string role = await FirebaseService.GetUserRoleAsync(userId);
-                
-                if (role == "Teacher")
+                var fbUser = await FirebaseService.LoginWithGoogleAsync();
+                if (fbUser != null)
                 {
-                    MainWindow main = new MainWindow();
-                    main.Show();
-                    main.Activate();
+                    string email       = fbUser.Info?.Email ?? "";
+                    string displayName = fbUser.Info?.DisplayName ?? email;
+                    string uid         = fbUser.Uid;
+
+                    await FirebaseService.CreateUserInFirestore(uid, email, displayName);
+
+                    var user = new User
+                    {
+                        Id       = uid,
+                        Email    = email,
+                        FullName = displayName,
+                        Role     = GetRoleByEmail(email)
+                    };
+
+                    // Cố lấy FullName thực từ Firestore nếu có
+                    try
+                    {
+                        if (FirebaseService.Db != null)
+                        {
+                            var doc = await FirebaseService.Db.Collection("Users").Document(uid).GetSnapshotAsync();
+                            if (doc.Exists)
+                            {
+                                var stored = doc.ConvertTo<User>();
+                                if (!string.IsNullOrWhiteSpace(stored?.FullName))
+                                    user.FullName = stored.FullName;
+                            }
+                        }
+                    }
+                    catch { /* không bắt buộc */ }
+
+                    OpenMainWindow(user);
                 }
-                else
-                {
-                    StudentMainWindow studentMain = new StudentMainWindow();
-                    studentMain.Show();
-                    studentMain.Activate();
-                }
-                
-                current_window?.Close();
             }
-
-            btnLogin.IsEnabled = true;
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi đăng nhập Google: " + ex.Message);
+            }
+            finally
+            {
+                btnLogin.IsEnabled = true;
+            }
         }
 
+        // ─── Đăng nhập bằng Email/Password (nút bấm) ──────────────
         private async void Login_Click(object sender, RoutedEventArgs e)
         {
-            string email = txtEmail.Text;
+            await DoEmailLogin();
+        }
+
+        // ─── Đăng nhập bằng Enter ──────────────────────────────────
+        private async void login_enter(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+                await DoEmailLogin();
+        }
+
+        // ─── Logic đăng nhập email/password dùng chung ─────────────
+        private async Task DoEmailLogin()
+        {
+            string email    = txtEmail.Text.Trim();
             string password = txtPassword.Password;
 
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
@@ -77,125 +121,103 @@ namespace e_learning_app
                 txtstatus.Text = "Vui lòng nhập đầy đủ Email và Mật khẩu!";
                 return;
             }
+
+            // ── Admin đặc biệt ──
             if (email == "admin" && password == "admin")
             {
-                var current_window = Window.GetWindow(this) as LoginWindow;
-
-                AdminMainWindow adminMainWindow = new AdminMainWindow();
-                adminMainWindow.Show();
-                adminMainWindow.Activate();
-                current_window?.Close();
+                var loginWin = Window.GetWindow(this) as LoginWindow;
+                var adminWin = new AdminMainWindow();
+                adminWin.Show();
+                adminWin.Activate();
+                loginWin?.Close();
                 return;
             }
+
             btnLogin.IsEnabled = false;
+            txtstatus.Text = "";
 
             try
             {
                 string userId = await FirebaseService.LoginAsync(email, password);
 
-                if (userId != null)
+                if (userId == null)
                 {
-                    var current_window = Window.GetWindow(this) as LoginWindow;
-                    await FirebaseService.CreateUserInFirestore(userId, email);
-                    
-                    string role = await FirebaseService.GetUserRoleAsync(userId);
-                    
-                    if (role == "Teacher")
-                    {
-                        MainWindow main = new MainWindow();
-                        main.Show();
-                        main.Activate();
-                    }
-                    else
-                    {
-                        StudentMainWindow studentMain = new StudentMainWindow();
-                        studentMain.Show();
-                        studentMain.Activate();
-                    }
-                    current_window?.Close();
-                }
-                else
-                {
-                    txtstatus.Text = "Sai Email hoặc mật khẩu";
+                    txtstatus.Text = "Sai Email hoặc Mật khẩu!";
+                    return;
                 }
 
+                // Đảm bảo document tồn tại trên Firestore
+                await FirebaseService.CreateUserInFirestore(userId, email);
+
+                // Xây dựng user object ban đầu từ Firebase Auth UID
+                var user = new User
+                {
+                    Id       = userId,
+                    Email    = email,
+                    FullName = email.Split('@')[0],
+                    Role     = GetRoleByEmail(email)
+                };
+
+                // Fetch đúng Firestore document ID (quan trọng: phải khớp với InstructorId trong courses)
+                try
+                {
+                    if (FirebaseService.Db != null)
+                    {
+                        // Tìm theo Email để lấy Firestore document ID thực sự
+                        var query = await FirebaseService.Db.Collection("Users")
+                            .WhereEqualTo("Email", email)
+                            .Limit(1)
+                            .GetSnapshotAsync();
+
+                        if (query.Count > 0)
+                        {
+                            var stored = query.Documents[0].ConvertTo<User>();
+                            // stored.Id = Firestore document ID thực (khớp với InstructorId trong courses)
+                            if (!string.IsNullOrWhiteSpace(stored?.Id))
+                                user.Id = stored.Id;
+                            if (!string.IsNullOrWhiteSpace(stored?.FullName))
+                                user.FullName = stored.FullName;
+                            if (!string.IsNullOrWhiteSpace(stored?.Role))
+                                user.Role = stored.Role;
+                        }
+                    }
+                }
+                catch { /* không bắt buộc */ }
+
+                OpenMainWindow(user);
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi kết nối" + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi kết nối: " + ex.Message);
+            }
             finally
             {
                 btnLogin.IsEnabled = true;
             }
         }
 
-        private async void login_enter(object sender, KeyEventArgs e)
+        // ─── Quên mật khẩu ─────────────────────────────────────────
+        private async void ForgotPassword_click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (e.Key == Key.Enter)
+            string email = txtEmail.Text.Trim();
+            if (string.IsNullOrWhiteSpace(email))
             {
-                string email = txtEmail.Text;
-                string password = txtPassword.Password;
-                if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-                {
-                    txtstatus.Text = "Vui lòng nhập đầy đủ Email và Mật khẩu!";
-                    return;
-                }
-                btnLogin.IsEnabled = false;
-
-                if (email == "admin" && password == "admin")
-                {
-                    var current_window = Window.GetWindow(this) as LoginWindow;
-
-                    AdminMainWindow adminMainWindow = new AdminMainWindow();
-                    adminMainWindow.Show();
-                    adminMainWindow.Activate();
-                    current_window?.Close();
-                    return;
-                }
-
-                try
-                {
-                    string userId = await FirebaseService.LoginAsync(email, password);
-
-                    if (userId != null)
-                    {
-                        var current_window = Window.GetWindow(this) as LoginWindow;
-                        await FirebaseService.CreateUserInFirestore(userId, email);
-
-                        string role = await FirebaseService.GetUserRoleAsync(userId);
-                    
-                        if (role == "Teacher")
-                        {
-                            MainWindow main = new MainWindow();
-                            main.Show();
-                            main.Activate();
-                        }
-                        else
-                        {
-                            StudentMainWindow studentMain = new StudentMainWindow();
-                            studentMain.Show();
-                            studentMain.Activate();
-                        }
-                        current_window?.Close();
-                    }
-                    else
-                    {
-                        txtstatus.Text = "Sai Email hoặc mật khẩu";
-                    }
-                }
-                catch (Exception ex) { MessageBox.Show("Lỗi kết nối" + ex.Message); }
-                finally
-                {
-                    btnLogin.IsEnabled = true;
-                }
+                txtstatus.Text = "Vui lòng nhập Email để đặt lại mật khẩu!";
+                return;
             }
+            bool ok = await FirebaseService.SendPasswordResetAsync(email);
+            if (ok)
+                MessageBox.Show("Email đặt lại mật khẩu đã được gửi!", "Thành công");
+            else
+                MessageBox.Show("Không thể gửi email. Vui lòng kiểm tra lại địa chỉ email.", "Lỗi");
         }
 
-        private void ForgotPassword_click(object sender, MouseButtonEventArgs e)
+        // ─── Chuyển sang màn hình đăng ký ──────────────────────────
+        private void GoToRegister_Click(object sender, MouseButtonEventArgs e)
         {
             var parent = Window.GetWindow(this) as LoginWindow;
             if (parent != null)
-            {
-                parent.MainContentHolder.Content = new ForgotPasswordControl();
-            }
+                parent.MainContentHolder.Content = new RegisterControl();
         }
     }
 }

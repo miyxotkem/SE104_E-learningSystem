@@ -1,23 +1,13 @@
 <UserControl x:Class="e_learning_app.Views.CourseDetailView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="White">
+             xmlns:local="clr-namespace:e_learning_app.Views"
+             x:Name="Root"
+             Background="White"
+             PreviewMouseLeftButtonDown="UserControl_PreviewMouseLeftButtonDown">
 
     <UserControl.Resources>
-        <Style x:Key="DocumentBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="#F8FAFC"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="BorderBrush" Value="#F1F5F9"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="15"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F1F5F9"/>
-                    <Setter Property="BorderBrush" Value="#3B82F6"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+        <!--<local:deadlinecolorconverter x:Key="deadlinecolorconverter"/>-->
 
         <Style TargetType="ContextMenu" x:Key="ModernContextMenu">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -135,7 +125,6 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-
                             <ContentPresenter Margin="12,0,30,0" VerticalAlignment="Center" Content="{TemplateBinding SelectionBoxItem}" IsHitTestVisible="False"/>
                             <Path x:Name="Arrow" Data="M0,0 L4,4 L8,0 Z" Fill="#64748B" HorizontalAlignment="Right" Margin="0,0,15,0" VerticalAlignment="Center"/>
                             <ToggleButton Background="Transparent" BorderThickness="0" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"/>
@@ -184,6 +173,36 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="ContentItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="ItemBorder" Background="White" CornerRadius="12" BorderBrush="#F1F5F9" BorderThickness="1" Padding="15">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.05" Color="Black"/>
+                            </Border.Effect>
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#F8FAFC"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#EFF6FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -191,50 +210,12 @@
             <StackPanel>
                 <Grid Height="240">
                     <Border x:Name="CoverPhoto" VerticalAlignment="Top" Height="180" Background="#3B82F6"/>
-                    <Button x:Name="BtnMoreActions" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="20" Background="#44000000" Width="45" Height="32" Cursor="Hand" Click="BtnMoreActions_Click">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                    <TextBlock Text="•••" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                        <Button.ContextMenu>
-                            <ContextMenu x:Name="CourseContextMenu" Style="{StaticResource ModernContextMenu}">
-                                <MenuItem Header="Chỉnh sửa lớp học" Style="{StaticResource ModernMenuItem}" Click="MenuEdit_Click">
-                                    <MenuItem.Icon>
-                                        <TextBlock Text="✏️" FontSize="14"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem x:Name="MenuToggleStatus" Header="Kết thúc lớp học" Style="{StaticResource ModernMenuItem}" Click="MenuToggleStatus_Click">
-                                    <MenuItem.Icon>
-                                        <TextBlock x:Name="MenuToggleIcon" Text="⏸️" FontSize="14"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <Separator Style="{StaticResource ModernSeparator}"/>
-                                <MenuItem Header="Xóa lớp học" Foreground="#EF4444" Style="{StaticResource ModernMenuItem}" Click="MenuDelete_Click">
-                                    <MenuItem.Icon>
-                                        <TextBlock Text="🗑️" FontSize="14" Foreground="#EF4444"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </Button>
                     <Border Width="80" Height="80" Background="White" CornerRadius="15" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="60,0,0,20" BorderBrush="White" BorderThickness="4">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="10" Opacity="0.1"/>
                         </Border.Effect>
                         <TextBlock x:Name="TxtEmoji" Text="📚" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <Button Content="← Quay lại" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20" Background="#44000000" Foreground="White" Padding="10,5" Click="BtnBack_Click">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                                    <ContentPresenter Margin="{TemplateBinding Padding}"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
                 </Grid>
 
                 <StackPanel Margin="60,0,60,40">
@@ -248,11 +229,19 @@
                         <Border Background="#F5F3FF" CornerRadius="6" Padding="8,4" BorderBrush="#DDD6FE" BorderThickness="1" Margin="8,0,0,0">
                             <TextBlock x:Name="TxtCourseType" Text="Loại môn" FontSize="12" Foreground="#8B5CF6" FontWeight="SemiBold"/>
                         </Border>
+                        <Border Background="#FFF7ED" CornerRadius="6" Padding="8,4" BorderBrush="#FFEDD5" BorderThickness="1" Margin="8,0,0,0">
+                            <TextBlock x:Name="TxtSchedule" Text="Hình thức 2" FontSize="12" Foreground="#F97316" FontWeight="SemiBold"/>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,20" Orientation="Horizontal">
+                        <TextBlock FontSize="15" Foreground="#475569" Text="Giảng viên phụ trách: " FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtInstructorName" FontSize="15" Foreground="#1E293B" Text="Đang tải..." VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <TextBlock x:Name="TxtDescription" FontSize="15" Foreground="#475569" TextWrapping="Wrap" Margin="0,10,0,30" LineHeight="24"/>
+                    <TextBlock Text="Mô tả chi tiết" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,8"/>
+                    <TextBlock x:Name="TxtDescription" FontSize="15" Foreground="#475569" TextWrapping="Wrap" Margin="0,0,0,30" LineHeight="24"/>
 
-                    <UniformGrid Columns="2" Margin="0,0,0,30" HorizontalAlignment="Left">
+                    <UniformGrid Columns="2" Margin="0,0,0,20" HorizontalAlignment="Left">
                         <StackPanel Width="150">
                             <TextBlock Text="Sinh viên" FontSize="12" Foreground="#94A3B8"/>
                             <TextBlock x:Name="TxtStudentCount" Text="0" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
@@ -263,60 +252,323 @@
                         </StackPanel>
                     </UniformGrid>
 
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,30">
+                        <Button x:Name="BtnEnterRoom" Height="36" Background="#10B981" Foreground="White" Cursor="Hand" Padding="15,0" Margin="0,0,15,0" Click="BtnEnterRoom_Click">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <TextBlock Text="🎬 Vào phòng học (Xem Video)" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </Button>
+                        <Grid Visibility="{Binding Visibility, ElementName=BtnManageApprovals}">
+                            <Button x:Name="BtnManageApprovals" Height="36" Background="#F59E0B" Foreground="White" Cursor="Hand" Visibility="Collapsed" Padding="15,0" Click="BtnManageApprovals_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <TextBlock Text="Duyệt yêu cầu tham gia lớp" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </Button>
+
+                            <Border x:Name="BadgeBorder" Background="#EF4444" CornerRadius="10" MinWidth="22" Height="22" 
+                                    HorizontalAlignment="Right" VerticalAlignment="Top" 
+                                    Margin="0,-8,-8,0" Visibility="Collapsed" IsHitTestVisible="False">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.25" Color="Black"/>
+                                </Border.Effect>
+                                <TextBlock x:Name="TxtPendingCount" Text="0" Foreground="White" FontSize="11" FontWeight="Bold" 
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5,0"/>
+                            </Border>
+                        </Grid>
+
+                        <Button x:Name="BtnManageStudents" Height="36" Background="#0EA5E9" Foreground="White" Cursor="Hand" Visibility="Collapsed" Padding="15,0" Margin="15,0,0,0" Click="BtnManageStudents_Click">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <TextBlock Text="Quản lý sinh viên" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </Button>
+                    </StackPanel>
+
                     <Separator Margin="0,0,0,30" Background="#F1F5F9"/>
+
+                    <!-- Video Bài Giảng -->
+                    <StackPanel Margin="0,0,0,30">
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Video Bài Giảng" FontSize="20" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                            <Button x:Name="BtnAddVideo" Grid.Column="1" Content="+ Thêm video" Foreground="{Binding CourseAccentBrush, ElementName=Root}" FontWeight="SemiBold" Padding="16,0" Height="36" MinWidth="100" Cursor="Hand" Visibility="Collapsed" Click="BtnAddVideo_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Grid>
+                                            <Border Background="{TemplateBinding Foreground}" Opacity="0.1" CornerRadius="8"/>
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+
+                        <ItemsControl x:Name="LessonsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="White" CornerRadius="12" BorderBrush="#F1F5F9" BorderThickness="1" Padding="15" Margin="0,0,0,10">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.05" Color="Black"/>
+                                        </Border.Effect>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Width="40" Height="40" Background="#F1F5F9" CornerRadius="8" Margin="0,0,15,0">
+                                                <TextBlock Text="🎥" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Margin="0,0,30,0">
+
+                        <StackPanel Grid.Column="0" Margin="0,0,15,0">
                             <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
                                 <TextBlock Text="Tài liệu &amp; Nội dung" FontSize="20" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
-                                <Button x:Name="BtnAddLesson" Content="+ Thêm bài học" HorizontalAlignment="Right" Background="#3B82F6" Foreground="White" Padding="12,6" BorderThickness="0" Click="BtnAddLesson_Click" Cursor="Hand">
+
+                                <Button x:Name="BtnAddContent" Grid.Column="1" Content="+ Thêm mới" Foreground="{Binding CourseAccentBrush, ElementName=Root}" FontWeight="SemiBold" Padding="16,0" Height="36" MinWidth="100" Cursor="Hand" Visibility="Collapsed" Click="BtnAddContent_Click">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                                                <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
+                                            <Grid>
+                                                <Border Background="{TemplateBinding Foreground}" Opacity="0.1" CornerRadius="8"/>
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
                             </Grid>
-                            <ItemsControl x:Name="DocumentsList" Margin="0,0"/>
+
+                            <ListBox x:Name="DocumentsList" Margin="0" Padding="0" BorderThickness="0" Background="Transparent" 
+                                     ItemContainerStyle="{StaticResource ContentItemStyle}"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     AllowDrop="True" Drop="DocumentsList_Drop" MouseDoubleClick="DocumentsList_MouseDoubleClick">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Background="Transparent">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock x:Name="DragHandle" Grid.Column="0" Text="⋮⋮" FontSize="16" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="0,0,15,0" Cursor="SizeAll" MouseLeftButtonDown="DragHandle_PreviewMouseLeftButtonDown" Visibility="{Binding ElementName=BtnAddContent, Path=Visibility}"/>
+                                            <Border Grid.Column="1" Width="40" Height="40" Background="#F1F5F9" CornerRadius="8" Margin="0,0,15,0">
+                                                <TextBlock Text="{Binding Icon}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Type}" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Visibility="{Binding ElementName=BtnAddContent, Path=Visibility}">
+                                                <Button Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,15,0" ToolTip="Chỉnh sửa" Tag="{Binding Id}" Click="BtnEditContent_Click">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="Transparent">
+                                                                <Path x:Name="IconPath" Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" Fill="{Binding CourseAccentBrush, ElementName=Root}" Width="16" Height="16" Stretch="Uniform"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="IconPath" Property="Opacity" Value="0.7"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                                <Button Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Xóa" Tag="{Binding Id}" Click="BtnDeleteContent_Click">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="Transparent">
+                                                                <Path x:Name="IconPath" Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" Fill="#EF4444" Width="16" Height="16" Stretch="Uniform"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="IconPath" Property="Opacity" Value="0.7"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </StackPanel>
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="Bài tập sắp tới" FontSize="20" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,20"/>
-                            <ItemsControl x:Name="AssignmentsList"/>
+
+                        <StackPanel Grid.Column="1" Margin="15,0,0,0">
+                            <Grid Margin="0,0,0,20">
+                                <TextBlock Text="Bài tập &amp; Kiểm tra" FontSize="20" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                                <Button x:Name="BtnShowAddAssignment" Content="+ Tạo bài tập" HorizontalAlignment="Right" Foreground="{Binding CourseAccentBrush, ElementName=Root}" FontWeight="SemiBold" Padding="16,0" Height="36" MinWidth="100" Cursor="Hand" Visibility="Collapsed" Click="BtnShowAddAssignment_Click">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Grid>
+                                                <Border Background="{TemplateBinding Foreground}" Opacity="0.1" CornerRadius="8"/>
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
+
+                            <ItemsControl x:Name="AssignmentsList" Margin="0" Padding="0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="White" CornerRadius="12" BorderBrush="#F1F5F9" BorderThickness="1" Padding="15" Margin="0,0,0,10">
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.05" Color="Black"/>
+                                            </Border.Effect>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Width="40" Height="40" Background="#F1F5F9" CornerRadius="8" Margin="0,0,15,0">
+                                                    <TextBlock Text="📝" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Background="Transparent" Cursor="Hand" MouseLeftButtonDown="AssignmentItem_Click" Tag="{Binding}">
+                                                    <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B" TextWrapping="Wrap"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                        <TextBlock Text="⏱ Hạn nộp: " FontSize="12" Foreground="#64748B"/>
+                                                        <TextBlock Text="{Binding Deadline, StringFormat=dd/MM/yyyy HH:mm}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding Deadline, Converter={StaticResource DeadlineColorConverter}}"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Visibility="{Binding ElementName=BtnShowAddAssignment, Path=Visibility}">
+                                                    <Button Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,15,0" ToolTip="Chỉnh sửa" Tag="{Binding Id}" Click="BtnEditAssignment_Click">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="Transparent">
+                                                                    <Path x:Name="IconPath" Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" Fill="{Binding CourseAccentBrush, ElementName=Root}" Width="16" Height="16" Stretch="Uniform"/>
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter TargetName="IconPath" Property="Opacity" Value="0.7"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                    </Button>
+                                                    <Button Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Xóa" Tag="{Binding Id}" Click="BtnDeleteAssignment_Click">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="Transparent">
+                                                                    <Path x:Name="IconPath" Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" Fill="#EF4444" Width="16" Height="16" Stretch="Uniform"/>
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter TargetName="IconPath" Property="Opacity" Value="0.7"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
 
+        <Button Content="← Quay lại" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20" Background="#44000000" Foreground="White" Padding="10,5" Cursor="Hand" Click="BtnBack_Click">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+
+        <Button x:Name="BtnMoreActions" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="20" Background="#44000000" Width="45" Height="32" Cursor="Hand" Click="BtnMoreActions_Click" Visibility="Collapsed">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                        <TextBlock Text="•••" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                    </Border>
+                </ControlTemplate>
+            </Button.Template>
+            <Button.ContextMenu>
+                <ContextMenu x:Name="CourseContextMenu" Style="{StaticResource ModernContextMenu}">
+                    <MenuItem Header="Chỉnh sửa lớp học" Style="{StaticResource ModernMenuItem}" Click="MenuEdit_Click">
+                        <MenuItem.Icon>
+                            <TextBlock Text="✏️" FontSize="14"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem x:Name="MenuToggleStatus" Header="Kết thúc lớp học" Style="{StaticResource ModernMenuItem}" Click="MenuToggleStatus_Click">
+                        <MenuItem.Icon>
+                            <TextBlock x:Name="MenuToggleIcon" Text="⏸️" FontSize="14"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator Style="{StaticResource ModernSeparator}"/>
+                    <MenuItem Header="Xóa lớp học" Foreground="#EF4444" Style="{StaticResource ModernMenuItem}" Click="MenuDelete_Click">
+                        <MenuItem.Icon>
+                            <TextBlock Text="🗑️" FontSize="14" Foreground="#EF4444"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+            </Button.ContextMenu>
+        </Button>
+
         <Grid x:Name="DeleteOverlay" Visibility="Collapsed">
             <Border Background="#A60F172A" MouseLeftButtonDown="CloseDeleteModal_Click"/>
-
             <Border Background="White" CornerRadius="24" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="30">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.15" Color="Black"/>
                 </Border.Effect>
-
                 <StackPanel>
                     <Border Width="64" Height="64" Background="#FEF2F2" CornerRadius="32" HorizontalAlignment="Center" Margin="0,0,0,20">
                         <TextBlock Text="🗑️" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-
                     <TextBlock Text="Xác nhận xóa lớp học?" FontSize="20" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                    <TextBlock Text="Hành động này không thể hoàn tác. Toàn bộ dữ liệu, tài liệu và danh sách sinh viên của lớp học này sẽ bị xóa vĩnh viễn." FontSize="14" Foreground="#64748B" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,30" LineHeight="22"/>
-
+                    <TextBlock Text="Hành động này không thể hoàn tác. Toàn bộ dữ liệu của lớp học này sẽ bị xóa vĩnh viễn." FontSize="14" Foreground="#64748B" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,30" LineHeight="22"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="15"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-
                         <Button Grid.Column="2" Content="Hủy bỏ" Height="45" Background="#F1F5F9" Foreground="#475569" FontWeight="SemiBold" Click="CloseDeleteModal_Click" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
@@ -326,7 +578,6 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-
                         <Button x:Name="BtnConfirmDelete" Grid.Column="0" Content="Xóa vĩnh viễn" Height="45" Background="#EF4444" Foreground="White" FontWeight="SemiBold" Click="ConfirmDelete_Click" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
@@ -341,56 +592,84 @@
             </Border>
         </Grid>
 
-        <Grid x:Name="AddLessonOverlay" Visibility="Collapsed">
-            <Border Background="#A60F172A" MouseLeftButtonDown="CloseAddLessonOverlay_Click"/>
-            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" Width="500" CornerRadius="16" Padding="30">
+        <Grid x:Name="DeleteContentOverlay" Visibility="Collapsed">
+            <Border Background="#A60F172A" MouseLeftButtonDown="CloseDeleteContentModal_Click"/>
+            <Border Background="White" CornerRadius="24" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="30">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.15" Color="Black"/>
                 </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="Thêm bài học mới" FontSize="22" FontWeight="Bold" Margin="0,0,0,25"/>
-
-                    <TextBlock Text="Tên bài học" Foreground="#64748B" Margin="0,0,0,5"/>
-                    <TextBox x:Name="InputLessonTitle" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,15"/>
-
-                    <TextBlock Text="Mô tả" Foreground="#64748B" Margin="0,0,0,5"/>
-                    <TextBox x:Name="InputLessonDesc" Style="{StaticResource ModernTextBox}" Height="80" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="12,10" Margin="0,0,0,15"/>
-
-                    <TextBlock Text="Video bài giảng" Foreground="#64748B" Margin="0,0,0,5"/>
-                    <Grid Margin="0,0,0,25">
+                    <Border Width="64" Height="64" Background="#FEF2F2" CornerRadius="32" HorizontalAlignment="Center" Margin="0,0,0,20">
+                        <TextBlock Text="🗑️" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="Xóa nội dung này?" FontSize="20" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Bạn có chắc chắn muốn xóa tài liệu/nội dung này khỏi lớp học?" FontSize="14" Foreground="#64748B" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,30" LineHeight="22"/>
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="InputVideoPath" Style="{StaticResource ModernTextBox}" Height="42" IsReadOnly="True" Text="Chưa chọn file..." Foreground="#94A3B8"/>
-                        <Button Grid.Column="1" Content="Chọn file" Background="#F1F5F9" Foreground="#3B82F6" FontWeight="SemiBold" Margin="10,0,0,0" Padding="15,0" Click="BtnSelectVideo_Click" Cursor="Hand">
+                        <Button Grid.Column="2" Content="Hủy bỏ" Height="45" Background="#F1F5F9" Foreground="#475569" FontWeight="SemiBold" Click="CloseDeleteContentModal_Click" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button Grid.Column="0" Content="Xóa vĩnh viễn" Height="45" Background="#EF4444" Foreground="White" FontWeight="SemiBold" Click="ConfirmDeleteContent_Click" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="12">
                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
                     </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Hủy" Background="Transparent" Foreground="#64748B" BorderThickness="0" Margin="0,0,15,0" Click="CloseAddLessonOverlay_Click" Cursor="Hand"/>
-                        <Button x:Name="BtnSaveLesson" Content="Lưu bài học" Width="140" Height="42" Background="#3B82F6" Foreground="White" Click="BtnSaveLesson_Click" Cursor="Hand">
+        <Grid x:Name="DeleteAssignmentOverlay" Visibility="Collapsed">
+            <Border Background="#A60F172A" MouseLeftButtonDown="CloseDeleteAssignmentModal_Click"/>
+            <Border Background="White" CornerRadius="24" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="30">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.15" Color="Black"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Border Width="64" Height="64" Background="#FEF2F2" CornerRadius="32" HorizontalAlignment="Center" Margin="0,0,0,20">
+                        <TextBlock Text="🗑️" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="Xóa bài tập này?" FontSize="20" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Dữ liệu bài tập sẽ bị xóa vĩnh viễn khỏi hệ thống." FontSize="14" Foreground="#64748B" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,30" LineHeight="22"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="2" Content="Hủy bỏ" Height="45" Background="#F1F5F9" Foreground="#475569" FontWeight="SemiBold" Click="CloseDeleteAssignmentModal_Click" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="12">
                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-                    </StackPanel>
-
-                    <StackPanel x:Name="UploadProgressPanel" Visibility="Collapsed" Margin="0,20,0,0">
-                        <TextBlock Text="Đang tải video lên Cloudinary, vui lòng chờ..." Foreground="#3B82F6" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                        <ProgressBar IsIndeterminate="True" Height="4" Foreground="#3B82F6" Background="#E2E8F0" BorderThickness="0"/>
-                    </StackPanel>
+                        <Button Grid.Column="0" Content="Xóa vĩnh viễn" Height="45" Background="#EF4444" Foreground="White" FontWeight="SemiBold" Click="ConfirmDeleteAssignment_Click" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
                 </StackPanel>
             </Border>
         </Grid>
@@ -406,14 +685,7 @@
                         <TextBox x:Name="EditTitleInput" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,15"/>
 
                         <TextBlock Text="Mô tả chi tiết" Foreground="#64748B" Margin="0,0,0,5"/>
-                        <TextBox x:Name="EditDescInput" 
-         Style="{StaticResource ModernTextBox}" 
-         Height="120" 
-         TextWrapping="Wrap" 
-         AcceptsReturn="True" 
-         VerticalContentAlignment="Top" 
-         Padding="12,10" 
-         Margin="0,0,0,15"/>
+                        <TextBox x:Name="EditDescInput" Style="{StaticResource ModernTextBox}" Height="120" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="12,10" Margin="0,0,0,15"/>
 
                         <Grid Margin="0,0,0,15">
                             <Grid.ColumnDefinitions>
@@ -439,6 +711,29 @@
                         <TextBlock Text="Khoa" Foreground="#64748B" Margin="0,0,0,5"/>
                         <TextBox x:Name="EditCategoryInput" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,15"/>
 
+                        <TextBlock Text="Lịch học" Foreground="#64748B" Margin="0,0,0,5"/>
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="EditCbDay" Grid.Column="0" Style="{StaticResource ModernComboBox}" SelectionChanged="EditCbDay_SelectionChanged">
+                                <ComboBoxItem Content="Hình thức 2"/>
+                                <ComboBoxItem Content="Thứ 2"/>
+                                <ComboBoxItem Content="Thứ 3"/>
+                                <ComboBoxItem Content="Thứ 4"/>
+                                <ComboBoxItem Content="Thứ 5"/>
+                                <ComboBoxItem Content="Thứ 6"/>
+                                <ComboBoxItem Content="Thứ 7"/>
+                                <ComboBoxItem Content="Chủ nhật"/>
+                            </ComboBox>
+                            <TextBox x:Name="EditTxtStartPeriod" Grid.Column="2" Style="{StaticResource ModernTextBox}" Tag="Từ tiết"/>
+                            <TextBox x:Name="EditTxtEndPeriod" Grid.Column="4" Style="{StaticResource ModernTextBox}" Tag="Đến tiết"/>
+                        </Grid>
+
                         <Grid Margin="0,0,0,15">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
@@ -463,8 +758,8 @@
                         <TextBox x:Name="EditEmojiInput" Style="{StaticResource ModernTextBox}" Width="60" Height="42" HorizontalAlignment="Left" Margin="0,0,0,15"/>
 
                         <TextBlock Text="Màu sắc chủ đề" Foreground="#64748B" Margin="0,0,0,5"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,25">
-                            <RadioButton GroupName="ThemeColors" Background="#3B82F6" Style="{StaticResource ColorRadioStyle}" IsChecked="True"/>
+                        <StackPanel x:Name="EditThemeColorsPanel" Orientation="Horizontal" Margin="0,0,0,25">
+                            <RadioButton GroupName="ThemeColors" Background="#3B82F6" Style="{StaticResource ColorRadioStyle}"/>
                             <RadioButton GroupName="ThemeColors" Background="#8B5CF6" Style="{StaticResource ColorRadioStyle}"/>
                             <RadioButton GroupName="ThemeColors" Background="#F59E0B" Style="{StaticResource ColorRadioStyle}"/>
                             <RadioButton GroupName="ThemeColors" Background="#10B981" Style="{StaticResource ColorRadioStyle}"/>
@@ -473,7 +768,7 @@
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="Lưu thay đổi" Width="140" Height="42" Background="#3B82F6" Foreground="White" Click="ConfirmEdit_Click">
+                            <Button Content="Lưu thay đổi" Width="140" Height="42" Background="{Binding CourseAccentBrush, ElementName=Root}" Foreground="White" Click="ConfirmEdit_Click">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
                                         <Border Background="{TemplateBinding Background}" CornerRadius="10">
@@ -488,5 +783,630 @@
                 </ScrollViewer>
             </Border>
         </Grid>
+
+        <Grid x:Name="NoteReaderDrawer" Visibility="Collapsed">
+            <Border Background="#40000000" MouseLeftButtonDown="CloseNoteReader_Click"/>
+            <Border HorizontalAlignment="Right" Background="White" Width="600" CornerRadius="20,0,0,20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="-5" Opacity="0.1" Color="Black"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Margin="30,30,30,15">
+                        <Button Content="✕" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" FontSize="18" Foreground="#64748B" Cursor="Hand" Click="CloseNoteReader_Click"/>
+                        <TextBlock x:Name="TxtNoteTitle" FontSize="28" FontWeight="Bold" Foreground="#1E293B" Margin="0,10,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <ScrollViewer Grid.Row="1" Margin="30,0,30,30" VerticalScrollBarVisibility="Auto">
+                        <TextBlock x:Name="TxtNoteContent" FontSize="16" Foreground="#475569" TextWrapping="Wrap" LineHeight="26"/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="AddContentDrawer" Visibility="Collapsed">
+            <Border Background="#40000000" MouseLeftButtonDown="CloseAddDrawer_Click"/>
+            <Border HorizontalAlignment="Right" Background="White" Width="500">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="30">
+                        <TextBlock x:Name="TxtContentFormTitle" Text="Thêm nội dung mới" FontSize="22" FontWeight="Bold" Margin="0,0,0,25"/>
+                        <TextBlock Text="Loại nội dung" Foreground="#64748B" Margin="0,0,0,5"/>
+                        <ComboBox x:Name="AddTypeInput" Tag="Chọn loại" Style="{StaticResource ModernComboBox}" Margin="0,0,0,15" SelectionChanged="AddTypeInput_SelectionChanged">
+                            <ComboBoxItem Content="Document" IsSelected="True"/>
+                            <ComboBoxItem Content="Link"/>
+                            <ComboBoxItem Content="Note"/>
+                        </ComboBox>
+                        <TextBlock Text="Tiêu đề" Foreground="#64748B" Margin="0,0,0,5"/>
+                        <TextBox x:Name="AddTitleInput" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,15"/>
+
+                        <Grid x:Name="InputAreaLink" Visibility="Collapsed" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="Đường dẫn (URL)" Foreground="#64748B" Margin="0,0,0,5"/>
+                                <TextBox x:Name="AddLinkInput" Style="{StaticResource ModernTextBox}" Height="42" Tag="https://..."/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid x:Name="InputAreaNote" Visibility="Collapsed" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="Nội dung ghi chú" Foreground="#64748B" Margin="0,0,0,5"/>
+                                <TextBox x:Name="AddNoteInput" Style="{StaticResource ModernTextBox}" Height="150" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="12,10"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid x:Name="InputAreaDocument" Visibility="Visible" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="Chọn tệp tài liệu" Foreground="#64748B" Margin="0,0,0,5"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="AddDocPathInput" Grid.Column="0" Style="{StaticResource ModernTextBox}" Height="42" IsReadOnly="True" Margin="0,0,10,0"/>
+                                    <Button Grid.Column="1" Content="Thêm" Width="80" Height="42" Background="#F1F5F9" Foreground="#475569" FontWeight="SemiBold" Click="BtnBrowseFile_Click">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                            <Button x:Name="BtnSubmitContent" Content="Thêm vào lớp" Width="140" Height="42" Background="{Binding CourseAccentBrush, ElementName=Root}" Foreground="White" Click="ConfirmAddContent_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button Content="Hủy" Margin="15,0,0,0" Background="Transparent" Foreground="#64748B" BorderThickness="0" Click="CloseAddDrawer_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="AddAssignmentDrawer" Visibility="Collapsed">
+            <Border Background="#40000000" MouseLeftButtonDown="CloseAddAssignmentDrawer_Click"/>
+            <Border HorizontalAlignment="Right" Background="White" Width="500">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="30">
+                        <TextBlock x:Name="TxtAssignmentFormTitle" Text="Tạo bài tập mới" FontSize="22" FontWeight="Bold" Margin="0,0,0,25"/>
+
+                        <TextBlock Text="Tên bài tập" Foreground="#64748B" Margin="0,0,0,5"/>
+                        <TextBox x:Name="AssignTitleInput" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,15"/>
+
+                        <TextBlock Text="Mô tả / Yêu cầu" Foreground="#64748B" Margin="0,0,0,5"/>
+                        <TextBox x:Name="AssignDescInput" Style="{StaticResource ModernTextBox}" Height="100" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="12,10" Margin="0,0,0,15"/>
+
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="15"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Hạn nộp (Ngày)" Foreground="#64748B" Margin="0,0,0,5"/>
+                                <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Background="White">
+                                    <DatePicker x:Name="AssignDatePicker" Height="40" Padding="5" BorderThickness="0" Background="Transparent"/>
+                                </Border>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Giờ (VD: 23:59)" Foreground="#64748B" Margin="0,0,0,5"/>
+                                <TextBox x:Name="AssignTimeInput" Style="{StaticResource ModernTextBox}" Height="42" Text="23:59"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="File đính kèm (Tùy chọn)" Foreground="#64748B" Margin="0,0,0,5"/>
+                        <Grid Height="100" Margin="0,0,0,25" Cursor="Hand" Background="#F8FAFC" MouseLeftButtonDown="AssignDropZone_Click" AllowDrop="True" Drop="AssignDropZone_Drop">
+                            <Rectangle Stroke="#3B82F6" StrokeThickness="2" StrokeDashArray="4 4" RadiusX="12" RadiusY="12" IsHitTestVisible="False"/>
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                                <TextBlock Text="📎" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="TxtAssignSelectedFile" Text="Kéo thả tệp vào đây hoặc nhấn để chọn" FontSize="14" Foreground="#64748B" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="350"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="BtnConfirmAddAssignment" Content="Tạo bài tập" Width="140" Height="42" Background="{Binding CourseAccentBrush, ElementName=Root}" Foreground="White" Click="ConfirmAddAssignment_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button Content="Hủy" Margin="15,0,0,0" Background="Transparent" Foreground="#64748B" BorderThickness="0" Click="CloseAddAssignmentDrawer_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="AssignmentDetailDrawer" Visibility="Collapsed">
+            <Border Background="#40000000" MouseLeftButtonDown="CloseAssignmentDetail_Click"/>
+            <Border HorizontalAlignment="Right" Background="White" Width="600" CornerRadius="20,0,0,20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="-5" Opacity="0.1" Color="Black"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="40,40,40,15">
+                        <Button Content="✕" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" FontSize="18" Foreground="#64748B" Cursor="Hand" Click="CloseAssignmentDetail_Click"/>
+                        <TextBlock x:Name="DetailAssignTitle" FontSize="30" FontWeight="Bold" Foreground="#1E293B" Margin="0,10,0,10" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="⏱ Hạn nộp: " FontSize="14" Foreground="#64748B" VerticalAlignment="Center"/>
+                            <Border x:Name="DetailAssignDeadlineBorder" Background="#ECFDF5" Padding="8,4" CornerRadius="6" BorderBrush="#A7F3D0" BorderThickness="1">
+                                <TextBlock x:Name="DetailAssignDeadline" FontSize="14" Foreground="#10B981" FontWeight="SemiBold"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="1" Margin="40,0,40,40" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,0,15,0">
+                            <Separator Margin="0,0,0,20" Background="#F1F5F9"/>
+                            <TextBlock Text="Yêu cầu bài tập" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="DetailAssignDesc" FontSize="15" Foreground="#475569" TextWrapping="Wrap" LineHeight="26" Margin="0,0,0,20"/>
+
+                            <Button x:Name="BtnDetailDownloadAttach" Cursor="Hand" Margin="0,0,0,30" Click="DownloadAttachedFile_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="15">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="40" Height="40" Background="#EFF6FF" CornerRadius="8" Margin="0,0,15,0">
+                                                    <TextBlock Text="📎" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Tài liệu đính kèm" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                                    <TextBlock Text="Nhấn để xem hoặc tải xuống" FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Opacity" Value="0.8"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <StackPanel x:Name="InstructorManageArea" Visibility="Collapsed">
+                                <Separator Margin="0,0,0,20" Background="#F1F5F9"/>
+                                <TextBlock Text="Quản lý &amp; Chấm điểm" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,15"/>
+                                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20">
+                                    <StackPanel>
+                                        <TextBlock x:Name="TxtInstructorGradingStatus" Text="Trạng thái: Đang kiểm tra..." FontSize="14" Foreground="#F59E0B" Margin="0,0,0,15" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="TxtSubmissionCount" Text="Đang tải dữ liệu..." FontSize="14" Foreground="#475569" Margin="0,0,0,15"/>
+                                        <Button x:Name="BtnDownloadAll" Content="Tải về tất cả bài nộp (.zip)" Height="45" Background="#3B82F6" Foreground="White" FontSize="15" FontWeight="SemiBold" Cursor="Hand" Click="BtnDownloadAll_Click" Margin="0,0,0,10">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button x:Name="BtnGradeAssignment" Grid.Column="0" Content="Chấm bài &amp; Nhận xét" Height="45" Background="White" Foreground="#8B5CF6" BorderBrush="#8B5CF6" BorderThickness="1.5" FontSize="15" FontWeight="SemiBold" Cursor="Hand" Click="BtnGradeAssignment_Click">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                            <Button x:Name="BtnPublishGrades" Grid.Column="2" Content="Công khai điểm" Height="45" Background="White" Foreground="#F43F5E" BorderBrush="#F43F5E" BorderThickness="1.5" FontSize="15" FontWeight="SemiBold" Cursor="Hand" Click="BtnPublishGrades_Click">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel x:Name="StudentSubmitArea">
+                                <Separator Margin="0,0,0,20" Background="#F1F5F9"/>
+                                <Grid Margin="0,0,0,15">
+                                    <TextBlock Text="Nộp bài của bạn" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="Trạng thái: " FontSize="14" Foreground="#64748B"/>
+                                        <TextBlock x:Name="DetailSubmissionStatus" Text="Chưa nộp" FontSize="14" FontWeight="SemiBold" Foreground="#EF4444"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border x:Name="StudentGradePanel" Background="#ECFDF5" BorderBrush="#10B981" BorderThickness="1" CornerRadius="10" Padding="15,10" Margin="0,0,0,15" Visibility="Collapsed">
+                                    <StackPanel>
+                                        <TextBlock Text="Kết quả chấm điểm" FontSize="16" FontWeight="Bold" Foreground="#10B981" Margin="0,0,0,10"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                            <TextBlock Text="Điểm số: " FontSize="14" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                            <TextBlock x:Name="TxtStudentScore" Text="10/10" FontSize="14" FontWeight="Bold" Foreground="#10B981"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Nhận xét:" FontSize="14" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,5,0,2"/>
+                                        <TextBlock x:Name="TxtStudentComment" Text="Bài làm rất tốt!" FontSize="14" Foreground="#475569" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border x:Name="SubmittedFileDetailsPanel" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,0,0,15" Visibility="Collapsed">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="📄" FontSize="24" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock x:Name="TxtSubmittedFileName" Text="filename.pdf" FontSize="14" FontWeight="SemiBold" Foreground="#1E293B" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock x:Name="TxtSubmittedTime" Text="Đã nộp lúc: 10:17 20/04/2026" FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <Grid x:Name="DropZoneGrid" Height="100" Margin="0,0,0,15" Cursor="Hand" Background="#F8FAFC" MouseLeftButtonDown="DropZone_Click" AllowDrop="True" Drop="DropZone_Drop">
+                                    <Rectangle x:Name="DropZoneBorder" Stroke="#3B82F6" StrokeThickness="2" StrokeDashArray="4 4" RadiusX="12" RadiusY="12" IsHitTestVisible="False"/>
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                                        <TextBlock Text="📁" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                                        <TextBlock x:Name="TxtSelectedFile" Text="Kéo thả tệp vào đây hoặc nhấn để chọn" FontSize="14" Foreground="#64748B" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Button x:Name="BtnDetailSubmit" Content="Tải lên tệp bài làm" Height="45" Background="#3B82F6" Foreground="White" FontSize="15" FontWeight="SemiBold" Cursor="Hand" Click="BtnSubmitAssignment_Click">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                <TextBlock x:Name="TxtFormatHint" Text="Định dạng hỗ trợ: PDF, Word, Excel, ZIP..." FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="ApprovalDrawer" Visibility="Collapsed">
+            <Border Background="#40000000" MouseLeftButtonDown="CloseApprovalDrawer_Click"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Stretch" Background="White" Width="500" CornerRadius="20,0,0,20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="-5" Opacity="0.1" Color="Black"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="30,30,30,15">
+                        <Grid>
+                            <TextBlock Text="Yêu cầu chờ duyệt" FontSize="22" FontWeight="Bold" Foreground="#1E293B"/>
+                            <Button Content="✕" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" FontSize="18" Foreground="#64748B" Cursor="Hand" Click="CloseApprovalDrawer_Click"/>
+                        </Grid>
+
+                        <Button x:Name="BtnAcceptAll" Content="Duyệt tất cả" Height="40" Background="{Binding CourseAccentBrush, ElementName=Root}" Foreground="White" FontWeight="SemiBold" Margin="0,15,0,0" Cursor="Hand" Click="BtnAcceptAll_Click" Visibility="Collapsed">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="1" Margin="30,0,30,30" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock x:Name="TxtNoPendingRequests" 
+                                       Text="Hiện không có yêu cầu nào đang chờ duyệt." 
+                                       Foreground="#94A3B8" FontSize="14" 
+                                       HorizontalAlignment="Center" Margin="0,40,0,0" 
+                                       Visibility="Collapsed"/>
+
+                            <ItemsControl x:Name="PendingRequestsList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="15" Margin="0,0,0,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                    <TextBlock Text="{Binding FullName}" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B" TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="{Binding Email}" FontSize="13" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text=" • " FontSize="13" Foreground="#CBD5E1"/>
+                                                        <TextBlock Text="{Binding TimeAgo}" FontSize="13" Foreground="#94A3B8" FontStyle="Italic"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <Button Grid.Column="1" Content="✔" Width="36" Height="36" Background="#10B981" Foreground="White" FontWeight="Bold" Cursor="Hand" Margin="0,0,8,0" Tag="{Binding RegistrationId}" Click="BtnAcceptStudent_Click">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+
+                                                <Button Grid.Column="2" Content="✕" Width="36" Height="36" Background="#EF4444" Foreground="White" FontWeight="Bold" Cursor="Hand" Tag="{Binding RegistrationId}" Click="BtnRejectStudent_Click">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="ManageStudentsDrawer" Visibility="Collapsed">
+            <Border Background="#40000000" MouseLeftButtonDown="CloseManageStudentsDrawer_Click"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Stretch" Background="White" Width="500" CornerRadius="20,0,0,20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="-5" Opacity="0.1" Color="Black"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="30,30,30,15">
+                        <Grid>
+                            <TextBlock Text="Danh sách sinh viên" FontSize="22" FontWeight="Bold" Foreground="#1E293B"/>
+                            <Button Content="✕" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" FontSize="18" Foreground="#64748B" Cursor="Hand" Click="CloseManageStudentsDrawer_Click"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="1" Margin="30,0,30,30" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock x:Name="TxtNoEnrolledStudents" 
+                                       Text="Chưa có sinh viên nào tham gia lớp học." 
+                                       Foreground="#94A3B8" FontSize="14" 
+                                       HorizontalAlignment="Center" Margin="0,40,0,0" 
+                                       Visibility="Collapsed"/>
+
+                            <ItemsControl x:Name="EnrolledStudentsList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="15" Margin="0,0,0,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                    <TextBlock Text="{Binding FullName}" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Email}" FontSize="13" Foreground="#64748B" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                                </StackPanel>
+
+                                                <Button Grid.Column="1" Content="🗑️" Width="36" Height="36" Background="#FEF2F2" Foreground="#EF4444" FontWeight="Bold" FontSize="16" Cursor="Hand" Tag="{Binding RegistrationId}" Click="BtnRemoveStudent_Click" ToolTip="Xóa sinh viên khỏi lớp">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="GradingDrawer" Visibility="Collapsed">
+            <Border Background="#40000000" MouseLeftButtonDown="CloseGradingDrawer_Click"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Stretch" Background="#F8FAFC" Width="800" CornerRadius="20,0,0,20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="-5" Opacity="0.1" Color="Black"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="70"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="White" CornerRadius="20,0,0,0" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                        <Grid Margin="30,0">
+                            <TextBlock Text="Chấm bài &amp; Nhận xét" FontSize="20" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                            <Button Content="✕" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" FontSize="18" Foreground="#64748B" Cursor="Hand" Click="CloseGradingDrawer_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0">
+                            <Grid>
+                                <TextBlock x:Name="TxtGradingLoading" Text="Đang tải danh sách..." HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="#94A3B8"/>
+                                <ListBox x:Name="GradingItemsList" Background="Transparent" BorderThickness="0" SelectionChanged="GradingItemsList_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="15,10" Background="Transparent" BorderBrush="#F1F5F9" BorderThickness="0,0,0,1">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding FullName}" FontWeight="SemiBold" FontSize="14" Foreground="#1E293B" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding DisplayFileName}" FontSize="12" Foreground="#64748B" TextTrimming="CharacterEllipsis" MaxWidth="220" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                    <Ellipse Grid.Column="1" Width="12" Height="12" Fill="{Binding StatusColor}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Border>
+
+                        <Grid x:Name="GradingRightPanel" Grid.Column="1" Margin="30" Visibility="Collapsed">
+                            <StackPanel>
+                                <TextBlock x:Name="TxtGradeStudentName" Text="Tên Sinh Viên" FontSize="24" FontWeight="Bold" Foreground="#1E293B" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="TxtGradeStatus" Text="Nộp đúng hạn" FontSize="14" FontWeight="SemiBold" Foreground="#10B981" Margin="0,5,0,20"/>
+
+                                <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,0,0,25">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="📄" FontSize="24" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                                        <TextBlock x:Name="TxtGradeFileName" Grid.Column="1" Text="file_bai_tap.pdf" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        <Button Grid.Column="2" Content="Tải xuống" Background="#EFF6FF" Foreground="#3B82F6" FontWeight="SemiBold" Padding="15,8" BorderThickness="0" Cursor="Hand" Click="BtnDownloadCurrentGradeFile_Click">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                                <TextBlock Text="Điểm số (0 - 10)" Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBox x:Name="InputScore" Style="{StaticResource ModernTextBox}" FontSize="16" FontWeight="Bold" Padding="15,10" BorderBrush="#E2E8F0" BorderThickness="1" Background="White" Width="120" HorizontalAlignment="Left" Margin="0,0,0,20"/>
+
+                                <TextBlock Text="Nhận xét" Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBox x:Name="InputComment" Style="{StaticResource ModernTextBox}" TextWrapping="Wrap" AcceptsReturn="True" Height="150" Padding="15" BorderBrush="#E2E8F0" BorderThickness="1" Background="White" VerticalContentAlignment="Top"/>
+
+                                <Button x:Name="BtnSaveAndNext" Content="Lưu &amp; Tiếp tục" Height="45" Background="#3B82F6" Foreground="White" FontSize="15" FontWeight="Bold" Margin="0,30,0,0" Cursor="Hand" Click="BtnSaveAndNext_Click">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+        
+        <!-- Add Video Drawer -->
+        <Grid x:Name="AddVideoDrawer" Visibility="Collapsed">
+            <!-- Overlay -->
+            <Border Background="#000000" Opacity="0.4" MouseLeftButtonDown="CloseAddVideoDrawer_Click"/>
+            
+            <!-- Drawer Content -->
+            <Border Background="White" Width="450" HorizontalAlignment="Right" CornerRadius="20,0,0,20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="-5" Opacity="0.1" Color="Black"/>
+                </Border.Effect>
+                
+                <Grid Margin="30">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Grid Grid.Row="0" Margin="0,0,0,30">
+                        <TextBlock Text="Thêm Video Bài Giảng" FontSize="22" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                        <Button Content="✕" FontSize="18" Foreground="#94A3B8" Background="Transparent" BorderThickness="0" HorizontalAlignment="Right" Cursor="Hand" Click="CloseAddVideoDrawer_Click"/>
+                    </Grid>
+
+                    <!-- Body -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="Tiêu đề video" Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBox x:Name="InputVideoTitle" Style="{StaticResource ModernTextBox}" Padding="15,12" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,20"/>
+
+                            <TextBlock Text="Mô tả" Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBox x:Name="InputVideoDesc" Style="{StaticResource ModernTextBox}" Height="80" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="15,12" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,20"/>
+
+                            <TextBlock Text="Tệp Video (.mp4)" Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <Border BorderBrush="#E2E8F0" BorderThickness="2" CornerRadius="12" Background="#F8FAFC" Margin="0,0,0,20">
+                                <StackPanel Margin="20" HorizontalAlignment="Center">
+                                    <TextBlock Text="🎥" FontSize="30" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                    <TextBlock x:Name="TxtSelectedVideoFile" Text="Chưa chọn tệp nào" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,0,0,15" TextWrapping="Wrap" TextAlignment="Center"/>
+                                    <Button x:Name="BtnBrowseVideo" Content="Chọn tệp" Background="#EFF6FF" Foreground="#3B82F6" FontWeight="SemiBold" Padding="20,8" BorderThickness="0" Cursor="Hand" HorizontalAlignment="Center" Click="BtnBrowseVideo_Click">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Button x:Name="BtnConfirmAddVideo" Grid.Row="2" Content="Tải lên Video" Height="45" Background="#3B82F6" Foreground="White" FontSize="15" FontWeight="Bold" Margin="0,20,0,0" Cursor="Hand" Click="ConfirmAddVideo_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+
     </Grid>
 </UserControl>
