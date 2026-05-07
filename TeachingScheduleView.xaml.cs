@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using e_learning_app.Views;
 
 namespace e_learning_app
 {
@@ -21,6 +22,7 @@ namespace e_learning_app
             public string Room { get; set; }
             public string Time { get; set; }
             public string ColorHex { get; set; }
+            public Course AssociatedCourse { get; set; }
         }
 
         private List<ScheduleEvent> _currentSchedule = new();
@@ -67,7 +69,8 @@ namespace e_learning_app
                         ClassName = c.ClassName,
                         Room = string.IsNullOrEmpty(c.Category) ? "Online" : c.Category,
                         Time = timeStr,
-                        ColorHex = colorHex
+                        ColorHex = colorHex,
+                        AssociatedCourse = c
                     });
                 }
             }
@@ -279,9 +282,10 @@ namespace e_learning_app
             // Click event
             border.MouseLeftButtonUp += (s, e) =>
             {
-                MessageBox.Show(
-                    $"Thông tin lớp học:\n\nMôn: {ev.Subject}\nLớp: {ev.ClassName}\nPhòng: {ev.Room}\nGiờ học: {ev.Time}",
-                    "Chi tiết Lịch Dạy", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (Window.GetWindow(this) is MainWindow mw && ev.AssociatedCourse != null)
+                {
+                    mw.NavigateTo(new CourseDetailView(_dbManager, ev.AssociatedCourse));
+                }
             };
 
             return border;
