@@ -29,7 +29,7 @@ namespace e_learning_app
                         txtEmail.Text = user.Email;
                         txtPhone.Text = user.PhoneNumber;
                         txtRole.Text = user.Role;
-                        txtCreatedAt.Text = user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+                        //txtCreatedAt.Text = user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
                     }
                 }
             }

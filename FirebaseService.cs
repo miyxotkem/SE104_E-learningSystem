@@ -227,7 +227,7 @@ namespace e_learning_app
                 DocumentReference docRef = Db.Collection("Users").Document(uid);
                 DocumentSnapshot snapshot = await docRef.GetSnapshotAsync();
 
-                string role = email == "buitrantrongnguyen@gmail.com" ? "Teacher" : "Student";
+                string role = "Student";
 
                 // Kiểm tra xem user đã tồn tại chưa để tránh ghi đè
                 if (!snapshot.Exists)

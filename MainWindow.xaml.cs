@@ -37,7 +37,7 @@ namespace e_learning_app
                 return;
             }
 
-            if (user.Role == "Instructor")
+            if (user.Role == "Teacher")
                 MainContentArea.Content = new TeacherDashboardView(_dbManager);
             else
                 MainContentArea.Content = new StudentDashboardView(_dbManager);
@@ -47,7 +47,7 @@ namespace e_learning_app
 
         public void NavDashboard_Click(object sender, RoutedEventArgs e)
         {
-            if (_dbManager.GetCurrentUser()?.Role == "Instructor")
+            if (_dbManager.GetCurrentUser()?.Role == "Teacher")
                 MainContentArea.Content = new TeacherDashboardView(_dbManager);
             else
                 MainContentArea.Content = new StudentDashboardView(_dbManager);
