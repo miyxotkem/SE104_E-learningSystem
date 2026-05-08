@@ -16,6 +16,7 @@ namespace e_learning_app.Views.Admin
         public string Email      { get; set; }
         public string Role       { get; set; }
         public string CreatedAt  { get; set; }
+        public bool IsBlocked    { get; set; }
 
         public string Initials =>
             string.IsNullOrWhiteSpace(FullName) ? "?" :
@@ -23,6 +24,11 @@ namespace e_learning_app.Views.Admin
                                   .Where(w => w.Length > 0)
                                   .Take(2)
                                   .Select(w => char.ToUpper(w[0])));
+
+        // UI Helpers
+        public string BlockText => IsBlocked ? "🔓 Mở khóa" : "🔒 Khóa";
+        public System.Windows.Media.Brush BlockTextBrush => IsBlocked ? System.Windows.Media.Brushes.Green : new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#DC2626"));
+        public System.Windows.Media.Brush IsBlockedBrush => IsBlocked ? new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#DCFCE7")) : new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#FEE2E2"));
     }
 
     public partial class AdminUsersView : UserControl
@@ -53,6 +59,7 @@ namespace e_learning_app.Views.Admin
                         FullName  = u.FullName ?? u.Email,
                         Email     = u.Email,
                         Role      = u.Role ?? "Student",
+                        IsBlocked = u.IsBlocked,
                         CreatedAt = u.CreatedAt == default ? "N/A" : u.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
                     };
                 }).OrderBy(u => u.FullName).ToList();
@@ -131,6 +138,51 @@ namespace e_learning_app.Views.Admin
                         MessageBox.Show("Cập nhật vai trò thành công!", "Thông báo");
                         
                         // Load lại dữ liệu
+                        UserControl_Loaded(null, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        private async void BtnBlockUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is AdminUserRow row)
+            {
+                bool newBlockStatus = !row.IsBlocked;
+                string action = newBlockStatus ? "khóa" : "mở khóa";
+
+                var result = MessageBox.Show($"Bạn có chắc muốn {action} tài khoản {row.FullName}?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        await _db.GetDb.Collection("Users").Document(row.Uid).UpdateAsync("IsBlocked", newBlockStatus);
+                        MessageBox.Show($"Đã {action} tài khoản thành công!", "Thông báo");
+                        UserControl_Loaded(null, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        private async void BtnDeleteUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is AdminUserRow row)
+            {
+                var result = MessageBox.Show($"CẢNH BÁO: Bạn có chắc muốn XÓA VĨNH VIỄN tài khoản {row.FullName}? \n\nHành động này không thể hoàn tác!", "Xác nhận xóa", MessageBoxButton.YesNo, MessageBoxImage.Stop);
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        await _db.GetDb.Collection("Users").Document(row.Uid).DeleteAsync();
+                        MessageBox.Show("Đã xóa tài khoản thành công!", "Thông báo");
                         UserControl_Loaded(null, null);
                     }
                     catch (Exception ex)

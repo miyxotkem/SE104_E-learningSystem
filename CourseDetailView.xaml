@@ -7,7 +7,7 @@
              PreviewMouseLeftButtonDown="UserControl_PreviewMouseLeftButtonDown">
 
     <UserControl.Resources>
-        <!--<local:deadlinecolorconverter x:Key="deadlinecolorconverter"/>-->
+        <local:DeadlineColorConverter x:Key="DeadlineColorConverter"/>
 
         <Style TargetType="ContextMenu" x:Key="ModernContextMenu">
             <Setter Property="OverridesDefaultStyle" Value="True"/>

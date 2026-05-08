@@ -59,7 +59,7 @@ namespace e_learning_app.Views
         private void ApplyRolePermissions()
         {
             var currentUser = _dbManager.GetCurrentUser();
-            _isInstructor = (currentUser != null && currentUser.Role == "Teacher");
+            _isInstructor = (currentUser != null && currentUser.Role == "Instructor");
 
             if (_isInstructor)
             {
@@ -238,7 +238,7 @@ namespace e_learning_app.Views
                 var selectedCourse = _allClasses.FirstOrDefault(c => c.Id == courseId);
                 if (selectedCourse == null) return;
 
-                string role = _isInstructor ? "Teacher" : "Student";
+                string role = _isInstructor ? "Instructor" : "Student";
 
                 // Giáo viên dùng MainWindow
                 var mainWin = Window.GetWindow(this) as MainWindow;
