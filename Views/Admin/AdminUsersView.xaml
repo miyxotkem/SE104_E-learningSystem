@@ -254,7 +254,7 @@
                     </DataGridTemplateColumn>
 
                     <!-- Actions -->
-                    <DataGridTemplateColumn Header="Thao tác" Width="160">
+                    <DataGridTemplateColumn Header="Thao tác" Width="230">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Margin="12,0" VerticalAlignment="Center">
@@ -268,11 +268,27 @@
                                             </ControlTemplate>
                                         </Button.Template>
                                     </Button>
-                                    <!-- Khóa -->
-                                    <Border Background="#FEE2E2" CornerRadius="8" Padding="8,4"
-                                            Cursor="Hand">
-                                        <TextBlock Text="🔒 Khóa" FontSize="11" Foreground="#DC2626" FontWeight="SemiBold"/>
-                                    </Border>
+                                    <!-- Khóa/Mở khóa -->
+                                    <Button x:Name="BtnBlockUser" Click="BtnBlockUser_Click" Margin="0,0,6,0">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{Binding IsBlockedBrush}" CornerRadius="8" Padding="8,4" Cursor="Hand">
+                                                    <TextBlock Text="{Binding BlockText}" FontSize="11" Foreground="{Binding BlockTextBrush}" FontWeight="SemiBold"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+
+                                    <!-- Xóa -->
+                                    <Button x:Name="BtnDeleteUser" Click="BtnDeleteUser_Click">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="#FEE2E2" CornerRadius="8" Padding="8,4" Cursor="Hand">
+                                                    <TextBlock Text="🗑️ Xóa" FontSize="11" Foreground="#DC2626" FontWeight="SemiBold"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
                                 </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>

@@ -3,12 +3,14 @@ using e_learning_app.Views;
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using Google.Cloud.Firestore;
 
 namespace e_learning_app
 {
     public partial class MainWindow : Window
     {
         private readonly DatabaseManager _dbManager;
+        private FirestoreChangeListener _userListener;
 
         public MainWindow(User loggedInUser)
         {
@@ -25,6 +27,35 @@ namespace e_learning_app
             btnDashBoard.Focus();
 
             this.Loaded += MainWindow_Loaded;
+            this.Closed += (s, e) => _userListener?.StopAsync();
+
+            StartUserStatusListener(loggedInUser?.Id);
+        }
+
+        private void StartUserStatusListener(string userId)
+        {
+            if (string.IsNullOrEmpty(userId) || FirebaseService.Db == null) return;
+
+            DocumentReference docRef = FirebaseService.Db.Collection("Users").Document(userId);
+            _userListener = docRef.Listen(snapshot =>
+            {
+                if (snapshot.Exists)
+                {
+                    var user = snapshot.ConvertTo<User>();
+                    if (user != null && user.IsBlocked)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            _userListener?.StopAsync();
+                            MessageBox.Show("Tài khoản của bạn đã bị Admin khóa. Bạn sẽ bị đăng xuất ngay lập tức.", "Cảnh báo bảo mật", MessageBoxButton.OK, MessageBoxImage.Stop);
+
+                            var loginWin = new LoginWindow();
+                            loginWin.Show();
+                            this.Close();
+                        });
+                    }
+                }
+            });
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)

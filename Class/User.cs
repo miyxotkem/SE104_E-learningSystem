@@ -25,6 +25,9 @@ namespace e_learning_app
         public string Role { get; set; }
 
         [FirestoreProperty]
+        public bool IsBlocked { get; set; }
+
+        [FirestoreProperty]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
