@@ -249,7 +249,6 @@ namespace e_learning_app
                     // Nếu FullName trong Firestore đang trống, hãy cập nhật nó bằng fullName truyền vào.
                     var updates = new Dictionary<string, object> 
                     { 
-                        { "Role", role }, 
                         { "Email", email } 
                     };
 

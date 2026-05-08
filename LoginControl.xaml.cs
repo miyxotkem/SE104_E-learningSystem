@@ -55,8 +55,7 @@ namespace e_learning_app
                     {
                         Id       = uid,
                         Email    = email,
-                        FullName = fullName,
-                        Role     = "Student"
+                        FullName = fullName
                     };
 
                     // Cố lấy FullName thực từ Firestore nếu có
@@ -70,6 +69,10 @@ namespace e_learning_app
                                 var stored = doc.ConvertTo<User>();
                                 if (!string.IsNullOrWhiteSpace(stored?.FullName))
                                     user.FullName = stored.FullName;
+                                if (!string.IsNullOrWhiteSpace(stored?.Role))
+                                    user.Role = stored.Role;
+                                else
+                                    user.Role = "Student";
                             }
                         }
                     }
@@ -145,31 +148,28 @@ namespace e_learning_app
                 {
                     Id       = userId,
                     Email    = email,
-                    FullName = email.Split('@')[0],
-                    Role     = "Student"
+                    FullName = email.Split('@')[0]
                 };
 
-                // Fetch đúng Firestore document ID (quan trọng: phải khớp với InstructorId trong courses)
+                // Fetch đúng Firestore document (dùng userId làm Document ID)
                 try
                 {
                     if (FirebaseService.Db != null)
                     {
-                        // Tìm theo Email để lấy Firestore document ID thực sự
-                        var query = await FirebaseService.Db.Collection("Users")
-                            .WhereEqualTo("Email", email)
-                            .Limit(1)
-                            .GetSnapshotAsync();
-
-                        if (query.Count > 0)
+                        var doc = await FirebaseService.Db.Collection("Users").Document(userId).GetSnapshotAsync();
+                        if (doc.Exists)
                         {
-                            var stored = query.Documents[0].ConvertTo<User>();
-                            // stored.Id = Firestore document ID thực (khớp với InstructorId trong courses)
-                            if (!string.IsNullOrWhiteSpace(stored?.Id))
-                                user.Id = stored.Id;
+                            var stored = doc.ConvertTo<User>();
                             if (!string.IsNullOrWhiteSpace(stored?.FullName))
                                 user.FullName = stored.FullName;
                             if (!string.IsNullOrWhiteSpace(stored?.Role))
                                 user.Role = stored.Role;
+                            else
+                                user.Role = "Student";
+                        }
+                        else
+                        {
+                            user.Role = "Student";
                         }
                     }
                 }
