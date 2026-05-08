@@ -33,7 +33,7 @@ namespace e_learning_app
                 string initials = parts.Length >= 2
                     ? $"{parts[0][0]}{parts[^1][0]}"
                     : user.FullName.Substring(0, System.Math.Min(2, user.FullName.Length));
-                TxtAvatarInitials.Text = initials.ToUpper();
+                //TxtAvatarInitials.Text = initials.ToUpper();
             }
 
             // Load trang Dashboard mặc định
@@ -74,8 +74,7 @@ namespace e_learning_app
 
         private void BtnProfile_Click(object sender, RoutedEventArgs e)
         {
-            SetActiveNav(BtnProfile);
-            StudentContentArea.Content = new StudentProfileView();
+            OpenProfile_Click(sender, null);
         }
 
         private void BtnNotifications_Click(object sender, RoutedEventArgs e)
@@ -98,6 +97,11 @@ namespace e_learning_app
                 loginWin.Show();
                 this.Close();
             }
+        }
+
+        private void OpenProfile_Click(object sender, RoutedEventArgs e)
+        {
+            StudentContentArea.Content = new ProfileManage(_dbManager);
         }
     }
 }

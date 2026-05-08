@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.ProfileManage"
+<UserControl x:Class="e_learning_app.ProfileManage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -148,18 +148,16 @@
                         <TextBox x:Name="txtFullName" Tag="Nhập họ tên..."/>
 
                         <TextBlock Text="Email" Style="{StaticResource FieldLabelStyle}"/>
-                        <TextBox x:Name="txtEmail" Tag="example@email.com"/>
-
-                        <TextBlock Text="Số điện thoại" Style="{StaticResource FieldLabelStyle}"/>
-                        <TextBox x:Name="txtPhone" Tag="090..."/>
+                        <TextBox x:Name="txtEmail" Tag="example@email.com" IsReadOnly="True" Background="#F1F5F9"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="Tên đăng nhập" Style="{StaticResource FieldLabelStyle}"/>
-                        <TextBox x:Name="txtUsername" IsReadOnly="True" Background="#F1F5F9"/>
+                        <TextBlock Text="Số điện thoại" Style="{StaticResource FieldLabelStyle}"/>
+                        <TextBox x:Name="txtPhone" Tag="090..."/>
 
                         <TextBlock Text="Vai trò" Style="{StaticResource FieldLabelStyle}"/>
                         <TextBox x:Name="txtRole" IsReadOnly="True" Background="#F1F5F9"/>
+
                     </StackPanel>
                 </Grid>
             </Border>

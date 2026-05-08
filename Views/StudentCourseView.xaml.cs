@@ -368,8 +368,7 @@ namespace e_learning_app.Views
             if (currentUser == null) return;
 
             string userId = currentUser.Id;
-            string userName = !string.IsNullOrEmpty(currentUser.FullName) ? currentUser.FullName : 
-                              (!string.IsNullOrEmpty(currentUser.Username) ? currentUser.Username : "Học viên ẩn danh");
+            string userName = !string.IsNullOrEmpty(currentUser.FullName) ? currentUser.FullName : "Học viên ẩn danh";
             string role = _course.InstructorId == currentUser.Id ? "Teacher" : "Student";
 
             var newComment = new Comment

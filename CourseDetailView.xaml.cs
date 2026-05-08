@@ -1770,12 +1770,6 @@ namespace e_learning_app.Views
                         name = userDoc.ContainsField("FullName") ? userDoc.GetValue<object>("FullName")?.ToString() : "";
                         email = userDoc.ContainsField("Email") ? userDoc.GetValue<object>("Email")?.ToString() : "";
 
-                        // Fallback cho dữ liệu cũ dùng DisplayName
-                        if (string.IsNullOrWhiteSpace(name) && userDoc.ContainsField("DisplayName"))
-                        {
-                            name = userDoc.GetValue<object>("DisplayName")?.ToString();
-                        }
-
                         if (string.IsNullOrWhiteSpace(name)) name = "Học viên ẩn danh";
                     }
 
@@ -1943,12 +1937,6 @@ namespace e_learning_app.Views
                         // Lấy dữ liệu an toàn, tránh lỗi ép kiểu trực tiếp
                         name = userDoc.ContainsField("FullName") ? userDoc.GetValue<object>("FullName")?.ToString() : "";
                         email = userDoc.ContainsField("Email") ? userDoc.GetValue<object>("Email")?.ToString() : "";
-
-                        // Fallback cho dữ liệu cũ dùng DisplayName
-                        if (string.IsNullOrWhiteSpace(name) && userDoc.ContainsField("DisplayName"))
-                        {
-                            name = userDoc.GetValue<object>("DisplayName")?.ToString();
-                        }
 
                         if (string.IsNullOrWhiteSpace(name)) name = "Học viên ẩn danh";
                     }

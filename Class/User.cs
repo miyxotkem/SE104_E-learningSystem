@@ -13,12 +13,6 @@ namespace e_learning_app
         public string Uid => Id;
 
         [FirestoreProperty]
-        public string Username { get; set; }
-
-        [FirestoreProperty]
-        public string Password { get; set; }
-
-        [FirestoreProperty]
         public string Email { get; set; }
 
         [FirestoreProperty]
@@ -31,6 +25,6 @@ namespace e_learning_app
         public string Role { get; set; }
 
         [FirestoreProperty]
-        public System.DateTime? CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -1,4 +1,4 @@
-﻿using e_learning_app;
+using e_learning_app;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -17,10 +17,8 @@ namespace e_learning_app
 
         private void btnNext_Click(object sender, RoutedEventArgs e)
         {
-            if(_dbManager.GetCurrentUser().Password == txtCurrentPassword.Password)
-                _mainProfile.ShowNewPasswordView();
-            else
-                MessageBox.Show("Incorrect password");
+            // Cho phép đi tiếp (Vì Firestore không còn lưu Password để so sánh)
+            _mainProfile.ShowNewPasswordView();
         }
     }
 }

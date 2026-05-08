@@ -30,11 +30,8 @@ namespace e_learning_app.Views.Admin
                 int totalStudents = users.Count(u => u.Role?.ToLower() == "student");
                 int totalTeachers = users.Count(u => u.Role?.ToLower() == "teacher");
 
-                // Count users created in last 7 days
-                var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
-                int newUsers = users.Count(u =>
-                    u.CreatedAt.HasValue &&
-                    u.CreatedAt.Value >= sevenDaysAgo);
+                // Count users created in last 7 days (Bị gỡ bỏ vì không còn CreatedAt)
+                int newUsers = 0;
 
                 // Update stat cards
                 TxtTotalUsers.Text    = totalUsers.ToString();
@@ -42,9 +39,8 @@ namespace e_learning_app.Views.Admin
                 TxtTotalTeachers.Text = totalTeachers.ToString();
                 TxtNewUsers.Text      = newUsers.ToString();
 
-                // Show 10 most recent users in the table
+                // Show 10 users in the table
                 var recent = users
-                    .OrderByDescending(u => u.CreatedAt)
                     .Take(10)
                     .ToList();
 

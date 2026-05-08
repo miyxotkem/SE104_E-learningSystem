@@ -9,7 +9,7 @@ namespace e_learning_app
     public partial class LoginControl : UserControl
     {
         // Email duy nhất có role giáo viên
-        private const string TeacherEmail = "dinhquangnhat16062006@gmail.com";
+        private const string TeacherEmail = "buitrantrongnguyen@gmail.com";
 
         public LoginControl()
         {
@@ -55,18 +55,18 @@ namespace e_learning_app
                 var fbUser = await FirebaseService.LoginWithGoogleAsync();
                 if (fbUser != null)
                 {
-                    string email       = fbUser.Info?.Email ?? "";
-                    string displayName = fbUser.Info?.DisplayName ?? email;
-                    string uid         = fbUser.Uid;
+                    string email    = fbUser.Info?.Email ?? "";
+                    string fullName = fbUser.Info?.DisplayName ?? email;
+                    string uid      = fbUser.Uid;
 
 
-                    await FirebaseService.CreateUserInFirestore(uid, email, displayName);
+                    await FirebaseService.CreateUserInFirestore(uid, email, fullName);
 
                     var user = new User
                     {
                         Id       = uid,
                         Email    = email,
-                        FullName = displayName,
+                        FullName = fullName,
                         Role     = GetRoleByEmail(email)
                     };
 

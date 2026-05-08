@@ -22,7 +22,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
-            <Setter Property="Height" Value="50"/>
+            <Setter Property="Height" Value="40"/>
             <Setter Property="Margin" Value="0,4"/>
             <Setter Property="Padding" Value="20,0"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>

@@ -214,7 +214,7 @@ namespace e_learning_app
             }
         }
 
-        public static async Task<bool> CreateUserInFirestore(string uid, string email = "", string displayName = "")
+        public static async Task<bool> CreateUserInFirestore(string uid, string email = "", string fullName = "")
         {
             try
             {
@@ -234,18 +234,32 @@ namespace e_learning_app
                 {
                     Dictionary<string, object> user = new Dictionary<string, object>
                     {
-                        { "Uid", uid },
                         { "Email", email },
-                        { "FullName", string.IsNullOrEmpty(displayName) ? "New User" : displayName },
-                        { "CreatedAt", FieldValue.ServerTimestamp },
-                        { "Role", role }
+                        { "FullName", string.IsNullOrEmpty(fullName) ? "New User" : fullName },
+                        { "PhoneNumber", "" },
+                        { "Role", role },
+                        { "CreatedAt", DateTime.UtcNow }
                     };
 
                     await docRef.SetAsync(user);
                 }
                 else
                 {
-                    await docRef.UpdateAsync(new Dictionary<string, object> { { "Role", role }, { "Email", email } });
+                    // Nếu đã tồn tại, cập nhật các thông tin quan trọng. 
+                    // Nếu FullName trong Firestore đang trống, hãy cập nhật nó bằng fullName truyền vào.
+                    var updates = new Dictionary<string, object> 
+                    { 
+                        { "Role", role }, 
+                        { "Email", email } 
+                    };
+
+                    if (!snapshot.ContainsField("FullName") || string.IsNullOrWhiteSpace(snapshot.GetValue<string>("FullName")))
+                    {
+                        if (!string.IsNullOrEmpty(fullName))
+                            updates["FullName"] = fullName;
+                    }
+
+                    await docRef.UpdateAsync(updates);
                 }
                 
                 return true;

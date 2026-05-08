@@ -1,7 +1,8 @@
-﻿using System;
+using Google.Cloud.Firestore;
+using System;
 using System.Windows;
 using System.Windows.Controls;
-using Google.Cloud.Firestore;
+using System.Windows.Media;
 
 namespace e_learning_app
 {
@@ -27,22 +28,34 @@ namespace e_learning_app
                         txtFullName.Text = user.FullName;
                         txtEmail.Text = user.Email;
                         txtPhone.Text = user.PhoneNumber;
-                        txtUsername.Text = user.Username;
                         txtRole.Text = user.Role;
+                        txtCreatedAt.Text = user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading user: " + ex.Message);
+                MessageBox.Show("Lỗi tải thông tin: " + ex.Message);
             }
         }
 
-        private void btnChangePassword_Click(object sender, RoutedEventArgs e)
+        private async void btnChangePassword_Click(object sender, RoutedEventArgs e)
         {
-            MainProfileUI.Visibility = Visibility.Collapsed;
-            FullScreenOverlay.Visibility = Visibility.Visible;
-            FullScreenOverlay.Content = new CurrentPassword(this, _dbManager);
+            string email = txtEmail.Text;
+            if (string.IsNullOrWhiteSpace(email)) return;
+
+            btnChangePassword.IsEnabled = false;
+            bool issent = await FirebaseService.SendPasswordResetAsync(email);
+
+            if (issent)
+            {
+                MessageBox.Show("Hệ thống đã gửi link khôi phục vào Email của bạn. Hãy kiểm tra nhé!");
+            }
+            else
+            {
+                MessageBox.Show("Email không chính xác hoặc không tồn tại. Hãy kiểm tra nhé!");
+            }
+            btnChangePassword.IsEnabled = true;
         }
 
         public void ShowNewPasswordView()
@@ -61,21 +74,34 @@ namespace e_learning_app
         {
             try
             {
+                btnSave.IsEnabled = false;
                 var user = _dbManager.GetCurrentUser();
+                if (user == null) return;
 
                 user.FullName = txtFullName.Text;
                 user.Email = txtEmail.Text;
                 user.PhoneNumber = txtPhone.Text;
-                user.Username = txtUsername.Text;
-                user.Role = txtRole.Text;
 
                 await _dbManager.UpdateFullProfile(user.Id, user);
-                MessageBox.Show("Profile updated successfully!");
+                
+                // Cập nhật lại local state để các màn hình khác (Sidebar) thấy được sự thay đổi
+                _dbManager.SetCurrentUser(user);
+
+                MessageBox.Show("Cập nhật thông tin thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error updating profile: " + ex.Message);
+                MessageBox.Show("Lỗi cập nhật: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            finally
+            {
+                btnSave.IsEnabled = true;
+            }
+        }
+
+        private void txtFullName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using e_learning_app;
+using e_learning_app;
 using System.Diagnostics.Eventing.Reader;
 using System.Windows;
 using System.Windows.Controls;
@@ -23,11 +23,8 @@ namespace e_learning_app
             {
                 var user = _dbManager.GetCurrentUser();
 
-                if (txtNewPassword.Password == user.Password)
-                    MessageBox.Show("Password is the same!");
-                else if (user != null)
+                if (user != null)
                 {
-                    user.Password = txtNewPassword.Password;
                     try
                     {
                         await _dbManager.UpdateFullProfile(user.Id, user);

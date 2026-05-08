@@ -27,8 +27,15 @@ namespace e_learning_app
 
         private async void Register_Click(object sender, RoutedEventArgs e)
         {
-            string email = txtEmail.Text;
+            string fullName = txtFullName.Text.Trim();
+            string email = txtEmail.Text.Trim();
             string password = txtPassword.Password;
+
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                MessageBox.Show("Vui lòng nhập họ và tên!!");
+                return;
+            }
             if (string.IsNullOrEmpty(email))
             {
                 MessageBox.Show("Vui lòng nhập email!!");
@@ -51,7 +58,7 @@ namespace e_learning_app
 
                 if (newUserId != null)
                 {
-                    await FirebaseService.CreateUserInFirestore(newUserId, email); // Lưu vào Firestore với Email
+                    await FirebaseService.CreateUserInFirestore(newUserId, email, fullName); // Lưu vào Firestore với Email và FullName
                     MessageBox.Show("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.");
                     var parent_window=Window.GetWindow(this) as LoginWindow;
                     if (parent_window != null)

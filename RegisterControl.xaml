@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.RegisterControl"
+<UserControl x:Class="e_learning_app.RegisterControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
@@ -11,7 +11,7 @@
 
         <TextBlock Text="Họ và tên" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{StaticResource TextDark}"/>
         <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="10" Padding="15,10" Margin="0,0,0,15">
-            <TextBox Background="Transparent" BorderThickness="0" FontSize="14" VerticalAlignment="Center" />
+            <TextBox x:Name="txtFullName" Background="Transparent" BorderThickness="0" FontSize="14" VerticalAlignment="Center" />
         </Border>
 
         <TextBlock Text="Email" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{StaticResource TextDark}"/>

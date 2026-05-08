@@ -94,55 +94,44 @@
                 <!-- Nav items -->
                 <StackPanel Grid.Row="1">
                     <!-- Section label -->
-                    <TextBlock Text="TỔNG QUAN" FontSize="10" FontWeight="Bold" Foreground="#CBD5E1"
-                               Margin="25,0,0,8" />
                     <Button x:Name="BtnDashboard" Content="🏠   Trang chủ"
                             Style="{StaticResource StudentNavBtnActive}" Click="BtnDashboard_Click"/>
-
-                    <TextBlock Text="HỌC TẬP" FontSize="10" FontWeight="Bold" Foreground="#CBD5E1"
-                               Margin="25,14,0,8"/>
                     <Button x:Name="BtnCourses"  Content="📚   Khóa học của tôi"
                             Style="{StaticResource StudentNavBtn}" Click="BtnCourses_Click"/>
                     <Button x:Name="BtnQuiz"     Content="📝   Bài kiểm tra"
                             Style="{StaticResource StudentNavBtn}" Click="BtnQuiz_Click"/>
-
-                    <TextBlock Text="CÁ NHÂN" FontSize="10" FontWeight="Bold" Foreground="#CBD5E1"
-                               Margin="25,14,0,8"/>
                     <Button x:Name="BtnProfile"  Content="🏆   Hồ sơ &amp; Thành tích"
                             Style="{StaticResource StudentNavBtn}" Click="BtnProfile_Click"/>
                     <Button x:Name="BtnNotifications" Content="🔔   Thông báo"
                             Style="{StaticResource StudentNavBtn}" Click="BtnNotifications_Click"/>
                 </StackPanel>
 
-                <!-- User info -->
-                <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="15" Padding="10" Margin="10">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Width="38" Height="38" CornerRadius="10">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#60A5FA" Offset="0"/>
-                                    <GradientStop Color="#A78BFA" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <TextBlock x:Name="TxtAvatarInitials" Text="?" Foreground="White" VerticalAlignment="Center"
-                                       HorizontalAlignment="Center" FontWeight="Bold" FontSize="13"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding FullName, FallbackValue='Học sinh'}" FontWeight="SemiBold" FontSize="12"
-                                       Foreground="{StaticResource TextDark}" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="{Binding Email, FallbackValue=''}" FontSize="10"
-                                       Foreground="{StaticResource TextMuted}" TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                        
-                    </Grid>
-                </Border>
-                <Button Grid.Row="3" Content="🚪   Đăng xuất" Style="{StaticResource LogoutBtn}"
-                        Click="BtnLogout_Click" Margin="0,0,0,4"/>
+                <!-- User info (Clickable) -->
+                <StackPanel Grid.Row="2" VerticalAlignment="Bottom" Margin="10,0,10,10">
+                    <Button Content="🚪   Đăng xuất" Style="{StaticResource NavButtonStyle}" Click="BtnLogout_Click" Foreground="#EF4444" Margin="0"/>
+                    <Button Click="OpenProfile_Click" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ProfileBorder" Background="#F8FAFC" CornerRadius="15" Padding="10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="35" Height="35" CornerRadius="10" Background="#3B82F6">
+                                            <TextBlock Text="★" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold" FontSize="18"/>
+                                        </Border>
+                                        <StackPanel Margin="10,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding FullName, FallbackValue='Tài khoản của tôi'}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource TextDark}"/>
+                                            <TextBlock Text="Xem hồ sơ cá nhân" FontSize="10" Foreground="{StaticResource TextMuted}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ProfileBorder" Property="Background" Value="#F1F5F9"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
             </Grid>
             
         </Border>
