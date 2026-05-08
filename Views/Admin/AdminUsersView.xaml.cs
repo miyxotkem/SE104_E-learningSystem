@@ -41,17 +41,19 @@ namespace e_learning_app.Views.Admin
         {
             try
             {
+                // Xóa list cũ trước khi load lại
+                _allUsers.Clear();
                 QuerySnapshot snap = await _db.GetDb.Collection("Users").GetSnapshotAsync();
                 _allUsers = snap.Documents.Select(d =>
                 {
                     var u = d.ConvertTo<User>();
                     return new AdminUserRow
                     {
-                        Uid       = u.Uid,
+                        Uid       = d.Id,
                         FullName  = u.FullName ?? u.Email,
                         Email     = u.Email,
                         Role      = u.Role ?? "Student",
-                        CreatedAt = "N/A"
+                        CreatedAt = u.CreatedAt == default ? "N/A" : u.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
                     };
                 }).OrderBy(u => u.FullName).ToList();
 
@@ -105,6 +107,38 @@ namespace e_learning_app.Views.Admin
             => SetFilter("student", FilterStudent);
 
         private void FilterTeacher_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
-            => SetFilter("teacher", FilterTeacher);
+            => SetFilter("instructor", FilterTeacher);
+
+        private async void BtnChangeRole_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is AdminUserRow row)
+            {
+                if (string.IsNullOrEmpty(row.Uid))
+                {
+                    MessageBox.Show("Không tìm thấy ID người dùng!");
+                    return;
+                }
+                string newRole = row.Role == "Instructor" ? "Student" : "Instructor";
+                
+                var result = MessageBox.Show($"Bạn có chắc muốn đổi vai trò của {row.FullName} thành {newRole} không?", 
+                                           "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        await _db.GetDb.Collection("Users").Document(row.Uid).UpdateAsync("Role", newRole);
+                        MessageBox.Show("Cập nhật vai trò thành công!", "Thông báo");
+                        
+                        // Load lại dữ liệu
+                        UserControl_Loaded(null, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi: {ex.Message}");
+                    }
+                }
+            }
+        }
     }
 }

@@ -59,7 +59,7 @@ namespace e_learning_app.Views
         private void ApplyRolePermissions()
         {
             var currentUser = _dbManager.GetCurrentUser();
-            _isInstructor = (currentUser != null && currentUser.Role == "Instructor");
+            _isInstructor = (currentUser != null && currentUser.Role == "Teacher");
 
             if (_isInstructor)
             {

@@ -8,23 +8,12 @@ namespace e_learning_app
 {
     public partial class LoginControl : UserControl
     {
-        // Email duy nhất có role giáo viên
-        private const string TeacherEmail = "dinhquangnhat16062006@gmail.com";
-
         public LoginControl()
         {
             InitializeComponent();
         }
 
-        // ─── Helper: xác định role theo email ───────────────────────
-        private static string GetRoleByEmail(string email)
-        {
-            return string.Equals(email?.Trim(), TeacherEmail, StringComparison.OrdinalIgnoreCase)
-                ? "Instructor"
-                : "Student";
-        }
 
-        // ─── Helper: mở cửa sổ chính với user đã xác thực ───────────
         private void OpenMainWindow(User user)
         {
             var loginWin = Window.GetWindow(this) as LoginWindow;
@@ -67,7 +56,7 @@ namespace e_learning_app
                         Id       = uid,
                         Email    = email,
                         FullName = fullName,
-                        Role     = GetRoleByEmail(email)
+                        Role     = "Student"
                     };
 
                     // Cố lấy FullName thực từ Firestore nếu có
@@ -157,7 +146,7 @@ namespace e_learning_app
                     Id       = userId,
                     Email    = email,
                     FullName = email.Split('@')[0],
-                    Role     = GetRoleByEmail(email)
+                    Role     = "Student"
                 };
 
                 // Fetch đúng Firestore document ID (quan trọng: phải khớp với InstructorId trong courses)
