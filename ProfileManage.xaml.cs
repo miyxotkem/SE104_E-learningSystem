@@ -29,10 +29,6 @@ namespace e_learning_app
                         txtEmail.Text = user.Email;
                         txtPhone.Text = user.PhoneNumber;
                         txtRole.Text = user.Role;
-<<<<<<< HEAD
-=======
-                        //txtCreatedAt.Text = user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
->>>>>>> f0bb7992841c7817dab50b58458063e1271ea278
                     }
                 }
             }
