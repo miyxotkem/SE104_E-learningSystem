@@ -73,6 +73,12 @@ namespace e_learning_app
                                     user.Role = stored.Role;
                                 else
                                     user.Role = "Student";
+
+                                if (stored != null && stored.IsBlocked)
+                                {
+                                    MessageBox.Show("Tài khoản của bạn đã bị khóa bởi Admin!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                                    return;
+                                }
                             }
                         }
                     }
@@ -166,6 +172,12 @@ namespace e_learning_app
                                 user.Role = stored.Role;
                             else
                                 user.Role = "Student";
+
+                            if (stored != null && stored.IsBlocked)
+                            {
+                                txtstatus.Text = "Tài khoản của bạn đã bị khóa!";
+                                return;
+                            }
                         }
                         else
                         {
