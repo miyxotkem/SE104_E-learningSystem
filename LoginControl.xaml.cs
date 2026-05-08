@@ -9,7 +9,7 @@ namespace e_learning_app
     public partial class LoginControl : UserControl
     {
         // Email duy nhất có role giáo viên
-        private const string TeacherEmail = "buitrantrongnguyen@gmail.com";
+        private const string TeacherEmail = "dinhquangnhat16062006@gmail.com";
 
         public LoginControl()
         {
