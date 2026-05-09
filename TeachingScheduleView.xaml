@@ -85,21 +85,31 @@
             <Grid>
                 <!-- 15 columns: Time Axis + Spacing + 7 Days -->
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="60"/> <!-- Time Axis -->
-                    <ColumnDefinition Width="10"/> <!-- Spacing -->
-                    <ColumnDefinition Width="*"/> <!-- Mon -->
-                    <ColumnDefinition Width="10"/> <!-- Spacing -->
-                    <ColumnDefinition Width="*"/> <!-- Tue -->
+                    <ColumnDefinition Width="60"/>
+                    <!-- Time Axis -->
                     <ColumnDefinition Width="10"/>
-                    <ColumnDefinition Width="*"/> <!-- Wed -->
+                    <!-- Spacing -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Mon -->
                     <ColumnDefinition Width="10"/>
-                    <ColumnDefinition Width="*"/> <!-- Thu -->
+                    <!-- Spacing -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Tue -->
                     <ColumnDefinition Width="10"/>
-                    <ColumnDefinition Width="*"/> <!-- Fri -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Wed -->
                     <ColumnDefinition Width="10"/>
-                    <ColumnDefinition Width="*"/> <!-- Sat -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Thu -->
                     <ColumnDefinition Width="10"/>
-                    <ColumnDefinition Width="*"/> <!-- Sun -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Fri -->
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <!-- Sat -->
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <!-- Sun -->
                 </Grid.ColumnDefinitions>
 
                 <Grid.RowDefinitions>
@@ -119,62 +129,75 @@
 
                 <!-- Scrollable Timetable (Absolute coordinates) -->
                 <ScrollViewer Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="15" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <!-- Total Height: 07:00 -> 17:30 = 10.5 hours * 60px/h = 630px. Set to 660px for padding -->
-                    <Grid Height="660" Margin="0,10,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="60"/>
-                            <ColumnDefinition Width="10"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,10,0,30">
+                        <!-- 1. Main Timetable Grid -->
+                        <Grid Height="660">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                        <!-- Horizontal Grid Lines representing hours -->
-                        <Canvas x:Name="GridLinesCanvas" Grid.Column="2" Grid.ColumnSpan="13"/>
-                        
-                        <!-- Vertical Column Separators -->
-                        <Border Grid.Column="3" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
-                        <Border Grid.Column="5" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
-                        <Border Grid.Column="7" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
-                        <Border Grid.Column="9" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
-                        <Border Grid.Column="11" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
-                        <Border Grid.Column="13" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
+                            <!-- Horizontal Grid Lines representing hours -->
+                            <Canvas x:Name="GridLinesCanvas" Grid.Column="2" Grid.ColumnSpan="13"/>
 
-                        <!-- Time labels -->
-                        <Canvas x:Name="TimeLabelsCanvas" Grid.Column="0"/>
+                            <!-- Vertical Column Separators -->
+                            <Border Grid.Column="3" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
+                            <Border Grid.Column="5" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
+                            <Border Grid.Column="7" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
+                            <Border Grid.Column="9" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
+                            <Border Grid.Column="11" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
+                            <Border Grid.Column="13" Background="#F1F5F9" Width="1" HorizontalAlignment="Center"/>
 
-                        <!-- Day Canvases -->
-                        <Canvas x:Name="CanvasMonday" Grid.Column="2"/>
-                        <Canvas x:Name="CanvasTuesday" Grid.Column="4"/>
-                        <Canvas x:Name="CanvasWednesday" Grid.Column="6"/>
-                        <Canvas x:Name="CanvasThursday" Grid.Column="8"/>
-                        <Canvas x:Name="CanvasFriday" Grid.Column="10"/>
-                        <Canvas x:Name="CanvasSaturday" Grid.Column="12"/>
-                        <Canvas x:Name="CanvasSunday" Grid.Column="14"/>
+                            <!-- Time labels -->
+                            <Canvas x:Name="TimeLabelsCanvas" Grid.Column="0"/>
 
-                        <!-- Current Time Indicator -->
-                        <!-- We put it in the same Grid but spanning across all days, and we will translate it dynamically -->
-                        <Canvas Grid.Column="2" Grid.ColumnSpan="13" IsHitTestVisible="False">
-                            <!-- Dashed line across whole week -->
-                            <Line x:Name="CurrentTimeLine" X1="0" Y1="0" X2="2000" Y2="0" Stroke="#EF4444" StrokeThickness="2" Visibility="Collapsed">
-                                <Line.StrokeDashArray>
-                                    <DoubleCollection>4 2</DoubleCollection>
-                                </Line.StrokeDashArray>
-                            </Line>
-                            <!-- Dot for current day -->
-                            <Ellipse x:Name="CurrentTimeDot" Width="8" Height="8" Fill="#EF4444" Margin="-4,-4,0,0" Visibility="Collapsed"/>
-                        </Canvas>
-                    </Grid>
+                            <!-- Day Canvases -->
+                            <Canvas x:Name="CanvasMonday" Grid.Column="2"/>
+                            <Canvas x:Name="CanvasTuesday" Grid.Column="4"/>
+                            <Canvas x:Name="CanvasWednesday" Grid.Column="6"/>
+                            <Canvas x:Name="CanvasThursday" Grid.Column="8"/>
+                            <Canvas x:Name="CanvasFriday" Grid.Column="10"/>
+                            <Canvas x:Name="CanvasSaturday" Grid.Column="12"/>
+                            <Canvas x:Name="CanvasSunday" Grid.Column="14"/>
+
+                            <!-- Current Time Indicator -->
+                            <Canvas Grid.Column="2" Grid.ColumnSpan="13" IsHitTestVisible="False">
+                                <Line x:Name="CurrentTimeLine" X1="0" Y1="0" X2="2000" Y2="0" Stroke="#EF4444" StrokeThickness="2" Visibility="Collapsed">
+                                    <Line.StrokeDashArray>
+                                        <DoubleCollection>4 2</DoubleCollection>
+                                    </Line.StrokeDashArray>
+                                </Line>
+                                <Ellipse x:Name="CurrentTimeDot" Width="8" Height="8" Fill="#EF4444" Margin="-4,-4,0,0" Visibility="Collapsed"/>
+                            </Canvas>
+                        </Grid>
+
+                        <!-- 2. Other Forms Section (Hình thức 2) -->
+                        <Border Margin="0,30,0,0" Padding="0,20,0,0" BorderBrush="#F1F5F9" BorderThickness="0,1,0,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                    <Border Background="#F1F5F9" Padding="8,4" CornerRadius="4">
+                                        <TextBlock Text="💻 Hình thức 2" FontSize="13" FontWeight="Bold" Foreground="#64748B"/>
+                                    </Border>
+                                    <TextBlock Text="Các lớp học không cố định thời gian (Online/Tự học)" FontSize="13" Foreground="#94A3B8" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <WrapPanel x:Name="WrapOtherForms" HorizontalAlignment="Left" ItemWidth="280"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </ScrollViewer>
             </Grid>
         </Border>
