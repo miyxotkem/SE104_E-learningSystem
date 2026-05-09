@@ -120,8 +120,8 @@
 
                     <!-- Quiz info -->
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="📝  Bài kiểm tra giữa kỳ – Toán cao cấp A1" FontSize="15" FontWeight="Bold" Foreground="#1E293B"/>
-                        <TextBlock Text="Câu 7 / 15  ·  15 điểm" FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
+                        <TextBlock x:Name="TxtQuizTitle" Text="📝  Đang tải bài thi..." FontSize="15" FontWeight="Bold" Foreground="#1E293B"/>
+                        <TextBlock x:Name="TxtProgressHeader" Text="Câu -- / --  ·  -- điểm" FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <!-- Timer (Subtle, centered) -->
@@ -140,7 +140,7 @@
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
                         <TextBlock Text="Tiến độ làm bài" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,0,0,4"/>
                         <Border Height="8" CornerRadius="4" Background="#E2E8F0" Width="180">
-                            <Border HorizontalAlignment="Left" Width="84" Height="8" CornerRadius="4">
+                            <Border x:Name="ProgressBarFill" HorizontalAlignment="Left" Width="0" Height="8" CornerRadius="4">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                         <GradientStop Color="#3B82F6" Offset="0"/>
@@ -149,7 +149,7 @@
                                 </Border.Background>
                             </Border>
                         </Border>
-                        <TextBlock Text="7/15 câu" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+                        <TextBlock x:Name="TxtProgressFooter" Text="0/0 câu" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -160,9 +160,9 @@
                     <!-- Question number badge -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                         <Border Background="#3B82F6" CornerRadius="10" Padding="12,6">
-                            <TextBlock Text="Câu 7" FontSize="13" FontWeight="Bold" Foreground="White"/>
+                            <TextBlock x:Name="TxtQuestionBadge" Text="Câu --" FontSize="13" FontWeight="Bold" Foreground="White"/>
                         </Border>
-                        <Border Background="#EFF6FF" CornerRadius="10" Padding="10,6" Margin="8,0,0,0">
+                        <Border x:Name="BadgeRequired" Background="#EFF6FF" CornerRadius="10" Padding="10,6" Margin="8,0,0,0">
                             <TextBlock Text="Bắt buộc" FontSize="12" Foreground="#3B82F6" FontWeight="SemiBold"/>
                         </Border>
                     </StackPanel>
@@ -173,48 +173,24 @@
                             <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.06" Color="Black"/>
                         </Border.Effect>
                         <StackPanel>
-                            <TextBlock TextWrapping="Wrap" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B" LineHeight="28">
-                                Cho hàm số f(x) = x³ – 3x² + 2. Tìm tất cả các điểm cực trị của hàm số và phân loại chúng (cực đại / cực tiểu).
+                            <TextBlock x:Name="TxtQuestionContent" TextWrapping="Wrap" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B" LineHeight="28">
+                                Đang tải câu hỏi...
                             </TextBlock>
                             <!-- Hint / formula area -->
-                            <Border Background="#F8FAFC" CornerRadius="12" Padding="16,12" Margin="0,16,0,0">
+                            <Border x:Name="BorderHint" Background="#F8FAFC" CornerRadius="12" Padding="16,12" Margin="0,16,0,0" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="💡" FontSize="14" VerticalAlignment="Center"/>
-                                    <TextBlock Text="  Gợi ý: Tìm f'(x) = 0, sau đó xét dấu f''(x) tại các nghiệm."
+                                    <TextBlock x:Name="TxtHint" Text="  Gợi ý sẽ hiển thị ở đây."
                                                FontSize="13" Foreground="#64748B" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
                     </Border>
 
-                    <!-- Answer Options -->
-                    <RadioButton Style="{StaticResource AnswerRadioBtn}" GroupName="Q7">
-                        <TextBlock FontSize="15" Foreground="#1E293B">
-                            <Run FontWeight="Bold" Foreground="#3B82F6">A. </Run>
-                            <Run>Cực tiểu tại x = 0 (f(0) = 2) và cực đại tại x = 2 (f(2) = –2)</Run>
-                        </TextBlock>
-                    </RadioButton>
-
-                    <RadioButton Style="{StaticResource AnswerRadioBtn}" GroupName="Q7" IsChecked="True">
-                        <TextBlock FontSize="15" Foreground="#1E293B">
-                            <Run FontWeight="Bold" Foreground="#3B82F6">B. </Run>
-                            <Run>Cực đại tại x = 0 (f(0) = 2) và cực tiểu tại x = 2 (f(2) = –2)</Run>
-                        </TextBlock>
-                    </RadioButton>
-
-                    <RadioButton Style="{StaticResource AnswerRadioBtn}" GroupName="Q7">
-                        <TextBlock FontSize="15" Foreground="#1E293B">
-                            <Run FontWeight="Bold" Foreground="#3B82F6">C. </Run>
-                            <Run>Hàm số không có cực trị vì f'(x) luôn dương</Run>
-                        </TextBlock>
-                    </RadioButton>
-
-                    <RadioButton Style="{StaticResource AnswerRadioBtn}" GroupName="Q7">
-                        <TextBlock FontSize="15" Foreground="#1E293B">
-                            <Run FontWeight="Bold" Foreground="#3B82F6">D. </Run>
-                            <Run>Cực tiểu tại x = 0 và cực tiểu tại x = 2 (cùng loại)</Run>
-                        </TextBlock>
-                    </RadioButton>
+                    <!-- Answer Options Container -->
+                    <StackPanel x:Name="PanelAnswers">
+                        <!-- Items will be generated dynamically -->
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
 
@@ -228,12 +204,12 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Previous -->
-                    <Button Grid.Column="0" Style="{StaticResource NavBtn}"
+                    <Button Grid.Column="0" x:Name="BtnPrev" Style="{StaticResource NavBtn}" Click="BtnPrev_Click"
                             Content="← Câu trước" Background="#F1F5F9" Foreground="#64748B"/>
 
                     <!-- Mark for review -->
-                    <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Background="#FFFBF0" CornerRadius="10" Padding="14,7" Cursor="Hand">
+                    <Border Grid.Column="1" x:Name="BtnMarkReview" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Background="#FFFBF0" CornerRadius="10" Padding="14,7" Cursor="Hand" MouseLeftButtonUp="BtnMarkReview_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="🚩" FontSize="13" VerticalAlignment="Center"/>
                             <TextBlock Text="  Đánh dấu xem lại" FontSize="12" Foreground="#CA8A04" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -242,10 +218,10 @@
 
                     <!-- Next + Submit -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <Button Style="{StaticResource NavBtn}"
+                        <Button x:Name="BtnNext" Style="{StaticResource NavBtn}" Click="BtnNext_Click"
                                 Content="Câu tiếp theo →" Background="#EFF6FF" Foreground="#3B82F6"
                                 Margin="0,0,10,0"/>
-                        <Button Style="{StaticResource NavBtn}"
+                        <Button x:Name="BtnSubmit" Style="{StaticResource NavBtn}" Click="BtnSubmit_Click"
                                 Content="🏁  Nộp bài" Background="#3B82F6" Foreground="White">
                             <Button.Effect>
                                 <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.2" Color="#3B82F6"/>
@@ -285,30 +261,8 @@
 
                 <!-- Question Grid Map -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <WrapPanel Margin="14,14,14,8" Orientation="Horizontal">
-                        <!-- Done questions (1-6) -->
-                        <Button Style="{StaticResource QMapBtn}" Background="#DCFCE7" Foreground="#16A34A" Content="1" FontWeight="Bold"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#DCFCE7" Foreground="#16A34A" Content="2" FontWeight="Bold"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#DCFCE7" Foreground="#16A34A" Content="3" FontWeight="Bold"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#DCFCE7" Foreground="#16A34A" Content="4" FontWeight="Bold"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#FEF9C3" Foreground="#CA8A04" Content="5" FontWeight="Bold"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#DCFCE7" Foreground="#16A34A" Content="6" FontWeight="Bold"/>
-                        <!-- Current -->
-                        <Button Style="{StaticResource QMapBtn}" Width="38" Height="38" Margin="3"
-                                Content="7" FontWeight="Bold" Foreground="White">
-                            <Button.Background>
-                                <SolidColorBrush Color="#3B82F6"/>
-                            </Button.Background>
-                        </Button>
-                        <!-- Not done (8-15) -->
-                        <Button Style="{StaticResource QMapBtn}" Background="#F1F5F9" Foreground="#94A3B8" Content="8"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#FEE2E2" Foreground="#DC2626" Content="9" FontWeight="Bold"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#F1F5F9" Foreground="#94A3B8" Content="10"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#F1F5F9" Foreground="#94A3B8" Content="11"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#F1F5F9" Foreground="#94A3B8" Content="12"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#F1F5F9" Foreground="#94A3B8" Content="13"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#F1F5F9" Foreground="#94A3B8" Content="14"/>
-                        <Button Style="{StaticResource QMapBtn}" Background="#F1F5F9" Foreground="#94A3B8" Content="15"/>
+                    <WrapPanel x:Name="PanelQuestionMap" Margin="14,14,14,8" Orientation="Horizontal">
+                        <!-- Will be generated dynamically -->
                     </WrapPanel>
                 </ScrollViewer>
 
@@ -317,19 +271,19 @@
                     <StackPanel>
                         <Grid Margin="0,0,0,6">
                             <TextBlock Text="Đã làm" FontSize="12" Foreground="#64748B"/>
-                            <TextBlock Text="6 / 15" FontSize="12" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Right"/>
+                            <TextBlock x:Name="TxtStatsDone" Text="0 / --" FontSize="12" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Right"/>
                         </Grid>
                         <Grid Margin="0,0,0,6">
                             <TextBlock Text="Đánh dấu xem lại" FontSize="12" Foreground="#64748B"/>
-                            <TextBlock Text="2 câu" FontSize="12" FontWeight="Bold" Foreground="#CA8A04" HorizontalAlignment="Right"/>
+                            <TextBlock x:Name="TxtStatsReview" Text="0 câu" FontSize="12" FontWeight="Bold" Foreground="#CA8A04" HorizontalAlignment="Right"/>
                         </Grid>
                         <Grid>
                             <TextBlock Text="Chưa làm" FontSize="12" Foreground="#64748B"/>
-                            <TextBlock Text="7 câu" FontSize="12" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Right"/>
+                            <TextBlock x:Name="TxtStatsTodo" Text="-- câu" FontSize="12" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Right"/>
                         </Grid>
 
-                        <Button Margin="0,14,0,0" Background="#DC2626" Foreground="White" FontWeight="Bold"
-                                FontSize="13" Height="44" BorderThickness="0" Cursor="Hand">
+                        <Button x:Name="BtnSubmitRight" Margin="0,14,0,0" Background="#DC2626" Foreground="White" FontWeight="Bold"
+                                FontSize="13" Height="44" BorderThickness="0" Cursor="Hand" Click="BtnSubmit_Click">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="0,0,0,0">
