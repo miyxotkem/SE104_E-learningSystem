@@ -362,6 +362,30 @@ namespace e_learning_app
             Refresh();
         }
 
+        private void ExamCard_ViewClicked(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is Exam exam)
+            {
+                ViewExam(exam);
+            }
+        }
+
+        private void ExamCard_EditClicked(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is Exam exam)
+            {
+                EditExam(exam);
+            }
+        }
+
+        private void ExamCard_DeleteClicked(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is Exam exam)
+            {
+                DeleteExam(exam);
+            }
+        }
+
         private void BtnCreateExam_Click(object sender, RoutedEventArgs e)
         {
             if (Window.GetWindow(this) is MainWindow mw)

@@ -47,17 +47,54 @@ namespace e_learning_app
 
             try
             {
-                var coursesSnap = await _dbManager.GetDb.Collection("Courses")
-                    .WhereEqualTo("InstructorId", currentUser.Id)
-                    .WhereEqualTo("IsActive", true)
-                    .GetSnapshotAsync();
-
                 _currentSchedule.Clear();
+                List<Course> enrolledCourses = new List<Course>();
 
-                foreach (var doc in coursesSnap.Documents)
+                if (currentUser.Role == "Instructor")
                 {
-                    var c = doc.ConvertTo<Course>();
-                    
+                    TxtTitle.Text = "📅 Lịch giảng dạy";
+                    TxtSubtitle.Text = "Lịch giảng dạy các lớp học trong tuần";
+                    BtnPrint.Content = "🖨️ In lịch dạy";
+
+                    var coursesSnap = await _dbManager.GetDb.Collection("Courses")
+                        .WhereEqualTo("InstructorId", currentUser.Id)
+                        .WhereEqualTo("IsActive", true)
+                        .GetSnapshotAsync();
+
+                    foreach (var doc in coursesSnap.Documents)
+                    {
+                        var c = doc.ConvertTo<Course>();
+                        c.Id = doc.Id;
+                        enrolledCourses.Add(c);
+                    }
+                }
+                else // Student
+                {
+                    TxtTitle.Text = "📅 Thời khóa biểu";
+                    TxtSubtitle.Text = "Lịch học tập các lớp học trong tuần";
+                    BtnPrint.Content = "🖨️ In thời khóa biểu";
+
+                    var registrationsSnap = await _dbManager.GetDb.Collection("courseRegistrations")
+                        .WhereEqualTo("userId", currentUser.Id)
+                        .WhereEqualTo("status", "accepted")
+                        .GetSnapshotAsync();
+
+                    foreach (var reg in registrationsSnap.Documents)
+                    {
+                        string courseId = reg.GetValue<string>("courseId");
+                        var courseSnap = await _dbManager.GetDb.Collection("Courses").Document(courseId).GetSnapshotAsync();
+
+                        if (courseSnap.Exists)
+                        {
+                            var c = courseSnap.ConvertTo<Course>();
+                            c.Id = courseSnap.Id;
+                            if (c.IsActive) enrolledCourses.Add(c);
+                        }
+                    }
+                }
+
+                foreach (var c in enrolledCourses)
+                {
                     int dayOfWeek = ConvertDayStringToNumber(c.DayOfWeek);
                     string timeStr = ConvertPeriodsToTime(c.StartPeriod, c.EndPeriod);
                     string colorHex = string.IsNullOrEmpty(c.AccentColor) ? "#DBEAFE" : c.AccentColor;
@@ -76,7 +113,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải lịch giảng dạy: {ex.Message}", "Lỗi");
+                MessageBox.Show($"Lỗi tải lịch học: {ex.Message}", "Lỗi");
             }
         }
 
@@ -315,9 +352,16 @@ namespace e_learning_app
             // Click event
             border.MouseLeftButtonUp += (s, e) =>
             {
-                if (Window.GetWindow(this) is MainWindow mw && ev.AssociatedCourse != null)
+                if (ev.AssociatedCourse == null) return;
+
+                var win = Window.GetWindow(this);
+                if (win is MainWindow mw)
                 {
                     mw.NavigateTo(new CourseDetailView(_dbManager, ev.AssociatedCourse));
+                }
+                else if (win is StudentMainWindow smw)
+                {
+                    smw.NavigateTo(new CourseDetailView(_dbManager, ev.AssociatedCourse));
                 }
             };
 

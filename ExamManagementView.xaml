@@ -224,7 +224,10 @@
                              VirtualizingPanel.IsVirtualizing="True">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <local:ExamCardView />
+                                <local:ExamCardView 
+                                    ViewClicked="ExamCard_ViewClicked"
+                                    EditClicked="ExamCard_EditClicked"
+                                    DeleteClicked="ExamCard_DeleteClicked"/>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                         <ListBox.ItemContainerStyle>

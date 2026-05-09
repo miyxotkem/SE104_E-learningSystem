@@ -46,8 +46,8 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel>
-                <TextBlock Text="📅 Thời khóa biểu" FontSize="28" FontWeight="Bold" Foreground="#1E293B"/>
-                <TextBlock Text="Lịch giảng dạy các lớp học trong tuần" FontSize="14" Foreground="#64748B" Margin="0,6,0,0"/>
+                <TextBlock x:Name="TxtTitle" Text="📅 Thời khóa biểu" FontSize="28" FontWeight="Bold" Foreground="#1E293B"/>
+                <TextBlock x:Name="TxtSubtitle" Text="Lịch giảng dạy các lớp học trong tuần" FontSize="14" Foreground="#64748B" Margin="0,6,0,0"/>
             </StackPanel>
 
             <!-- Công cụ điều hướng tuần -->
@@ -65,7 +65,7 @@
                 <Button Content="Tuần sau &gt;" Background="Transparent" Foreground="#64748B" BorderThickness="0" 
                         FontWeight="SemiBold" FontSize="14" Padding="10" Cursor="Hand" Margin="10,0,0,0" Click="BtnNextWeek_Click"/>
                 
-                <Button Content="🖨️ In lịch dạy" Background="#1E293B" Foreground="White" 
+                <Button x:Name="BtnPrint" Content="🖨️ In lịch dạy" Background="#1E293B" Foreground="White" 
                         FontWeight="Bold" FontSize="13" Padding="16,10" BorderThickness="0" 
                         Cursor="Hand" Margin="20,0,0,0" Click="BtnPrint_Click">
                     <Button.Resources>

@@ -76,6 +76,7 @@ namespace e_learning_app
         {
             BtnDashboard.Style      = (Style)FindResource("StudentNavBtn");
             BtnCourses.Style        = (Style)FindResource("StudentNavBtn");
+            BtnSchedule.Style       = (Style)FindResource("StudentNavBtn");
             BtnQuiz.Style           = (Style)FindResource("StudentNavBtn");
             BtnProfile.Style        = (Style)FindResource("StudentNavBtn");
             BtnNotifications.Style  = (Style)FindResource("StudentNavBtn");
@@ -83,24 +84,33 @@ namespace e_learning_app
             activeBtn.Style = (Style)FindResource("StudentNavBtnActive");
         }
 
+        public void NavigateTo(UserControl view)
+        {
+            StudentContentArea.Content = view;
+        }
+
         private void BtnDashboard_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnDashboard);
-
-            StudentContentArea.Content = new StudentDashboardView(_dbManager);
-
+            NavigateTo(new StudentDashboardView(_dbManager));
         }
 
         private void BtnCourses_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnCourses);
-            StudentContentArea.Content = new MyClassesView(_dbManager);
+            NavigateTo(new MyClassesView(_dbManager));
+        }
+
+        private void BtnSchedule_Click(object sender, RoutedEventArgs e)
+        {
+            SetActiveNav(BtnSchedule);
+            NavigateTo(new TeachingScheduleView(_dbManager));
         }
 
         private void BtnQuiz_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnQuiz);
-            StudentContentArea.Content = new StudentQuizView(_dbManager);
+            NavigateTo(new StudentQuizView(_dbManager));
         }
 
         private void BtnProfile_Click(object sender, RoutedEventArgs e)
@@ -111,7 +121,7 @@ namespace e_learning_app
         private void BtnNotifications_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnNotifications);
-            StudentContentArea.Content = new StudentNotificationView();
+            NavigateTo(new StudentNotificationView());
         }
 
         private void BtnLogout_Click(object sender, RoutedEventArgs e)
@@ -132,7 +142,7 @@ namespace e_learning_app
 
         private void OpenProfile_Click(object sender, RoutedEventArgs e)
         {
-            StudentContentArea.Content = new ProfileManage(_dbManager);
+            NavigateTo(new ProfileManage(_dbManager));
         }
     }
 }
