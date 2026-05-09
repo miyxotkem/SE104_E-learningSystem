@@ -9,38 +9,37 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="AnswerBd" CornerRadius="14" Padding="18,14"
-                                BorderBrush="#E2E8F0" BorderThickness="2" Background="White"
-                                Margin="0,0,0,10" Cursor="Hand">
+                        <Border x:Name="AnswerBd" CornerRadius="16" Padding="20,16"
+                                BorderBrush="#E2E8F0" BorderThickness="1.5" Background="White"
+                                Margin="0,0,0,12" Cursor="Hand">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.04" Color="Black"/>
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.04" Color="Black"/>
                             </Border.Effect>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="36"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <!-- Circle indicator -->
-                                <Border x:Name="CircleBd" Width="28" Height="28" CornerRadius="14"
-                                        BorderBrush="#CBD5E1" BorderThickness="2" Background="White">
-                                    <Border x:Name="InnerCircle" Width="12" Height="12" CornerRadius="6"
+                                <Border x:Name="CircleBd" Width="24" Height="24" CornerRadius="12"
+                                        BorderBrush="#CBD5E1" BorderThickness="2" Background="White" HorizontalAlignment="Left">
+                                    <Border x:Name="InnerCircle" Width="10" Height="10" CornerRadius="5"
                                             Background="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <ContentPresenter Grid.Column="2" VerticalAlignment="Center"/>
+                                <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="AnswerBd" Property="BorderBrush" Value="#3B82F6"/>
-                                <Setter TargetName="AnswerBd" Property="Background" Value="#EFF6FF"/>
+                                <Setter TargetName="AnswerBd" Property="Background" Value="#F0F7FF"/>
                                 <Setter TargetName="CircleBd" Property="BorderBrush" Value="#3B82F6"/>
                                 <Setter TargetName="CircleBd" Property="Background" Value="#3B82F6"/>
                                 <Setter TargetName="InnerCircle" Property="Background" Value="White"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="AnswerBd" Property="BorderBrush" Value="#93C5FD"/>
-                                <Setter TargetName="AnswerBd" Property="Background" Value="#F8FBFF"/>
+                                <Setter TargetName="AnswerBd" Property="Background" Value="#F8FAFC"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -73,20 +72,22 @@
 
         <!-- Question Map Mini Button -->
         <Style x:Key="QMapBtn" TargetType="Button">
-            <Setter Property="Width"           Value="34"/>
-            <Setter Property="Height"          Value="34"/>
-            <Setter Property="Margin"          Value="3"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width"           Value="38"/>
+            <Setter Property="Height"          Value="38"/>
+            <Setter Property="Margin"          Value="4"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor"          Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bd" Property="Opacity" Value="0.8"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

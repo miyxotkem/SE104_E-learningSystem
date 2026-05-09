@@ -78,100 +78,42 @@ namespace e_learning_app.Views
 
         private void RenderExams()
         {
-            ExamsPanel.Children.Clear();
+            var examList = new List<object>();
             foreach (var exam in _allExams)
             {
                 var submission = _studentSubmissions.FirstOrDefault(s => s.ExamId == exam.Id);
                 bool isDone = submission != null;
 
-                var card = new Border
-                {
-                    Width = 300,
-                    Padding = new Thickness(20),
-                    Margin = new Thickness(0, 0, 16, 16),
-                    Background = Brushes.White,
-                    CornerRadius = new CornerRadius(12),
-                    Effect = new DropShadowEffect { BlurRadius = 10, Opacity = 0.05, ShadowDepth = 2 }
-                };
-
-                var sp = new StackPanel();
-
-                // Status tag
+                // Status configuration
                 string statusText = isDone ? "Hoàn thành" : (exam.IsActive ? "Đang mở" : "Đã đóng");
-                Color statusColor = isDone ? Color.FromRgb(0x3B, 0x82, 0xF6) : (exam.IsActive ? Color.FromRgb(0x16, 0xA3, 0x4A) : Color.FromRgb(0x64, 0x74, 0x8B));
-                Color statusBg = isDone ? Color.FromRgb(0xEF, 0xF6, 0xFF) : (exam.IsActive ? Color.FromRgb(0xDC, 0xFC, 0xE7) : Color.FromRgb(0xF1, 0xF5, 0xF9));
-
-                var tag = new Border
-                {
-                    Background = new SolidColorBrush(statusBg),
-                    CornerRadius = new CornerRadius(6),
-                    Padding = new Thickness(8, 4, 8, 4),
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Margin = new Thickness(0, 0, 0, 10),
-                    Child = new TextBlock
-                    {
-                        Text = statusText,
-                        FontSize = 11,
-                        FontWeight = FontWeights.SemiBold,
-                        Foreground = new SolidColorBrush(statusColor)
-                    }
-                };
-                sp.Children.Add(tag);
-
-                // Title
-                sp.Children.Add(new TextBlock
-                {
-                    Text = exam.Title,
-                    FontSize = 16,
-                    FontWeight = FontWeights.Bold,
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 0, 0, 8),
-                    Foreground = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B))
-                });
-
-                // Description
-                sp.Children.Add(new TextBlock
-                {
-                    Text = exam.Description,
-                    FontSize = 13,
-                    Foreground = Brushes.Gray,
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 0, 0, 15)
-                });
-
-                // Meta
-                sp.Children.Add(new TextBlock
-                {
-                    Text = $"⏱️ {exam.TimeLimitMinutes} phút   •   🎯 Giới hạn: {(int)exam.PassingScore}%",
-                    FontSize = 12,
-                    Foreground = Brushes.DimGray,
-                    Margin = new Thickness(0, 0, 0, 10)
-                });
+                string statusColor = isDone ? "#3B82F6" : (exam.IsActive ? "#16A34A" : "#64748B");
+                string statusBg = isDone ? "#EFF6FF" : (exam.IsActive ? "#DCFCE7" : "#F1F5F9");
 
                 // Highest Score
                 var examSubmissions = _studentSubmissions.Where(s => s.ExamId == exam.Id).ToList();
                 double? maxScore = examSubmissions.Any() ? examSubmissions.Max(s => s.Score) : null;
 
-                var scoreStack = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 15) };
-                scoreStack.Children.Add(new TextBlock { Text = "🏆 Điểm cao nhất: ", FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)) });
-                scoreStack.Children.Add(new TextBlock 
-                { 
-                    Text = maxScore.HasValue ? $"{maxScore.Value:F1}" : "--", 
-                    FontSize = 12, 
-                    FontWeight = FontWeights.Bold, 
-                    Foreground = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)) 
+                examList.Add(new
+                {
+                    Exam = exam,
+                    StatusText = statusText,
+                    StatusColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString(statusColor)),
+                    StatusBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString(statusBg)),
+                    MaxScoreDisplay = maxScore.HasValue ? $"{maxScore.Value:F1}" : "--"
                 });
-                sp.Children.Add(scoreStack);
+            }
 
-                card.Child = sp;
-                
-                // Navigate to History View on card click
-                card.Cursor = Cursors.Hand;
-                card.MouseLeftButtonDown += (s, e) => {
-                    NavigateToHistory(exam);
-                };
+            ExamsList.ItemsSource = examList;
+        }
 
-                ExamsPanel.Children.Add(card);
+        private void ExamsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ExamsList.SelectedItem != null)
+            {
+                dynamic selectedItem = ExamsList.SelectedItem;
+                NavigateToHistory(selectedItem.Exam);
+
+                ExamsList.SelectedItem = null;
             }
         }
 

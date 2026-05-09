@@ -3,271 +3,275 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d"
+             xmlns:local="clr-namespace:e_learning_app"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1200"
              Background="#F8FAFC"
              Loaded="UserControl_Loaded">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="*"/>
-		</Grid.RowDefinitions>
+        <!-- ==================== HEADER ==================== -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="32,24">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-		<!-- ==================== HEADER ==================== -->
-		<Border Grid.Row="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="24,20">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*"/>
-					<ColumnDefinition Width="Auto"/>
-				</Grid.ColumnDefinitions>
-
-				<!-- Title & Subtitle -->
-				<StackPanel VerticalAlignment="Center">
-					<TextBlock Text="📋 Quản Lý Bài Kiểm Tra"
-                             FontSize="28" FontWeight="Bold"
+                <!-- Title & Subtitle -->
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="📋 Quản Lý Bài Kiểm Tra"
+                             FontSize="32" FontWeight="Bold"
                              Foreground="#1E293B"
-                             Margin="0,0,0,4"/>
-					<TextBlock Text="Tạo, chỉnh sửa và quản lý các bài thi cho lớp học của bạn"
-                             FontSize="13" Foreground="#64748B"/>
-				</StackPanel>
+                             Margin="0,0,0,6"/>
+                    <TextBlock Text="Tạo và quản lý các bài thi định kỳ, bài tập trắc nghiệm"
+                             FontSize="14" Foreground="#64748B"/>
+                </StackPanel>
 
-				<!-- Create Button -->
-				<Button x:Name="BtnCreateExam"
+                <!-- Create Button -->
+                <Button x:Name="BtnCreateExam"
                        Grid.Column="1"
                        Content="➕ Tạo Bài Thi Mới"
                        Background="#3B82F6"
                        Foreground="White"
-                       FontSize="13"
-                       FontWeight="SemiBold"
-                       Padding="18,12,18,12"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Padding="24,12"
                        BorderThickness="0"
                        Cursor="Hand"
                        Click="BtnCreateExam_Click">
-					<Button.Resources>
-						<Style TargetType="Button">
-							<Setter Property="Template">
-								<Setter.Value>
-									<ControlTemplate TargetType="Button">
-										<Border Background="{TemplateBinding Background}"
-                                               CornerRadius="8"
-                                               Padding="{TemplateBinding Padding}">
-											<ContentPresenter HorizontalAlignment="Center"
+                    <Button.Resources>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                                CornerRadius="12"
+                                                Padding="{TemplateBinding Padding}">
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.15" Color="#3B82F6"/>
+                                            </Border.Effect>
+                                            <ContentPresenter HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"/>
-										</Border>
-									</ControlTemplate>
-								</Setter.Value>
-							</Setter>
-						</Style>
-					</Button.Resources>
-				</Button>
-			</Grid>
-		</Border>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#2563EB"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </Grid>
+        </Border>
 
-		<!-- ==================== MAIN CONTENT ==================== -->
-		<Grid Grid.Row="1" Margin="24">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="260"/>
-				<ColumnDefinition Width="20"/>
-				<ColumnDefinition Width="*"/>
-			</Grid.ColumnDefinitions>
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <Grid Grid.Row="1" Margin="32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="32"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-			<!-- ==================== SIDEBAR - FILTERS ==================== -->
-			<Border Grid.Column="0"
-                   Background="White"
-                   CornerRadius="12"
-                   Padding="20">
-
-				<ScrollViewer VerticalScrollBarVisibility="Auto">
-										<StackPanel>
-						<!-- Filter Title -->
-						<TextBlock Text="🔍 BỘ LỌC TÌM KIẾM"
-                                 FontSize="13"
+            <!-- ==================== SIDEBAR - FILTERS ==================== -->
+            <StackPanel Grid.Column="0">
+                <Border Background="White" CornerRadius="16" Padding="24" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <!-- Filter Title -->
+                        <TextBlock Text="🔍 BỘ LỌC"
+                                 FontSize="12"
                                  FontWeight="Bold"
-                                 Foreground="#1E293B"
-                                 Margin="0,0,0,16"/>
+                                 Foreground="#94A3B8"
+                                 Margin="0,0,0,20"/>
 
-						<!-- Search -->
-						<TextBlock Text="TÌM KIẾM"
+                        <!-- Search -->
+                        <TextBlock Text="TÌM KIẾM THEO TÊN"
                                  FontSize="11"
-                                 FontWeight="SemiBold"
+                                 FontWeight="Bold"
                                  Foreground="#475569"
                                  Margin="0,0,0,8"/>
-						<Border Background="#F1F5F9" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
-							<TextBox x:Name="TxtSearch"
-                                    Height="36"
-                                    Padding="10,0"
+                        <Border Background="#F8FAFC" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,24">
+                            <TextBox x:Name="TxtSearch"
+                                    Height="40"
+                                    Padding="12,0"
                                     FontSize="13"
                                     Background="Transparent"
                                     BorderThickness="0"
                                     VerticalContentAlignment="Center"
                                     TextChanged="TxtSearch_TextChanged"/>
-						</Border>
+                        </Border>
 
-						<!-- Divider -->
-						<Rectangle Height="1" Fill="#E2E8F0" Margin="0,0,0,16"/>
-
-						<!-- Subject Filter -->
-						<TextBlock Text="MÔN HỌC"
+                        <!-- Subject Filter -->
+                        <TextBlock Text="MÔN HỌC"
                                  FontSize="11"
-                                 FontWeight="SemiBold"
+                                 FontWeight="Bold"
                                  Foreground="#475569"
                                  Margin="0,0,0,8"/>
-						<Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
-							<ComboBox x:Name="CboSubject"
-                                     Height="36"
-                                     Padding="10,0"
+                        <Border Background="White" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,24">
+                            <ComboBox x:Name="CboSubject"
+                                     Height="40"
+                                     Padding="12,0"
                                      FontSize="13"
                                      Background="Transparent"
                                      BorderThickness="0"
                                      VerticalContentAlignment="Center"
                                      SelectionChanged="Filter_Changed">
-							</ComboBox>
-						</Border>
+                            </ComboBox>
+                        </Border>
 
-						<!-- Divider -->
-						<Rectangle Height="1" Fill="#E2E8F0" Margin="0,0,0,16"/>
-
-						<!-- Status Filter -->
-						<TextBlock Text="TRẠNG THÁI"
+                        <!-- Status Filter -->
+                        <TextBlock Text="TRẠNG THÁI"
                                  FontSize="11"
-                                 FontWeight="SemiBold"
+                                 FontWeight="Bold"
                                  Foreground="#475569"
-                                 Margin="0,0,0,10"/>
-						<CheckBox x:Name="ChkActive"
-                                 Content="✅ Đang Mở"
-                                 Margin="0,0,0,10"
-                                 FontSize="13"
-                                 Foreground="#1E293B"
-                                 Checked="Filter_Changed"
-                                 Unchecked="Filter_Changed"
-                                 Tag="active"/>
-						<CheckBox x:Name="ChkClosed"
-                                 Content="🔒 Đã Khóa"
-                                 Margin="0,0,0,10"
-                                 FontSize="13"
-                                 Foreground="#1E293B"
-                                 Checked="Filter_Changed"
-                                 Unchecked="Filter_Changed"
-                                 Tag="closed"/>
-						<CheckBox x:Name="ChkDraft"
-                                 Content="📝 Nháp"
-                                 Margin="0,0,0,16"
-                                 FontSize="13"
-                                 Foreground="#1E293B"
-                                 Checked="Filter_Changed"
-                                 Unchecked="Filter_Changed"
-                                 Tag="draft"/>
-					</StackPanel>
-				</ScrollViewer>
-			</Border>
+                                 Margin="0,0,0,12"/>
+                        <StackPanel>
+                            <CheckBox x:Name="ChkActive" Content="✅ Đang Mở" Margin="0,0,0,12" Checked="Filter_Changed" Unchecked="Filter_Changed" Tag="active"/>
+                            <CheckBox x:Name="ChkClosed" Content="🔒 Đã Khóa" Margin="0,0,0,12" Checked="Filter_Changed" Unchecked="Filter_Changed" Tag="closed"/>
+                            <CheckBox x:Name="ChkDraft" Content="📝 Nháp" Margin="0,0,0,0" Checked="Filter_Changed" Unchecked="Filter_Changed" Tag="draft"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
 
-			<!-- ==================== MAIN CONTENT AREA ==================== -->
-			<StackPanel Grid.Column="2">
-				<!-- Stats Cards -->
-				<Grid Height="100" Margin="0,0,0,20">
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*"/>
-						<ColumnDefinition Width="16"/>
-						<ColumnDefinition Width="*"/>
-						<ColumnDefinition Width="16"/>
-						<ColumnDefinition Width="*"/>
-					</Grid.ColumnDefinitions>
+            <!-- ==================== MAIN CONTENT AREA ==================== -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-					<!-- Total Exams Card -->
-					<Border Grid.Column="0"
+                <!-- Stats Cards -->
+                <Grid Height="120" Margin="0,0,0,32">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Total Exams Card -->
+                    <Border Grid.Column="0" CornerRadius="16" Padding="24">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FFFFFF" Offset="0"/>
+                                <GradientStop Color="#F8FAFC" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="15" ShadowDepth="1" Opacity="0.05" Color="Black"/>
+                        </Border.Effect>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="📊 Tổng Bài Thi" FontSize="13" Foreground="#64748B" Margin="0,0,0,10" FontWeight="Medium"/>
+                            <TextBlock x:Name="TxtTotalExams" Text="0" FontSize="36" FontWeight="Bold" Foreground="#1E293B"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Active Exams Card -->
+                    <Border Grid.Column="2" CornerRadius="16" Padding="24">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#EFF6FF" Offset="0"/>
+                                <GradientStop Color="#DBEAFE" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="✅ Đang Mở" FontSize="13" Foreground="#2563EB" Margin="0,0,0,10" FontWeight="Bold"/>
+                            <TextBlock x:Name="TxtActiveExams" Text="0" FontSize="36" FontWeight="Bold" Foreground="#1E40AF"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Pending Exams Card -->
+                    <Border Grid.Column="4" CornerRadius="16" Padding="24">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FFFBEB" Offset="0"/>
+                                <GradientStop Color="#FEF3C7" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="⏳ Chờ Phê Duyệt" FontSize="13" Foreground="#D97706" Margin="0,0,0,10" FontWeight="Bold"/>
+                            <TextBlock x:Name="TxtPendingExams" Text="0" FontSize="36" FontWeight="Bold" Foreground="#92400E"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Exams List Title -->
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="📝 DANH SÁCH BÀI THI"
+                             FontSize="14"
+                             FontWeight="Bold"
+                             Foreground="#1E293B"
+                             Margin="0,0,0,20"/>
+
+                    <!-- Exams ListBox -->
+                    <ListBox x:Name="ExamsList" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             VirtualizingPanel.IsVirtualizing="True">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <local:ExamCardView />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0,0,0,16"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <ContentPresenter />
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+
+                    <!-- Empty State -->
+                    <Border x:Name="EmptyState"
+                           Grid.Row="1"
                            Background="White"
-                           CornerRadius="12"
-                           Padding="20">
-						<StackPanel VerticalAlignment="Center">
-							<TextBlock Text="📊 Tổng Bài Thi"
-                                     FontSize="12"
-                                     Foreground="#64748B"
-                                     Margin="0,0,0,8"/>
-							<TextBlock x:Name="TxtTotalExams"
-                                     Text="0"
-                                     FontSize="32"
+                           CornerRadius="20"
+                           Padding="60"
+                           Visibility="Collapsed"
+                           VerticalAlignment="Top">
+                        <StackPanel VerticalAlignment="Center"
+                                  HorizontalAlignment="Center">
+                            <TextBlock Text="📭"
+                                     FontSize="72"
+                                     Foreground="#CBD5E1"
+                                     TextAlignment="Center"
+                                     Margin="0,0,0,24"/>
+                            <TextBlock Text="Chưa có bài thi nào"
+                                     FontSize="20"
                                      FontWeight="Bold"
-                                     Foreground="#1E293B"/>
-						</StackPanel>
-					</Border>
-
-					<!-- Active Exams Card -->
-					<Border Grid.Column="2"
-                           Background="White"
-                           CornerRadius="12"
-                           Padding="20">
-						<StackPanel VerticalAlignment="Center">
-							<TextBlock Text="✅ Đang Mở"
-                                     FontSize="12"
                                      Foreground="#64748B"
+                                     TextAlignment="Center"
                                      Margin="0,0,0,8"/>
-							<TextBlock x:Name="TxtActiveExams"
-                                     Text="0"
-                                     FontSize="32"
-                                     FontWeight="Bold"
-                                     Foreground="#3B82F6"/>
-						</StackPanel>
-					</Border>
-
-					<!-- Pending Exams Card -->
-					<Border Grid.Column="4"
-                           Background="White"
-                           CornerRadius="12"
-                           Padding="20">
-						<StackPanel VerticalAlignment="Center">
-							<TextBlock Text="⏳ Chờ Phê Duyệt"
-                                     FontSize="12"
-                                     Foreground="#64748B"
-                                     Margin="0,0,0,8"/>
-							<TextBlock x:Name="TxtPendingExams"
-                                     Text="0"
-                                     FontSize="32"
-                                     FontWeight="Bold"
-                                     Foreground="#F59E0B"/>
-						</StackPanel>
-					</Border>
-				</Grid>
-
-				<!-- Exams List Title -->
-				<TextBlock Text="📝 DANH SÁCH BÀI THI"
-                         FontSize="14"
-                         FontWeight="Bold"
-                         Foreground="#1E293B"
-                         Margin="0,0,0,16"/>
-
-				<!-- Exams Scrollable List -->
-				<ScrollViewer VerticalScrollBarVisibility="Auto"
-                            HorizontalScrollBarVisibility="Disabled"
-                            Height="500">
-					<StackPanel x:Name="ExamsPanel"/>
-				</ScrollViewer>
-
-				<!-- Empty State -->
-				<Border x:Name="EmptyState"
-                       Background="White"
-                       CornerRadius="12"
-                       Padding="40"
-                       Visibility="Collapsed">
-					<StackPanel VerticalAlignment="Center"
-                              HorizontalAlignment="Center">
-						<TextBlock Text="📭"
-                                 FontSize="64"
-                                 Foreground="#CBD5E1"
-                                 TextAlignment="Center"
-                                 Margin="0,0,0,16"/>
-						<TextBlock Text="Chưa có bài thi nào"
-                                 FontSize="16"
-                                 FontWeight="SemiBold"
-                                 Foreground="#64748B"
-                                 TextAlignment="Center"
-                                 Margin="0,0,0,8"/>
-						<TextBlock Text="Hãy tạo bài thi đầu tiên của bạn"
-                                 FontSize="12"
-                                 Foreground="#94A3B8"
-                                 TextAlignment="Center"/>
-					</StackPanel>
-				</Border>
-			</StackPanel>
-		</Grid>
-	</Grid>
+                            <TextBlock Text="Hãy tạo bài thi đầu tiên để bắt đầu đánh giá học sinh"
+                                     FontSize="14"
+                                     Foreground="#94A3B8"
+                                     TextAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
 </UserControl>

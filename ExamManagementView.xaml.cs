@@ -230,29 +230,27 @@ namespace e_learning_app
 
         private void Refresh()
         {
-            if (ExamsPanel == null) return;
+            if (ExamsList == null) return;
 
             var filtered = GetFilteredExams().ToList();
 
             // Update statistics
             UpdateStats();
 
-            // Render exams
-            ExamsPanel.Children.Clear();
+            // Render exams using ListBox binding
+            ExamsList.ItemsSource = filtered;
+            
             if (filtered.Count == 0)
             {
                 if (EmptyState != null)
                     EmptyState.Visibility = Visibility.Visible;
+                ExamsList.Visibility = Visibility.Collapsed;
             }
             else
             {
                 if (EmptyState != null)
                     EmptyState.Visibility = Visibility.Collapsed;
-                foreach (var exam in filtered)
-                {
-                    var examCard = BuildExamCard(exam);
-                    ExamsPanel.Children.Add(examCard);
-                }
+                ExamsList.Visibility = Visibility.Visible;
             }
         }
 
