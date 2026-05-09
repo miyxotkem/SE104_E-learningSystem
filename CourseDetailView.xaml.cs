@@ -248,7 +248,6 @@ namespace e_learning_app.Views
         {
             InputVideoTitle.Text = "";
             InputVideoDesc.Text = "";
-            TxtSelectedVideoFile.Text = "Chưa chọn tệp nào";
             TxtSelectedVideoFile.Tag = null;
             MainScrollViewer.Effect = new System.Windows.Media.Effects.BlurEffect { Radius = 10 };
             AddVideoDrawer.Visibility = Visibility.Visible;
@@ -391,7 +390,18 @@ namespace e_learning_app.Views
             try
             {
                 var doc = await _dbManager.GetDb.Collection("Users").Document(_course.InstructorId).GetSnapshotAsync();
-                TxtInstructorName.Text = doc.Exists ? doc.GetValue<string>("FullName") : "Không xác định";
+                if (doc.Exists)
+                {
+                    TxtInstructorName.Text = doc.ContainsField("FullName") ? doc.GetValue<string>("FullName") : "Không xác định";
+                    TxtInstructorEmail.Text = doc.ContainsField("Email") ? doc.GetValue<string>("Email") : "N/A";
+                    TxtInstructorPhone.Text = doc.ContainsField("PhoneNumber") ? doc.GetValue<string>("PhoneNumber") : "N/A";
+                }
+                else
+                {
+                    TxtInstructorName.Text = "Không xác định";
+                    TxtInstructorEmail.Text = "N/A";
+                    TxtInstructorPhone.Text = "N/A";
+                }
             }
             catch
             {
@@ -598,8 +608,10 @@ namespace e_learning_app.Views
             _editingContent = null;
             TxtContentFormTitle.Text = "Thêm nội dung mới";
             BtnSubmitContent.Content = "Thêm vào lớp";
-            AddTitleInput.Text = ""; AddLinkInput.Text = ""; AddNoteInput.Text = "";
-            AddDocPathInput.Text = ""; AddDocPathInput.Tag = null;
+            AddTitleInput.Text = "";
+            AddLinkInput.Text = "";
+            AddNoteInput.Text = "";
+            AddDocPathInput.Tag = null;
             AddTypeInput.SelectedIndex = 0;
             MainScrollViewer.Effect = new BlurEffect { Radius = 10 };
             AddContentDrawer.Visibility = Visibility.Visible;
@@ -1934,7 +1946,6 @@ namespace e_learning_app.Views
 
                     if (userDoc.Exists)
                     {
-                        // Lấy dữ liệu an toàn, tránh lỗi ép kiểu trực tiếp
                         name = userDoc.ContainsField("FullName") ? userDoc.GetValue<object>("FullName")?.ToString() : "";
                         email = userDoc.ContainsField("Email") ? userDoc.GetValue<object>("Email")?.ToString() : "";
 
@@ -2031,6 +2042,34 @@ namespace e_learning_app.Views
                     EditTxtEndPeriod.IsEnabled = true;
                     EditTxtStartPeriod.Opacity = 1;
                     EditTxtEndPeriod.Opacity = 1;
+                }
+            }
+        }
+
+        private void VideoDropZone_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files.Length > 0)
+                {
+                    string filePath = files[0];
+                    TxtSelectedVideoFile.Text = System.IO.Path.GetFileName(filePath);
+                    TxtSelectedVideoFile.Tag = filePath;
+                }
+            }
+        }
+
+        private void DocDropZone_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files.Length > 0)
+                {
+                    string filePath = files[0];
+                    AddDocPathInput.Text = System.IO.Path.GetFileName(filePath);
+                    AddDocPathInput.Tag = filePath;
                 }
             }
         }
