@@ -20,6 +20,7 @@ namespace e_learning_app.Views
         private int _currentIndex = 0;
         private DispatcherTimer _timer;
         private TimeSpan _remainingTime;
+        private double _totalSeconds;
         private DateTime _startTime;
 
         public TakeQuizView(DatabaseManager dbManager, Exam exam)
@@ -29,7 +30,8 @@ namespace e_learning_app.Views
             _exam = exam;
             
             _startTime = DateTime.Now;
-            _remainingTime = TimeSpan.FromMinutes(_exam.TimeLimitMinutes);
+            _totalSeconds = _exam.TimeLimitMinutes * 60;
+            _remainingTime = TimeSpan.FromSeconds(_totalSeconds);
             
             Loaded += TakeQuizView_Loaded;
         }
@@ -39,6 +41,29 @@ namespace e_learning_app.Views
             try 
             {
                 TxtQuizTitle.Text = $"📝  {_exam.Title}";
+
+                // Double check attempt limit
+                var user = _dbManager.GetCurrentUser();
+                if (user != null)
+                {
+                    var subSnap = await _dbManager.GetDb.Collection("exam_submissions")
+                        .WhereEqualTo("ExamId", _exam.Id)
+                        .WhereEqualTo("StudentId", user.Id)
+                        .GetSnapshotAsync();
+
+                    int attemptCount = subSnap.Count;
+                    int limit = _exam.AllowMultipleAttempts ? _exam.MaxAttempts : 1;
+
+                    if (attemptCount >= limit)
+                    {
+                        MessageBox.Show("Bạn đã hết lượt làm bài cho bài thi này!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        if (Window.GetWindow(this) is MainWindow mw)
+                            mw.MainContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+                        else if (Window.GetWindow(this) is StudentMainWindow smw)
+                            smw.StudentContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+                        return;
+                    }
+                }
                 
                 // Load questions from Firestore
                 _questions = await _dbManager.GetExamQuestionsAsync(_exam.Id);
@@ -75,17 +100,35 @@ namespace e_learning_app.Views
             _timer.Tick += (s, e) =>
             {
                 _remainingTime = _remainingTime.Subtract(TimeSpan.FromSeconds(1));
-                TxtTimer.Text = $"  {_remainingTime:mm\\:ss}";
+                
+                // Formatting: hh:mm:ss if > 1 hour, otherwise mm:ss
+                if (_remainingTime.TotalHours >= 1)
+                    TxtTimer.Text = _remainingTime.ToString(@"hh\:mm\:ss");
+                else
+                    TxtTimer.Text = _remainingTime.ToString(@"mm\:ss");
+
+                // Update Time Progress Bar
+                double percent = _remainingTime.TotalSeconds / _totalSeconds;
+                TimeProgressFill.Width = 140 * percent;
 
                 if (_remainingTime.TotalSeconds <= 0)
                 {
                     _timer.Stop();
+                    TimeProgressFill.Width = 0;
                     MessageBox.Show("Hết giờ làm bài! Hệ thống sẽ tự động nộp bài.", "Hết giờ");
-                    SubmitQuiz();
+                    _ = SubmitQuiz(); // Use discard for async call in non-async event
+                }
+                else if (_remainingTime.TotalMinutes < 1)
+                {
+                    // Pulse Red when < 1 min
+                    TxtTimer.Foreground = Brushes.Red;
+                    TimeProgressFill.Background = Brushes.Red;
+                    TxtTimer.Opacity = TxtTimer.Opacity == 1 ? 0.6 : 1; 
                 }
                 else if (_remainingTime.TotalMinutes < 5)
                 {
-                    TxtTimer.Foreground = Brushes.Red;
+                    TxtTimer.Foreground = Brushes.OrangeRed;
+                    TimeProgressFill.Background = Brushes.OrangeRed;
                 }
             };
             _timer.Start();

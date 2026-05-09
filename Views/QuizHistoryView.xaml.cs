@@ -59,9 +59,21 @@ namespace e_learning_app.Views
                 TxtHighestScore.Text = $"{maxScoreValue:F1} / {totalPoints:F1}";
 
                 // Check attempts limit
-                if (_submissions.Count >= _exam.MaxAttempts && !_exam.AllowMultipleAttempts)
+                bool isLimitReached = false;
+                if (!_exam.AllowMultipleAttempts)
+                {
+                    if (_submissions.Count >= 1) isLimitReached = true;
+                }
+                else
+                {
+                    if (_submissions.Count >= _exam.MaxAttempts) isLimitReached = true;
+                }
+
+                if (isLimitReached)
                 {
                     BtnStartQuiz.IsEnabled = false;
+                    BtnStartQuiz.Background = new SolidColorBrush(Color.FromRgb(0xE2, 0xE8, 0xF0));
+                    BtnStartQuiz.Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
                     BtnStartQuiz.Content = "❌ Hết lượt làm bài";
                 }
 
