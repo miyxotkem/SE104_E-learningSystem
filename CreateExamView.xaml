@@ -270,7 +270,15 @@
                             <CheckBox x:Name="ChkAllowReview" Content="👁️ Cho phép học sinh xem lại đáp án" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
                             <CheckBox x:Name="ChkRandomize" Content="🔀 Xáo trộn thứ tự câu hỏi cho mỗi lượt thi" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="False" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
                             <CheckBox x:Name="ChkShowScore" Content="📊 Hiển thị điểm số ngay khi nộp bài" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
-                            <CheckBox x:Name="ChkMultipleAttempts" Content="🔁 Cho phép học sinh thực hiện nhiều lần" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
+                            <CheckBox x:Name="ChkMultipleAttempts" Content="🔁 Cho phép học sinh thực hiện nhiều lần" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="ChkMultipleAttempts_Changed" Unchecked="ChkMultipleAttempts_Changed"/>
+
+                            <StackPanel x:Name="PanelMaxAttempts" Margin="30,0,0,10">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="Số lần làm tối đa" Style="{StaticResource FieldLabelStyle}" Margin="0"/>
+                                    <TextBlock Text=" (1-10)" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                </StackPanel>
+                                <TextBox x:Name="TxtMaxAttempts" Style="{StaticResource ModernTextBox}" Width="100" HorizontalAlignment="Left" Text="3" TextChanged="Sync_UI"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 

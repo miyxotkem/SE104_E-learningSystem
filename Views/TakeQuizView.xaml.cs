@@ -310,7 +310,17 @@ namespace e_learning_app.Views
                 
                 if (graded != null)
                 {
-                    MessageBox.Show($"Nộp bài thành công!\nĐiểm của bạn: {graded.Score:F1} / {_questions.Sum(q => q.Points)} ({graded.Percentage:F1}%)", "Kết quả");
+                    string msg = "Nộp bài thành công!";
+                    if (_exam.ShowScore)
+                    {
+                        msg += $"\nĐiểm của bạn: {graded.Score:F1} / {_questions.Sum(q => q.Points)} ({graded.Percentage:F1}%)";
+                    }
+                    else
+                    {
+                        msg += "\nKết quả của bạn đã được ghi nhận.";
+                    }
+                    
+                    MessageBox.Show(msg, "Kết quả");
                     
                     // Navigate back to student dashboard or quiz list
                     if (Window.GetWindow(this) is MainWindow mw)

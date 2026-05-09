@@ -56,7 +56,7 @@ namespace e_learning_app.Views
 
                 // Highest Score Calculation
                 double maxScoreValue = _submissions.Any() ? _submissions.Max(s => s.Score) : 0;
-                TxtHighestScore.Text = $"{maxScoreValue:F1} / {totalPoints:F1}";
+                TxtHighestScore.Text = _exam.ShowScore ? $"{maxScoreValue:F1} / {totalPoints:F1}" : "---";
 
                 // Check attempts limit
                 bool isLimitReached = false;
@@ -82,10 +82,10 @@ namespace e_learning_app.Views
                 {
                     Submission = s, // Keep reference for click
                     s.SubmittedAt,
-                    ScoreDisplay = $"{s.Score:F1} / {totalPoints:F1}",
+                    ScoreDisplay = _exam.ShowScore ? $"{s.Score:F1} / {totalPoints:F1}" : "Đã nộp",
                     TimeDisplay = $"Thời gian làm bài: {TimeSpan.FromSeconds(s.TimeSpentSeconds):mm\\:ss}",
-                    StatusText = s.Percentage >= _exam.PassingScore ? "Đạt" : "Không đạt",
-                    StatusBrush = s.Percentage >= _exam.PassingScore ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)) : new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26))
+                    StatusText = !_exam.ShowScore ? "---" : (s.Percentage >= _exam.PassingScore ? "Đạt" : "Không đạt"),
+                    StatusBrush = !_exam.ShowScore ? Brushes.Gray : (s.Percentage >= _exam.PassingScore ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)) : new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26)))
                 }).ToList();
 
                 ItemsHistory.ItemsSource = displayList;
@@ -100,8 +100,12 @@ namespace e_learning_app.Views
         {
             if (sender is FrameworkElement fe && fe.DataContext != null)
             {
-                // Accessing anonymous type property via dynamic or reflection is tricky in C#, 
-                // but since we know the structure of displayList:
+                if (!_exam.AllowReview)
+                {
+                    MessageBox.Show("Giảng viên đã tắt tính năng xem lại bài làm cho bài thi này.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
                 var context = fe.DataContext;
                 var submission = (ExamSubmission)context.GetType().GetProperty("Submission")?.GetValue(context);
 
