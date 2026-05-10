@@ -14,7 +14,7 @@ namespace e_learning_app.Views
     public partial class StudentDashboardView : UserControl
     {
         private readonly DatabaseManager _dbManager;
-        private static HashSet<string> _readNotifKeys = new HashSet<string>();
+        //private static HashSet<string> _readNotifKeys = new HashSet<string>();
 
         public class ScheduleItem
         {
@@ -93,6 +93,23 @@ namespace e_learning_app.Views
         {
             var currentUser = _dbManager.GetCurrentUser();
             if (currentUser == null) return;
+
+            // Đồng bộ trạng thái đã đọc từ Firebase
+            try
+            {
+                var readNotifsSnap = await _dbManager.GetDb.Collection("Users").Document(currentUser.Id)
+                    .Collection("ReadNotifications").GetSnapshotAsync();
+
+                NotificationService.ReadNotifKeys.Clear();
+                foreach (var doc in readNotifsSnap.Documents)
+                {
+                    NotificationService.ReadNotifKeys.Add(doc.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi đồng bộ ReadNotifications: " + ex.Message);
+            }
 
             try
             {
@@ -261,7 +278,7 @@ namespace e_learning_app.Views
                                         TargetCourse = c,
                                         Title = $"Bài tập '{title}' của lớp {c.ClassName} sẽ hết hạn trong vòng {hoursLeft} giờ tới!",
                                         Time = $"Hạn chót: {deadlineLocal:dd/MM - HH:mm}",
-                                        IsUnread = !_readNotifKeys.Contains(notifKey)
+                                        IsUnread = !NotificationService.ReadNotifKeys.Contains(notifKey)
                                     });
                                 }
                             }
@@ -280,7 +297,7 @@ namespace e_learning_app.Views
                                     TargetCourse = c,
                                     Title = $"Có bài tập mới: '{title}' ở lớp {c.ClassName}.",
                                     Time = "Bài tập mới",
-                                    IsUnread = !_readNotifKeys.Contains(notifKey)
+                                    IsUnread = !NotificationService.ReadNotifKeys.Contains(notifKey)
                                 });
                             }
                         }
@@ -334,19 +351,35 @@ namespace e_learning_app.Views
             }
         }
 
-        private void BtnNotifItem_Click(object sender, RoutedEventArgs e)
+        private async void BtnNotifItem_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.DataContext is NotifItem n)
             {
                 if (n.IsUnread)
                 {
                     n.IsUnread = false;
-                    _readNotifKeys.Add(n.NotifKey);
+                    NotificationService.ReadNotifKeys.Add(n.NotifKey);
+
+                    // Lưu trạng thái đã đọc lên Firebase
+                    try
+                    {
+                        var currentUser = _dbManager.GetCurrentUser();
+                        if (currentUser != null)
+                        {
+                            await _dbManager.GetDb.Collection("Users").Document(currentUser.Id)
+                                .Collection("ReadNotifications").Document(n.NotifKey)
+                                .SetAsync(new { ReadAt = DateTime.UtcNow });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Lỗi lưu trạng thái đã đọc: " + ex.Message);
+                    }
                 }
 
-                if (n.TargetCourse != null && Window.GetWindow(this) is MainWindow mw)
+                if (n.TargetCourse != null && Window.GetWindow(this) is StudentMainWindow mw)
                 {
-                    mw.MainContentArea.Content = new CourseDetailView(_dbManager, n.TargetCourse);
+                    mw.StudentContentArea.Content = new CourseDetailView(_dbManager, n.TargetCourse);
                 }
             }
         }
@@ -369,9 +402,9 @@ namespace e_learning_app.Views
 
         private void BtnViewAllNotif_Click(object sender, RoutedEventArgs e)
         {
-            if (Window.GetWindow(this) is MainWindow mw)
+            if (Window.GetWindow(this) is StudentMainWindow mw)
             {
-                mw.NavNotifications_Click(null, null);
+                mw.BtnNotifications_Click(null, null);
             }
         }
     }

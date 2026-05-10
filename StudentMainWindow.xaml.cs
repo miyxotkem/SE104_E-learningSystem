@@ -1,7 +1,8 @@
+using e_learning_app.Views;
+using Google.Apis.Util.Store;
+using Google.Cloud.Firestore;
 using System.Windows;
 using System.Windows.Controls;
-using e_learning_app.Views;
-using Google.Cloud.Firestore;
 
 namespace e_learning_app
 {
@@ -97,7 +98,7 @@ namespace e_learning_app
             StudentContentArea.Content = new MyClassesView(_dbManager);
         }
 
-        private void BtnQuiz_Click(object sender, RoutedEventArgs e)
+        public void BtnQuiz_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnQuiz);
             StudentContentArea.Content = new StudentQuizView(_dbManager);
@@ -108,14 +109,18 @@ namespace e_learning_app
             OpenProfile_Click(sender, null);
         }
 
-        private void BtnNotifications_Click(object sender, RoutedEventArgs e)
+        public void BtnNotifications_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnNotifications);
-            StudentContentArea.Content = new StudentNotificationView();
+            StudentContentArea.Content = new StudentNotificationView(_dbManager);
         }
 
-        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        private async void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
+            string credPath = "gg.auth.api";
+            var dataStore = new FileDataStore(credPath, true);
+            await dataStore.ClearAsync();
+
             var result = MessageBox.Show(
                         "Bạn có chắc muốn đăng xuất?",
                         "Xác nhận đăng xuất",

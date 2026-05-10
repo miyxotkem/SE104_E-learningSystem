@@ -128,7 +128,7 @@ namespace e_learning_app
             try
             {
                 // Xóa cache cũ để có thể chọn tài khoản Google khác
-                await dataStore.ClearAsync();
+                //await dataStore.ClearAsync();
 
                 // Đọc Client Secret từ file được nhúng trong .exe
                 string googleJsonContent = GetEmbeddedJson("google_json.json");

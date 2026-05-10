@@ -28,7 +28,7 @@ namespace e_learning_app.Views.Admin
 
                 int totalUsers    = users.Count;
                 int totalStudents = users.Count(u => u.Role?.ToLower() == "student");
-                int totalTeachers = users.Count(u => u.Role?.ToLower() == "teacher");
+                int totalTeachers = users.Count(u => u.Role?.ToLower() == "instructor");
 
                 // Count users created in last 7 days (Bị gỡ bỏ vì không còn CreatedAt)
                 int newUsers = 0;

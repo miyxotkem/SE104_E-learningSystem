@@ -132,6 +132,12 @@ namespace e_learning_app.Views
                 sp.Children.Add(btnTake);
 
                 card.Child = sp;
+                card.Cursor = exam.IsActive ? System.Windows.Input.Cursors.Hand : System.Windows.Input.Cursors.Arrow;
+                if (exam.IsActive)
+                {
+                    card.MouseDown += (s, e) => NavigateToExam(exam);
+                }
+
                 ExamsPanel.Children.Add(card);
             }
         }
@@ -141,11 +147,18 @@ namespace e_learning_app.Views
             if (sender is Button btn && btn.Tag is string examId)
             {
                 var selectedExam = _allExams.FirstOrDefault(x => x.Id == examId);
-                var studentWin = Window.GetWindow(this) as StudentMainWindow;
-                if (studentWin != null && selectedExam != null)
-                {
-                    studentWin.StudentContentArea.Content = new TakeQuizView(_dbManager, selectedExam);
-                }
+                NavigateToExam(selectedExam);
+            }
+        }
+
+        private void NavigateToExam(Exam exam)
+        {
+            if (exam == null) return;
+
+            var studentWin = Window.GetWindow(this) as StudentMainWindow;
+            if (studentWin != null)
+            {
+                studentWin.StudentContentArea.Content = new TakeQuizView(_dbManager, exam);
             }
         }
     }

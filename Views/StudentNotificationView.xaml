@@ -90,151 +90,52 @@
 
         <!-- TABS FILTER -->
         <StackPanel Grid.Row="2" Orientation="Horizontal">
-            <RadioButton Content="Tất cả (5)" Style="{StaticResource FilterTabBtn}" IsChecked="True"/>
-            <RadioButton Content="Chưa đọc (2)" Style="{StaticResource FilterTabBtn}"/>
-            <RadioButton Content="Bài tập (1)" Style="{StaticResource FilterTabBtn}"/>
-            <RadioButton Content="Cảnh báo (0)" Style="{StaticResource FilterTabBtn}"/>
+            <RadioButton Content="Tất cả" Style="{StaticResource FilterTabBtn}" IsChecked="True" Checked="FilterTab_Checked" Tag="All"/>
+            <RadioButton Content="Chưa đọc" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="Unread"/>
+            <RadioButton Content="Bài tập" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="Homework"/>
+            <RadioButton Content="Cảnh báo" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="Warning"/>
         </StackPanel>
 
         <!-- LIST NOTIFICATIONS -->
         <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                
-                <!-- UNREAD - Urgent (Deadline/Exam) -->
-                <Border Style="{StaticResource NotifUnread}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <Border Width="48" Height="48" CornerRadius="12" Background="#DBEAFE" VerticalAlignment="Top">
-                            <TextBlock Text="🚨" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        
-                        <StackPanel Grid.Column="2">
-                            <Grid Margin="0,0,0,6">
-                                <TextBlock Text="Sắp hết hạn: Bài tập Toán – Chương 3!" FontSize="15" FontWeight="Bold" Foreground="#1E293B"/>
-                                <TextBlock Text="Vừa xong" FontSize="11" Foreground="#3B82F6" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            <ItemsControl x:Name="NotifItemsControl" ItemsSource="{Binding Notifications}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border x:Name="NotifBorder" Style="{StaticResource NotifRead}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Icon Area -->
+                                <Border Grid.Column="0" Width="46" Height="46" CornerRadius="14" Background="#F1F5F9" Margin="0,0,16,0">
+                                    <TextBlock Text="{Binding Icon}" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Content -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                    <TextBlock Text="{Binding Content}" FontSize="13" Foreground="#64748B" Margin="0,4,0,4" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding TimeDisplay}" FontSize="11" Foreground="#94A3B8"/>
+                                </StackPanel>
+
+                                <!-- Actions -->
+                                <Button Grid.Column="2" Content="Xem chi tiết" 
+                                        Click="BtnNotifItem_Click"
+                                        Background="Transparent" BorderThickness="0" Foreground="#3B82F6"
+                                        FontSize="12" Cursor="Hand" VerticalAlignment="Top"/>
                             </Grid>
-                            <TextBlock Text="Bạn còn chưa đầy 12 giờ để nộp bài tập Toán. Hãy cố gắng hoàn thành để giữ chuỗi streak nhé!" 
-                                       FontSize="13" Foreground="#475569" TextWrapping="Wrap" LineHeight="20"/>
-                            
-                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                <Button Background="#3B82F6" Foreground="White" FontWeight="SemiBold" FontSize="12" 
-                                        BorderThickness="0" Padding="14,8" Cursor="Hand">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                    <TextBlock Text="Làm bài ngay →"/>
-                                </Button>
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- UNREAD - Teacher post -->
-                <Border Style="{StaticResource NotifUnread}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Border Width="48" Height="48" CornerRadius="12" Background="#FFFBEB" VerticalAlignment="Top">
-                            <TextBlock Text="📢" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-
-                        <StackPanel Grid.Column="2">
-                            <Grid Margin="0,0,0,6">
-                                <TextBlock Text="Giảng viên đã thêm tài liệu mới" FontSize="15" FontWeight="Bold" Foreground="#1E293B"/>
-                                <TextBlock Text="2 giờ trước" FontSize="11" Foreground="#3B82F6" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-                            <TextBlock Text="Thầy Nguyễn Văn An vừa tải lên 'Slide_Bai14_BoSung.pdf' trong khóa Toán cao cấp A1." 
-                                       FontSize="13" Foreground="#475569" TextWrapping="Wrap" LineHeight="20"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- READ - Exam result -->
-                <Border Style="{StaticResource NotifRead}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Border Width="48" Height="48" CornerRadius="12" Background="#F1F5F9" VerticalAlignment="Top">
-                            <TextBlock Text="🏆" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.8"/>
-                        </Border>
-
-                        <StackPanel Grid.Column="2">
-                            <Grid Margin="0,0,0,6">
-                                <TextBlock Text="Đã có điểm bài Quiz Vật lý Lab 1" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B"/>
-                                <TextBlock Text="Hôm qua" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-                            <TextBlock Text="Chúc mừng! Bạn đạt 9/10 điểm trong bài kiểm tra gần nhất. Bạn nhận được +250 XP." 
-                                       FontSize="13" Foreground="#64748B" TextWrapping="Wrap" LineHeight="20"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                
-                <!-- READ - System achievement -->
-                <Border Style="{StaticResource NotifRead}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Border Width="48" Height="48" CornerRadius="12" Background="#F1F5F9" VerticalAlignment="Top">
-                            <TextBlock Text="⭐" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.8"/>
-                        </Border>
-
-                        <StackPanel Grid.Column="2">
-                            <Grid Margin="0,0,0,6">
-                                <TextBlock Text="Mở khóa cấp độ tiếp theo!" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B"/>
-                                <TextBlock Text="02/04/2026" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-                            <TextBlock Text="Bạn đã đạt Level 14. Tiếp tục duy trì phong độ để mở khóa thêm các huy hiệu độc quyền nhé." 
-                                       FontSize="13" Foreground="#64748B" TextWrapping="Wrap" LineHeight="20"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                
-                <!-- READ - Course enrollment -->
-                <Border Style="{StaticResource NotifRead}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Border Width="48" Height="48" CornerRadius="12" Background="#F1F5F9" VerticalAlignment="Top">
-                            <TextBlock Text="👋" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.8"/>
-                        </Border>
-
-                        <StackPanel Grid.Column="2">
-                            <Grid Margin="0,0,0,6">
-                                <TextBlock Text="Chào mừng bạn đến với Lập trình Python cơ bản" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B"/>
-                                <TextBlock Text="30/03/2026" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-                            <TextBlock Text="Bạn đã tham gia thành công khóa học mới. Hãy xem video đầu tiên ngay." 
-                                       FontSize="13" Foreground="#64748B" TextWrapping="Wrap" LineHeight="20"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-            </StackPanel>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsUnread}" Value="True">
+                                <Setter TargetName="NotifBorder" Property="Style" Value="{StaticResource NotifUnread}"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </ScrollViewer>
     </Grid>
 </UserControl>

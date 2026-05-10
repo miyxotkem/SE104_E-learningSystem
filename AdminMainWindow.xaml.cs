@@ -1,3 +1,4 @@
+using Google.Apis.Util.Store;
 using System.Windows;
 
 namespace e_learning_app
@@ -56,8 +57,11 @@ namespace e_learning_app
             AdminContentArea.Content = new Views.Admin.AdminSettingsView();
         }
 
-        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        private async void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
+            string credPath = "gg.auth.api";
+            var dataStore = new FileDataStore(credPath, true);
+            await dataStore.ClearAsync();
             var result = MessageBox.Show(
                 "Bạn có chắc muốn đăng xuất khỏi Admin Panel?",
                 "Xác nhận đăng xuất",

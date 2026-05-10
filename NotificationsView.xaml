@@ -1,58 +1,74 @@
-﻿<UserControl x:Class="e_learning_app.Views.NotificationsView"
+<UserControl x:Class="e_learning_app.Views.NotificationsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F0F2F5"
              Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
-        <Style x:Key="FilterBtn" TargetType="Button">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="14,8"/>
-            <Setter Property="FontSize"        Value="13"/>
-            <Setter Property="Foreground"      Value="#64748B"/>
-            <Setter Property="Cursor"          Value="Hand"/>
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontSize"   Value="18"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#1E293B"/>
+        </Style>
+
+        <!-- Filter / Tab Button -->
+        <Style x:Key="FilterTabBtn" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#64748B"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize"   Value="13"/>
+            <Setter Property="Margin"     Value="0,0,10,0"/>
+            <Setter Property="Cursor"     Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="12" Padding="16,10">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#F1F5F9"/>
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.9"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="RoundBtn" TargetType="Button">
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-            <Setter Property="Template">
+
+        <!-- Unread Notification Item Style -->
+        <Style x:Key="NotifUnread" TargetType="Border">
+            <Setter Property="Background"   Value="#EFF6FF"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding"      Value="18"/>
+            <Setter Property="Margin"       Value="0,0,0,12"/>
+            <Setter Property="Effect">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Opacity" Value="0.85"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
+                    <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.04" Color="#3B82F6"/>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- Read Notification Item Style -->
+        <Style x:Key="NotifRead" TargetType="Border">
+            <Setter Property="Background"   Value="White"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding"      Value="18"/>
+            <Setter Property="Margin"       Value="0,0,0,12"/>
+            <Setter Property="BorderBrush"  Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
     </UserControl.Resources>
 
     <Grid Margin="30,30,30,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="16"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="20"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="24"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -62,43 +78,78 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
+
             <StackPanel>
-                <TextBlock Text="🔔  Thông báo lớp" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
-                <TextBlock Text="Quản lý và gửi thông báo tới học sinh và phụ huynh." FontSize="13" Foreground="#64748B" Margin="0,6,0,0"/>
+                <TextBlock Text="🔔  Thông báo chung" Style="{StaticResource SectionHeader}" FontSize="24"/>
+                <TextBlock Text="Thông báo hệ thống và tin nhắn từ giáo viên" FontSize="13" Foreground="#64748B" Margin="0,6,0,0"/>
             </StackPanel>
+
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button x:Name="BtnMarkAllRead" Content="✓ Đánh dấu đã đọc"
-                        Background="#F1F5F9" Foreground="#475569"
-                        Style="{StaticResource RoundBtn}" Padding="14,9" FontSize="13"
-                        Margin="0,0,10,0" Click="BtnMarkAllRead_Click"/>
-                <Button x:Name="BtnCreateNotif" Content="+ Tạo thông báo mới"
+                <Button x:Name="BtnMarkAllRead" Content="✓ Đánh dấu tất cả"
+                        Background="Transparent" BorderThickness="0" Foreground="#3B82F6"
+                        FontSize="13" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,15,0"
+                        Click="BtnMarkAllRead_Click"/>
+                <Button x:Name="BtnCreateNotif" Content="+ Tạo mới"
                         Background="#3B82F6" Foreground="White"
-                        Style="{StaticResource RoundBtn}" Padding="14,9" FontSize="13" FontWeight="SemiBold"
-                        Click="BtnCreateNotif_Click"/>
+                        Padding="16,8" FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                        Click="BtnCreateNotif_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="10"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
             </StackPanel>
         </Grid>
 
-        <!-- FILTER TABS -->
-        <Border Grid.Row="2" Background="White" CornerRadius="14" Padding="6">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.05" Color="Black"/>
-            </Border.Effect>
-            <StackPanel Orientation="Horizontal">
-                <Button x:Name="BtnFilterAll"    Style="{StaticResource FilterBtn}" Tag="all"
-                        Background="#EFF6FF" Foreground="#3B82F6" FontWeight="SemiBold"
-                        Click="BtnFilter_Click"/>
-                <Button x:Name="BtnFilterUnread" Style="{StaticResource FilterBtn}" Tag="unread"
-                        Margin="4,0" Click="BtnFilter_Click"/>
-                <Button x:Name="BtnFilterSent"   Style="{StaticResource FilterBtn}" Tag="sent"
-                        Margin="0,0,4,0" Click="BtnFilter_Click"/>
-                <Button x:Name="BtnFilterSystem" Style="{StaticResource FilterBtn}" Tag="system"
-                        Click="BtnFilter_Click"/>
-            </StackPanel>
-        </Border>
+        <!-- TABS FILTER -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal">
+            <RadioButton x:Name="BtnFilterAll" Content="Tất cả" Style="{StaticResource FilterTabBtn}" IsChecked="True" Checked="FilterTab_Checked" Tag="all"/>
+            <RadioButton x:Name="BtnFilterUnread" Content="Chưa đọc" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="unread"/>
+            <RadioButton x:Name="BtnFilterSent" Content="Đã gửi" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="sent"/>
+            <RadioButton x:Name="BtnFilterSystem" Content="Hệ thống" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="system"/>
+        </StackPanel>
 
-        <!-- NOTIFICATION LIST (dynamic) -->
+        <!-- LIST NOTIFICATIONS -->
         <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
-            <StackPanel x:Name="NotifListPanel"/>
+            <ItemsControl x:Name="NotifItemsControl" ItemsSource="{Binding Notifications}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border x:Name="NotifBorder" Style="{StaticResource NotifRead}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Icon Area -->
+                                <Border Grid.Column="0" Width="46" Height="46" CornerRadius="14" Background="#F1F5F9" Margin="0,0,16,0">
+                                    <TextBlock Text="{Binding Icon}" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Content -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                    <TextBlock Text="{Binding Content}" FontSize="13" Foreground="#64748B" Margin="0,4,0,4" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding TimeDisplay}" FontSize="11" Foreground="#94A3B8"/>
+                                </StackPanel>
+
+                                <!-- Actions -->
+                                <Button Grid.Column="2" Content="Xem chi tiết" 
+                                        Click="BtnViewNotif_Click"
+                                        Background="Transparent" BorderThickness="0" Foreground="#3B82F6"
+                                        FontSize="12" Cursor="Hand" VerticalAlignment="Top"/>
+                            </Grid>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsUnread}" Value="True">
+                                <Setter TargetName="NotifBorder" Property="Style" Value="{StaticResource NotifUnread}"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </ScrollViewer>
     </Grid>
 </UserControl>
