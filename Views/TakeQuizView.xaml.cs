@@ -4,8 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Documents;
-using e_learning_app;
+using System.Windows.Threading;
 using e_learning_app.Class;
 
 namespace e_learning_app.Views
@@ -15,188 +14,323 @@ namespace e_learning_app.Views
         private Exam _exam;
         private DatabaseManager _dbManager;
         private List<ExamQuestion> _questions = new();
+        private Dictionary<string, string> _studentAnswers = new(); // QuestionId -> AnswerIndex/Text
+        private HashSet<string> _markedForReview = new();
+
         private int _currentIndex = 0;
-        private Dictionary<string, string> _answers = new(); // QuestionId -> SelectedIndex (string)
+        private DispatcherTimer _timer;
+        private TimeSpan _remainingTime;
+        private double _totalSeconds;
+        private DateTime _startTime;
 
         public TakeQuizView(DatabaseManager dbManager, Exam exam)
         {
             InitializeComponent();
             _dbManager = dbManager;
             _exam = exam;
+
+            _startTime = DateTime.Now;
+            _totalSeconds = _exam.TimeLimitMinutes * 60;
+            _remainingTime = TimeSpan.FromSeconds(_totalSeconds);
+
+            Loaded += TakeQuizView_Loaded;
         }
 
-        private async void UserControl_Loaded(object sender, System.Windows.RoutedEventArgs e)
-        {
-            if (_exam != null)
-            {
-                TxtQuizTitle.Text = $"📝  {_exam.Title}";
-                TxtQuizMeta.Text = $"Ngày diễn ra: {_exam.ScheduledDate:dd/MM/yyyy HH:mm}  ·  {_exam.TimeLimitMinutes} phút";
-                
-                await LoadQuestionsAsync();
-            }
-        }
-
-        private async System.Threading.Tasks.Task LoadQuestionsAsync()
+        private async void TakeQuizView_Loaded(object sender, RoutedEventArgs e)
         {
             try
             {
-                _questions = await _dbManager.GetExamQuestionsAsync(_exam.Id);
-                _questions = _questions.OrderBy(q => q.QuestionOrder).ToList();
+                TxtQuizTitle.Text = $"📝  {_exam.Title}";
 
-                if (_questions.Count > 0)
+                // Double check attempt limit
+                var user = _dbManager.GetCurrentUser();
+                if (user != null)
                 {
-                    RenderQuestionMap();
-                    DisplayQuestion(0);
+                    var subSnap = await _dbManager.GetDb.Collection("exam_submissions")
+                        .WhereEqualTo("ExamId", _exam.Id)
+                        .WhereEqualTo("StudentId", user.Id)
+                        .GetSnapshotAsync();
+
+                    int attemptCount = subSnap.Count;
+                    int limit = _exam.AllowMultipleAttempts ? _exam.MaxAttempts : 1;
+
+                    if (attemptCount >= limit)
+                    {
+                        MessageBox.Show("Bạn đã hết lượt làm bài cho bài thi này!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        if (Window.GetWindow(this) is MainWindow mw)
+                            mw.MainContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+                        else if (Window.GetWindow(this) is StudentMainWindow smw)
+                            smw.StudentContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+                        return;
+                    }
                 }
-                else
+
+                // Load questions from Firestore
+                _questions = await _dbManager.GetExamQuestionsAsync(_exam.Id);
+
+                if (_questions == null || _questions.Count == 0)
                 {
-                    TxtQuestionText.Text = "Không có câu hỏi nào trong bài thi này.";
+                    MessageBox.Show("Không tìm thấy câu hỏi cho bài thi này.", "Thông báo");
+                    return;
                 }
+
+                if (_exam.RandomizeQuestions)
+                {
+                    var rnd = new Random();
+                    _questions = _questions.OrderBy(x => rnd.Next()).ToList();
+                }
+
+                // Initialize timer
+                StartTimer();
+
+                // Render first question
+                ShowQuestion(0);
+                UpdateQuestionMap();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải câu hỏi: {ex.Message}");
+                MessageBox.Show($"Lỗi tải bài thi: {ex.Message}");
             }
         }
 
-        private void DisplayQuestion(int index)
+        private void StartTimer()
+        {
+            _timer = new DispatcherTimer();
+            _timer.Interval = TimeSpan.FromSeconds(1);
+            _timer.Tick += (s, e) =>
+            {
+                _remainingTime = _remainingTime.Subtract(TimeSpan.FromSeconds(1));
+
+                // Formatting: hh:mm:ss if > 1 hour, otherwise mm:ss
+                if (_remainingTime.TotalHours >= 1)
+                    TxtTimer.Text = _remainingTime.ToString(@"hh\:mm\:ss");
+                else
+                    TxtTimer.Text = _remainingTime.ToString(@"mm\:ss");
+
+                // Update Time Progress Bar
+                double percent = _remainingTime.TotalSeconds / _totalSeconds;
+                TimeProgressFill.Width = 140 * percent;
+
+                if (_remainingTime.TotalSeconds <= 0)
+                {
+                    _timer.Stop();
+                    TimeProgressFill.Width = 0;
+                    MessageBox.Show("Hết giờ làm bài! Hệ thống sẽ tự động nộp bài.", "Hết giờ");
+                    _ = SubmitQuiz(); // Use discard for async call in non-async event
+                }
+                else if (_remainingTime.TotalMinutes < 1)
+                {
+                    // Pulse Red when < 1 min
+                    TxtTimer.Foreground = Brushes.Red;
+                    TimeProgressFill.Background = Brushes.Red;
+                    TxtTimer.Opacity = TxtTimer.Opacity == 1 ? 0.6 : 1;
+                }
+                else if (_remainingTime.TotalMinutes < 5)
+                {
+                    TxtTimer.Foreground = Brushes.OrangeRed;
+                    TimeProgressFill.Background = Brushes.OrangeRed;
+                }
+            };
+            _timer.Start();
+        }
+
+        private void ShowQuestion(int index)
         {
             if (index < 0 || index >= _questions.Count) return;
-            _currentIndex = index;
 
+            _currentIndex = index;
             var q = _questions[index];
-            TxtQuestionNumber.Text = $"Câu {index + 1}";
-            TxtQuestionText.Text = q.Content;
-            
-            // Clear and render answers
-            AnswersContainer.Children.Clear();
-            if (q.Type == QuestionType.MultipleChoice)
+
+            // Update UI
+            TxtQuestionBadge.Text = $"Câu {index + 1}";
+            TxtQuestionContent.Text = q.Content;
+            TxtProgressHeader.Text = $"Câu {index + 1} / {_questions.Count}  ·  {q.Points} điểm";
+
+            // Progress Bar
+            double progress = (double)(index + 1) / _questions.Count * 180;
+            ProgressBarFill.Width = progress;
+            TxtProgressFooter.Text = $"{index + 1}/{_questions.Count} câu";
+
+            // Hint
+            // (Assuming ExamQuestion doesn't have a Hint field in current model, but let's hide it)
+            BorderHint.Visibility = Visibility.Collapsed;
+
+            // Answers
+            PanelAnswers.Children.Clear();
+            if (q.Type == QuestionType.MultipleChoice || q.Type == QuestionType.TrueFalse)
             {
                 for (int i = 0; i < q.Options.Count; i++)
                 {
                     var rb = new RadioButton
                     {
-                        Style = (Style)FindResource("AnswerRadioBtn"),
+                        Style = (Style)Resources["AnswerRadioBtn"],
                         GroupName = $"Q_{q.Id}",
                         Tag = i.ToString(),
-                        Content = new TextBlock 
-                        { 
-                            FontSize = 15, 
-                            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x1E, 0x29, 0x3B)),
-                            Inlines = { 
-                                new System.Windows.Documents.Run { Text = $"{(char)('A' + i)}. ", FontWeight = FontWeights.Bold, Foreground = (System.Windows.Media.Brush)FindResource("PrimaryBlue") },
-                                new System.Windows.Documents.Run { Text = q.Options[i] }
-                            }
-                        }
+                        IsChecked = _studentAnswers.ContainsKey(q.Id) && _studentAnswers[q.Id] == i.ToString()
                     };
 
-                    if (_answers.ContainsKey(q.Id) && _answers[q.Id] == i.ToString())
-                    {
-                        rb.IsChecked = true;
-                    }
+                    var tb = new TextBlock { FontSize = 15, Foreground = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B)) };
+                    tb.Inlines.Add(new System.Windows.Documents.Run { Text = $"{(char)('A' + i)}. ", FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)) });
+                    tb.Inlines.Add(new System.Windows.Documents.Run { Text = q.Options[i] });
 
+                    rb.Content = tb;
                     rb.Checked += (s, e) => {
-                        _answers[q.Id] = (s as RadioButton).Tag.ToString();
+                        _studentAnswers[q.Id] = (s as RadioButton).Tag.ToString();
                         UpdateQuestionMap();
+                        UpdateStats();
                     };
 
-                    AnswersContainer.Children.Add(rb);
+                    PanelAnswers.Children.Add(rb);
                 }
             }
 
-            // Update Map selection
-            UpdateQuestionMap();
+            // Mark Review state
+            if (_markedForReview.Contains(q.Id))
+                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF9, 0xC3)); // Yellowish
+            else
+                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xF0));
 
-            // Update buttons visibility
-            BtnNext.Content = (index == _questions.Count - 1) ? "Xem lại bài" : "Câu tiếp theo →";
-        }
+            // Buttons
+            BtnPrev.IsEnabled = index > 0;
+            BtnNext.Content = index == _questions.Count - 1 ? "Câu cuối" : "Câu tiếp theo →";
 
-        private void RenderQuestionMap()
-        {
-            QuestionMapPanel.Children.Clear();
-            for (int i = 0; i < _questions.Count; i++)
-            {
-                var btn = new Button
-                {
-                    Style = (Style)FindResource("QMapBtn"),
-                    Content = (i + 1).ToString(),
-                    Tag = i,
-                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xF1, 0xF5, 0xF9)),
-                    Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x94, 0xA3, 0xB8))
-                };
-                btn.Click += (s, e) => DisplayQuestion((int)(s as Button).Tag);
-                QuestionMapPanel.Children.Add(btn);
-            }
+            UpdateStats();
         }
 
         private void UpdateQuestionMap()
         {
-            for (int i = 0; i < QuestionMapPanel.Children.Count; i++)
+            PanelQuestionMap.Children.Clear();
+            for (int i = 0; i < _questions.Count; i++)
             {
-                if (QuestionMapPanel.Children[i] is Button btn)
+                var q = _questions[i];
+                var btn = new Button
                 {
-                    int idx = (int)btn.Tag;
-                    bool isAnswered = _answers.ContainsKey(_questions[idx].Id);
-                    bool isCurrent = idx == _currentIndex;
+                    Style = (Style)Resources["QMapBtn"],
+                    Content = (i + 1).ToString(),
+                    Tag = i,
+                    FontWeight = FontWeights.Bold
+                };
 
-                    if (isCurrent)
-                    {
-                        btn.Background = (System.Windows.Media.Brush)FindResource("PrimaryBlue");
-                        btn.Foreground = System.Windows.Media.Brushes.White;
-                    }
-                    else if (isAnswered)
-                    {
-                        btn.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xDC, 0xFC, 0xE7));
-                        btn.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x16, 0xA3, 0x4A));
-                    }
-                    else
-                    {
-                        btn.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xF1, 0xF5, 0xF9));
-                        btn.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x94, 0xA3, 0xB8));
-                    }
+                // Colors based on state
+                if (i == _currentIndex)
+                {
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
+                    btn.Foreground = Brushes.White;
+                    btn.Width = 38; btn.Height = 38; // Current is slightly bigger
                 }
+                else if (_markedForReview.Contains(q.Id))
+                {
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2));
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26));
+                }
+                else if (_studentAnswers.ContainsKey(q.Id))
+                {
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7));
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A));
+                }
+                else
+                {
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9));
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
+                }
+
+                btn.Click += (s, e) => ShowQuestion((int)(s as Button).Tag);
+                PanelQuestionMap.Children.Add(btn);
             }
         }
 
-        private void BtnPrev_Click(object sender, RoutedEventArgs e)
+        private void UpdateStats()
         {
-            if (_currentIndex > 0)
-            {
-                DisplayQuestion(_currentIndex - 1);
-            }
+            int done = _studentAnswers.Count;
+            int review = _markedForReview.Count;
+            int todo = _questions.Count - done;
+
+            TxtStatsDone.Text = $"{done} / {_questions.Count}";
+            TxtStatsReview.Text = $"{review} câu";
+            TxtStatsTodo.Text = $"{todo} câu";
         }
+
+        private void BtnPrev_Click(object sender, RoutedEventArgs e) => ShowQuestion(_currentIndex - 1);
 
         private void BtnNext_Click(object sender, RoutedEventArgs e)
         {
             if (_currentIndex < _questions.Count - 1)
-            {
-                DisplayQuestion(_currentIndex + 1);
-            }
-            else
-            {
-                MessageBox.Show("Bạn đã đến câu hỏi cuối cùng. Hãy kiểm tra lại các câu trả lời trước khi nộp bài.");
-            }
+                ShowQuestion(_currentIndex + 1);
         }
 
-        private void BtnSubmit_Click(object sender, RoutedEventArgs e)
+        private void BtnMarkReview_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            var result = MessageBox.Show("Bạn có chắc chắn muốn nộp bài không?", "Xác nhận nộp bài", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var qId = _questions[_currentIndex].Id;
+            if (_markedForReview.Contains(qId))
+                _markedForReview.Remove(qId);
+            else
+                _markedForReview.Add(qId);
+
+            ShowQuestion(_currentIndex); // Refresh UI
+            UpdateQuestionMap();
+        }
+
+        private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show("Bạn có chắc chắn muốn nộp bài?", "Xác nhận nộp bài", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result == MessageBoxResult.Yes)
             {
-                SubmitQuiz();
+                await SubmitQuiz();
             }
         }
 
-        private async void SubmitQuiz()
+        private async System.Threading.Tasks.Task SubmitQuiz()
         {
-            // Logic nộp bài sẽ được viết ở đây (tính điểm, lưu Firestore)
-            MessageBox.Show("Đã nộp bài thành công! Hệ thống đang chấm điểm...");
-            
-            // Quay lại trang danh sách bài thi
-            var studentWin = Window.GetWindow(this) as StudentMainWindow;
-            if (studentWin != null)
+            _timer?.Stop();
+
+            var user = _dbManager.GetCurrentUser();
+            var submission = new ExamSubmission
             {
-                studentWin.BtnQuiz_Click(null, null);
+                ExamId = _exam.Id,
+                StudentId = user.Id,
+                StudentName = user.FullName,
+                TimeSpentSeconds = (int)(DateTime.Now - _startTime).TotalSeconds,
+                Status = SubmissionStatus.Submitted
+            };
+
+            foreach (var q in _questions)
+            {
+                submission.Answers.Add(new AnswerResponse
+                {
+                    QuestionId = q.Id,
+                    QuestionOrder = q.QuestionOrder,
+                    StudentAnswer = _studentAnswers.ContainsKey(q.Id) ? _studentAnswers[q.Id] : ""
+                });
+            }
+
+            try
+            {
+                // Grade automatically if multiple choice
+                var graded = await _dbManager.AutoGradeAndSubmitExamAsync(submission);
+
+                if (graded != null)
+                {
+                    MessageBox.Show($"Nộp bài thành công!\nĐiểm của bạn: {graded.Score:F1} / {_questions.Sum(q => q.Points)} ({graded.Percentage:F1}%)", "Kết quả");
+                    string msg = "Nộp bài thành công!";
+                    if (_exam.ShowScore)
+                    {
+                        msg += $"\nĐiểm của bạn: {graded.Score:F1} / {_questions.Sum(q => q.Points)} ({graded.Percentage:F1}%)";
+                    }
+                    else
+                    {
+                        msg += "\nKết quả của bạn đã được ghi nhận.";
+                    }
+
+                    MessageBox.Show(msg, "Kết quả");
+
+                    // Navigate back to student dashboard or quiz list
+                    if (Window.GetWindow(this) is MainWindow mw)
+                        mw.NavDashboard_Click(null, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi nộp bài: {ex.Message}");
             }
         }
     }

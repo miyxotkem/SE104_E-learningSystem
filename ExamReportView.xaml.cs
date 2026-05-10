@@ -42,6 +42,7 @@ namespace e_learning_app
             }
 
             ProcessStatistics();
+            UpdateTopStudents();
             
             LoadingOverlay.Visibility = Visibility.Collapsed;
         }
@@ -50,13 +51,11 @@ namespace e_learning_app
         {
             if (_submissions == null || _submissions.Count == 0)
             {
-                // No submissions
                 TxtTotalSubmissions.Text = "0";
                 TxtPassRate.Text = "0%";
                 TxtAvgScore.Text = "0.0";
                 TxtMaxScore.Text = "0.0";
                 TxtMinScore.Text = "0.0";
-                
                 DgSubmissions.ItemsSource = null;
                 DistributionPanel.Children.Clear();
                 return;
@@ -74,27 +73,90 @@ namespace e_learning_app
             TxtMaxScore.Text = maxScore.ToString("0.0");
             TxtMinScore.Text = minScore.ToString("0.0");
 
-            // Format data for datagrid
-            var displayList = _submissions.Select(s => new
-            {
-                s.StudentName,
-                s.SubmittedAt,
-                s.Score,
-                s.Percentage,
-                TimeSpentFormatted = TimeSpan.FromSeconds(s.TimeSpentSeconds).ToString(@"mm\:ss")
-            }).OrderByDescending(s => s.Score).ToList();
-
-            DgSubmissions.ItemsSource = displayList;
-
-            // Draw Distribution
+            RefreshSubmissionList();
             DrawDistributionChart();
         }
 
+        private void RefreshSubmissionList(string filter = "")
+        {
+            var list = _submissions.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                list = list.Where(s => s.StudentName.ToLower().Contains(filter.ToLower()));
+            }
+
+            var displayList = list.Select(s => new
+            {
+                SubmissionId = s.Id,
+                s.StudentName,
+                s.SubmittedAt,
+                ScoreDisplay = $"{s.Score:F1}/{_exam.TotalQuestions}",
+                s.Score,
+                s.Percentage,
+                TimeSpentFormatted = TimeSpan.FromSeconds(s.TimeSpentSeconds).ToString(@"mm\:ss"),
+                StatusBg = s.Percentage >= _exam.PassingScore ? new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7)) : new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2)),
+                StatusFg = s.Percentage >= _exam.PassingScore ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)) : new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26))
+            }).OrderByDescending(s => s.Score).ToList();
+
+            DgSubmissions.ItemsSource = displayList;
+        }
+
+        private void UpdateTopStudents()
+        {
+            TopStudentsPanel.Children.Clear();
+            var top = _submissions.OrderByDescending(s => s.Score).Take(5).ToList();
+            
+            for (int i = 0; i < top.Count; i++)
+            {
+                var s = top[i];
+                var medal = i switch { 0 => "🥇", 1 => "🥈", 2 => "🥉", _ => (i + 1).ToString() };
+                
+                var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var txtMedal = new TextBlock { Text = medal, FontSize = 18, VerticalAlignment = VerticalAlignment.Center };
+                var txtName = new TextBlock { Text = s.StudentName, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B)), VerticalAlignment = VerticalAlignment.Center };
+                var txtScore = new TextBlock { Text = s.Score.ToString("0.0"), FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)), VerticalAlignment = VerticalAlignment.Center };
+
+                Grid.SetColumn(txtMedal, 0);
+                Grid.SetColumn(txtName, 1);
+                Grid.SetColumn(txtScore, 2);
+
+                grid.Children.Add(txtMedal);
+                grid.Children.Add(txtName);
+                grid.Children.Add(txtScore);
+
+                TopStudentsPanel.Children.Add(grid);
+            }
+        }
+
+        private void TxtSearchStudent_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            string filter = TxtSearchStudent.Text;
+            SearchPlaceholder.Visibility = string.IsNullOrEmpty(filter) ? Visibility.Visible : Visibility.Collapsed;
+            RefreshSubmissionList(filter);
+        }
+
+        private void BtnViewSubmission_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string submissionId)
+            {
+                var submission = _submissions.FirstOrDefault(s => s.Id == submissionId);
+                if (submission != null)
+                {
+                    if (Window.GetWindow(this) is MainWindow mw)
+                    {
+                        mw.NavigateTo(new Views.QuizResultDetailView(_dbManager, _exam, submission));
+                    }
+                }
+            }
+        }
+        
         private void DrawDistributionChart()
         {
             DistributionPanel.Children.Clear();
-
-            // Ranges based on Percentage to be robust against different max scores
             var bands = new List<(string Range, string Color, double MinPct, double MaxPct)>
             {
                 ("Xuất sắc (90-100%)", "#22C55E", 90, 100),
@@ -105,7 +167,6 @@ namespace e_learning_app
 
             int maxCount = 0;
             var counts = new Dictionary<string, int>();
-
             foreach (var b in bands)
             {
                 int count = _submissions.Count(s => s.Percentage >= b.MinPct && s.Percentage <= b.MaxPct);
@@ -118,40 +179,26 @@ namespace e_learning_app
                 int count = counts[b.Range];
                 double widthPct = maxCount > 0 ? (double)count / maxCount * 100.0 : 0;
                 
-                var grid = new Grid { Margin = new Thickness(0, 0, 0, 15) };
+                var grid = new Grid { Margin = new Thickness(0, 0, 0, 16) };
                 grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                 grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                 
-                var headerGrid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+                var headerGrid = new Grid { Margin = new Thickness(0, 0, 0, 6) };
                 headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 
-                var txtLabel = new TextBlock { Text = b.Range, FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69)) };
-                var txtCount = new TextBlock { Text = count.ToString() + " hs", FontSize = 12, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B)) };
-                
-                Grid.SetColumn(txtLabel, 0);
+                headerGrid.Children.Add(new TextBlock { Text = b.Range, FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)) });
+                var txtCount = new TextBlock { Text = count.ToString() + " học sinh", FontSize = 12, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B)) };
                 Grid.SetColumn(txtCount, 1);
-                headerGrid.Children.Add(txtLabel);
                 headerGrid.Children.Add(txtCount);
                 
-                Grid.SetRow(headerGrid, 0);
-                grid.Children.Add(headerGrid);
-
-                var barBg = new Border { Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9)), Height = 12, CornerRadius = new CornerRadius(6) };
+                var barBg = new Border { Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9)), Height = 10, CornerRadius = new CornerRadius(5) };
                 var barFg = new Border { 
                     Background = (Brush)new BrushConverter().ConvertFromString(b.Color), 
-                    Height = 12, 
-                    CornerRadius = new CornerRadius(6),
-                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Height = 10, CornerRadius = new CornerRadius(5), HorizontalAlignment = HorizontalAlignment.Left,
                 };
 
-                // Bind width proportion to parent container size
-                var widthBinding = new Binding("ActualWidth")
-                {
-                    Source = barBg,
-                    Converter = new PercentageConverter(),
-                    ConverterParameter = widthPct / 100.0
-                };
+                var widthBinding = new Binding("ActualWidth") { Source = barBg, Converter = new PercentageConverter(), ConverterParameter = widthPct / 100.0 };
                 barFg.SetBinding(Border.WidthProperty, widthBinding);
 
                 var barGrid = new Grid();
@@ -159,8 +206,8 @@ namespace e_learning_app
                 barGrid.Children.Add(barFg);
 
                 Grid.SetRow(barGrid, 1);
+                grid.Children.Add(headerGrid);
                 grid.Children.Add(barGrid);
-
                 DistributionPanel.Children.Add(grid);
             }
         }
@@ -168,10 +215,7 @@ namespace e_learning_app
         private void BtnBack_Click(object sender, RoutedEventArgs e)
         {
             if (Window.GetWindow(this) is MainWindow mw)
-            {
-                // Go back to Exam Management View
                 mw.NavigateTo(new ExamManagementView(_dbManager));
-            }
         }
 
         private void BtnExportExcel_Click(object sender, RoutedEventArgs e)
@@ -181,49 +225,25 @@ namespace e_learning_app
                 MessageBox.Show("Chưa có dữ liệu để xuất!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-
-            var dlg = new Microsoft.Win32.SaveFileDialog
-            {
-                FileName = $"BaoCao_{_exam.Title.Replace(" ", "_")}.csv",
-                DefaultExt = ".csv",
-                Filter = "CSV (*.csv)|*.csv"
-            };
-            
+            var dlg = new Microsoft.Win32.SaveFileDialog { FileName = $"BaoCao_{_exam.Title.Replace(" ", "_")}.csv", DefaultExt = ".csv", Filter = "CSV (*.csv)|*.csv" };
             if (dlg.ShowDialog() == true)
             {
                 try
                 {
                     var sb = new StringBuilder();
-                    sb.AppendLine("Hoc sinh,Thoi gian nop,Diem,Phan tram,Thoi gian lam(giay)");
-                    foreach (var s in _submissions)
-                    {
-                        sb.AppendLine($"{s.StudentName},{s.SubmittedAt:dd/MM/yyyy HH:mm},{s.Score},{s.Percentage:0.0}%,{s.TimeSpentSeconds}");
-                    }
+                    sb.AppendLine("Học sinh,Thời gian nộp,Điểm,Phần trăm,Thời gian làm(giây)");
+                    foreach (var s in _submissions) sb.AppendLine($"{s.StudentName},{s.SubmittedAt:dd/MM/yyyy HH:mm},{s.Score},{s.Percentage:0.0}%,{s.TimeSpentSeconds}");
                     System.IO.File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
                     MessageBox.Show($"Đã xuất thành công: {dlg.FileName}", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Lỗi khi xuất file: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                catch (Exception ex) { MessageBox.Show($"Lỗi khi xuất file: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error); }
             }
         }
     }
 
     public class PercentageConverter : System.Windows.Data.IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            if (value is double width && parameter is double pct)
-            {
-                return width * pct;
-            }
-            return 0;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => (value is double width && parameter is double pct) ? width * pct : 0;
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => throw new NotImplementedException();
     }
 }

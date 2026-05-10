@@ -5,41 +5,97 @@
              Loaded="UserControl_Loaded">
     
     <UserControl.Resources>
-        <Style x:Key="TakeBtn" TargetType="Button">
-            <Setter Property="Background" Value="#3B82F6"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+        <Style x:Key="ExamCardStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,20,20"/>
+            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="0">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="CardBorder" Width="300" Background="White" CornerRadius="16" Padding="20"
+                                BorderBrush="#F1F5F9" BorderThickness="1">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.05" Color="Black"/>
+                            </Border.Effect>
+                            <Grid>
+                                <ContentPresenter />
+                            </Grid>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="CardBorder" Property="Background" Value="#F8FAFC"/>
+                                <Setter TargetName="CardBorder" Property="Cursor" Value="Hand"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Background" Value="#CBD5E1"/>
-                </Trigger>
-            </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
     <Grid Margin="30">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="20"/>
+            <RowDefinition Height="30"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
         <StackPanel Grid.Row="0">
-            <TextBlock Text="📝 Các bài kiểm tra" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
-            <TextBlock Text="Danh sách các bài thi đang mở" FontSize="14" Foreground="#64748B" Margin="0,5,0,0"/>
+            <TextBlock Text="📝 Các bài kiểm tra" FontSize="28" FontWeight="Bold" Foreground="#1E293B"/>
+            <TextBlock Text="Danh sách các bài thi và trắc nghiệm đang mở" FontSize="14" Foreground="#64748B" Margin="0,8,0,0"/>
         </StackPanel>
         
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <WrapPanel x:Name="ExamsPanel" Orientation="Horizontal"/>
-        </ScrollViewer>
+        <ListBox x:Name="ExamsList" Grid.Row="2" Background="Transparent" BorderThickness="0"
+                 ItemContainerStyle="{StaticResource ExamCardStyle}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 SelectionChanged="ExamsList_SelectionChanged">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <!-- Status Tag -->
+                        <Border Background="{Binding StatusBg}" CornerRadius="6" Padding="10,4" 
+                                HorizontalAlignment="Left" Margin="0,0,0,12">
+                            <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="Bold" Foreground="{Binding StatusColor}"/>
+                        </Border>
+
+                        <!-- Title -->
+                        <TextBlock Text="{Binding Exam.Title}" FontSize="18" FontWeight="Bold" Foreground="#1E293B" 
+                                   TextWrapping="Wrap" Margin="0,0,0,8" Height="50" MaxHeight="50"/>
+
+                        <!-- Description -->
+                        <TextBlock Text="{Binding Exam.Description}" FontSize="13" Foreground="#64748B" 
+                                   TextWrapping="Wrap" Margin="0,0,0,15" Height="40" MaxHeight="40"/>
+
+                        <!-- Meta Info -->
+                        <Border Background="#F8FAFC" CornerRadius="10" Padding="12" Margin="0,0,0,15">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="⏱️" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding Exam.TimeLimitMinutes, StringFormat='{}{0} phút'}" FontSize="12" Foreground="#475569"/>
+                                    <TextBlock Text="  •  " Foreground="#CBD5E1"/>
+                                    <TextBlock Text="🎯" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding Exam.PassingScore, StringFormat='{}Đạt: {0}%'}" FontSize="12" Foreground="#475569"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="🏆" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Điểm cao nhất: " FontSize="12" Foreground="#64748B"/>
+                                    <TextBlock Text="{Binding MaxScoreDisplay}" FontSize="12" FontWeight="Bold" Foreground="#3B82F6"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Action Hint -->
+                        <TextBlock Text="Nhấn để xem chi tiết →" FontSize="12" Foreground="#3B82F6" 
+                                   FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </Grid>
 </UserControl>

@@ -1,3 +1,4 @@
+using Grpc.Net.Client.Balancer;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,13 +32,13 @@ namespace e_learning_app.Views
             InitializeComponent();
         }
 
-        public StudentCourseView(DatabaseManager dbManager, Course course, Lesson currentLesson)
+        public  StudentCourseView(DatabaseManager dbManager, Course course, Lesson currentLesson)
         {
+
             InitializeComponent();
             _dbManager = dbManager;
             _course = course;
             _currentLesson = currentLesson;
-
             if (_course != null)
             {
                 TxtCourseTitle.Text = _currentLesson != null ? _currentLesson.Title : _course.Title;
@@ -49,7 +50,6 @@ namespace e_learning_app.Views
             LoadPlaylistAsync();
             LoadCommentsAsync();
         }
-
         private void SetupVideoPlayer()
         {
             if (_currentLesson != null && !string.IsNullOrEmpty(_currentLesson.VideoUrl))

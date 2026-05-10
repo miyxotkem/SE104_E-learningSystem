@@ -78,16 +78,10 @@
 
                 <!-- Course info -->
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtCourseTitle" Text="Toán cao cấp A1" FontSize="16" FontWeight="Bold" Foreground="#1E293B"/>
-                    <TextBlock x:Name="TxtCourseSubtitle" Text="Bài 14: Giới hạn hàm số  ·  GV: Nguyễn Văn An" FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
-                </StackPanel>
-
-                <!-- Progress info -->
-                <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <TextBlock Text="Tiến độ: 37%" FontSize="13" FontWeight="SemiBold" Foreground="#3B82F6" HorizontalAlignment="Right"/>
-                    <Border Height="6" CornerRadius="3" Background="#E2E8F0" Margin="0,5,0,0" Width="160">
-                        <Border HorizontalAlignment="Left" Width="59" Height="6" CornerRadius="3" Background="#3B82F6"/>
-                    </Border>
+                    <TextBlock x:Name="TxtCourseTitle"  FontSize="16" FontWeight="Bold" Foreground="#1E293B"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="TxtCourseSubtitle"  FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </Border>
@@ -156,15 +150,6 @@
                                                Panel.ZIndex="1" MouseLeftButtonDown="BtnFullscreen_Click"/>
                                 </StackPanel>
                             </Grid>
-                        </Border>
-
-                        <!-- Focus Mode Badge -->
-                        <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="16"
-                                Background="#1E293BD0" CornerRadius="10" Padding="10,6">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="🎯" FontSize="13" VerticalAlignment="Center"/>
-                                <TextBlock Text=" Focus Mode" FontSize="12" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                            </StackPanel>
                         </Border>
                     </Grid>
                 </Border>
@@ -256,11 +241,6 @@
                     <Border Grid.Row="0" Padding="18,16" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
                         <StackPanel>
                             <TextBlock Text="📋  Danh sách bài học" FontSize="15" FontWeight="Bold" Foreground="#1E293B"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Border Style="{StaticResource Pill}" Background="#EFF6FF">
-                                    <TextBlock Text="5/14 bài đã học" FontSize="11" Foreground="#3B82F6" FontWeight="SemiBold"/>
-                                </Border>
-                            </StackPanel>
                         </StackPanel>
                     </Border>
 

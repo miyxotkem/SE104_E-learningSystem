@@ -1,8 +1,7 @@
 <UserControl x:Class="e_learning_app.Views.TakeQuizView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="#F0F2F5"
-             Loaded="UserControl_Loaded">
+             Background="#F0F2F5">
 
     <UserControl.Resources>
         <!-- Radio Button hiện đại -->
@@ -10,38 +9,37 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="AnswerBd" CornerRadius="14" Padding="18,14"
-                                BorderBrush="#E2E8F0" BorderThickness="2" Background="White"
-                                Margin="0,0,0,10" Cursor="Hand">
+                        <Border x:Name="AnswerBd" CornerRadius="16" Padding="20,16"
+                                BorderBrush="#E2E8F0" BorderThickness="1.5" Background="White"
+                                Margin="0,0,0,12" Cursor="Hand">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.04" Color="Black"/>
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.04" Color="Black"/>
                             </Border.Effect>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="36"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <!-- Circle indicator -->
-                                <Border x:Name="CircleBd" Width="28" Height="28" CornerRadius="14"
-                                        BorderBrush="#CBD5E1" BorderThickness="2" Background="White">
-                                    <Border x:Name="InnerCircle" Width="12" Height="12" CornerRadius="6"
+                                <Border x:Name="CircleBd" Width="24" Height="24" CornerRadius="12"
+                                        BorderBrush="#CBD5E1" BorderThickness="2" Background="White" HorizontalAlignment="Left">
+                                    <Border x:Name="InnerCircle" Width="10" Height="10" CornerRadius="5"
                                             Background="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <ContentPresenter Grid.Column="2" VerticalAlignment="Center"/>
+                                <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="AnswerBd" Property="BorderBrush" Value="#3B82F6"/>
-                                <Setter TargetName="AnswerBd" Property="Background" Value="#EFF6FF"/>
+                                <Setter TargetName="AnswerBd" Property="Background" Value="#F0F7FF"/>
                                 <Setter TargetName="CircleBd" Property="BorderBrush" Value="#3B82F6"/>
                                 <Setter TargetName="CircleBd" Property="Background" Value="#3B82F6"/>
                                 <Setter TargetName="InnerCircle" Property="Background" Value="White"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="AnswerBd" Property="BorderBrush" Value="#93C5FD"/>
-                                <Setter TargetName="AnswerBd" Property="Background" Value="#F8FBFF"/>
+                                <Setter TargetName="AnswerBd" Property="Background" Value="#F8FAFC"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -74,20 +72,22 @@
 
         <!-- Question Map Mini Button -->
         <Style x:Key="QMapBtn" TargetType="Button">
-            <Setter Property="Width"           Value="34"/>
-            <Setter Property="Height"          Value="34"/>
-            <Setter Property="Margin"          Value="3"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width"           Value="38"/>
+            <Setter Property="Height"          Value="38"/>
+            <Setter Property="Margin"          Value="4"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor"          Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bd" Property="Opacity" Value="0.8"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -121,27 +121,33 @@
 
                     <!-- Quiz info -->
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtQuizTitle" Text="📝  Đang tải bài kiểm tra..." FontSize="15" FontWeight="Bold" Foreground="#1E293B"/>
-                        <TextBlock x:Name="TxtQuizMeta" Text="Vui lòng đợi..." FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
+                        <TextBlock x:Name="TxtQuizTitle" Text="📝  Đang tải bài thi..." FontSize="15" FontWeight="Bold" Foreground="#1E293B"/>
+                            <TextBlock x:Name="TxtProgressHeader" Text="Câu -- / --  ·  -- điểm" FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <!-- Timer (Subtle, centered) -->
-                    <Border Grid.Column="1" Background="#F8FAFC" CornerRadius="16" Padding="22,10" HorizontalAlignment="Center">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.06" Color="Black"/>
-                        </Border.Effect>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="⏱" FontSize="16" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="TxtTimer" Text="  22:45" FontSize="22" FontWeight="Bold"
-                                       Foreground="#1E293B" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                    <!-- Timer (Prominent, centered) -->
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border Background="#F8FAFC" CornerRadius="16" Padding="22,8" HorizontalAlignment="Center">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.08" Color="Black"/>
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⏱" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="TxtTimer" Text="00:00:00" FontSize="24" FontWeight="Bold"
+                                           Foreground="#1E293B" VerticalAlignment="Center" FontFamily="Consolas"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- Time Progress Bar -->
+                        <Border Height="4" Background="#F1F5F9" CornerRadius="2" Width="140" Margin="0,6,0,0">
+                            <Border x:Name="TimeProgressFill" HorizontalAlignment="Left" Background="#3B82F6" Width="140" Height="4" CornerRadius="2"/>
+                        </Border>
+                    </StackPanel>
 
                     <!-- Overall progress bar -->
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
                         <TextBlock Text="Tiến độ làm bài" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,0,0,4"/>
                         <Border Height="8" CornerRadius="4" Background="#E2E8F0" Width="180">
-                            <Border HorizontalAlignment="Left" Width="84" Height="8" CornerRadius="4">
+                            <Border x:Name="ProgressBarFill" HorizontalAlignment="Left" Width="0" Height="8" CornerRadius="4">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                         <GradientStop Color="#3B82F6" Offset="0"/>
@@ -150,7 +156,7 @@
                                 </Border.Background>
                             </Border>
                         </Border>
-                        <TextBlock Text="7/15 câu" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+                        <TextBlock x:Name="TxtProgressFooter" Text="0/0 câu" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -161,7 +167,7 @@
                     <!-- Question number badge -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                         <Border Background="#3B82F6" CornerRadius="10" Padding="12,6">
-                            <TextBlock x:Name="TxtQuestionNumber" Text="Câu 1" FontSize="13" FontWeight="Bold" Foreground="White"/>
+                            <TextBlock x:Name="TxtQuestionBadge" Text="Câu --" FontSize="13" FontWeight="Bold" Foreground="White"/>
                         </Border>
                         <Border x:Name="BadgeRequired" Background="#EFF6FF" CornerRadius="10" Padding="10,6" Margin="8,0,0,0">
                             <TextBlock Text="Bắt buộc" FontSize="12" Foreground="#3B82F6" FontWeight="SemiBold"/>
@@ -174,14 +180,14 @@
                             <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.06" Color="Black"/>
                         </Border.Effect>
                         <StackPanel>
-                        <TextBlock x:Name="TxtQuestionText" TextWrapping="Wrap" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B" LineHeight="28">
-                            Đang tải câu hỏi...
-                        </TextBlock>
+                            <TextBlock x:Name="TxtQuestionContent" TextWrapping="Wrap" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B" LineHeight="28">
+                                Đang tải câu hỏi...
+                            </TextBlock>
                             <!-- Hint / formula area -->
-                            <Border Background="#F8FAFC" CornerRadius="12" Padding="16,12" Margin="0,16,0,0">
+                            <Border x:Name="BorderHint" Background="#F8FAFC" CornerRadius="12" Padding="16,12" Margin="0,16,0,0" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="💡" FontSize="14" VerticalAlignment="Center"/>
-                                    <TextBlock Text="  Gợi ý: Tìm f'(x) = 0, sau đó xét dấu f''(x) tại các nghiệm."
+                                    <TextBlock x:Name="TxtHint" Text="  Gợi ý sẽ hiển thị ở đây."
                                                FontSize="13" Foreground="#64748B" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Border>
@@ -189,7 +195,9 @@
                     </Border>
 
                     <!-- Answer Options Container -->
-                    <StackPanel x:Name="AnswersContainer"/>
+                    <StackPanel x:Name="PanelAnswers">
+                        <!-- Items will be generated dynamically -->
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
 
@@ -203,12 +211,12 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Previous -->
-                    <Button x:Name="BtnPrev" Grid.Column="0" Style="{StaticResource NavBtn}"
-                            Content="← Câu trước" Background="#F1F5F9" Foreground="#64748B" Click="BtnPrev_Click"/>
+                    <Button Grid.Column="0" x:Name="BtnPrev" Style="{StaticResource NavBtn}" Click="BtnPrev_Click"
+                            Content="← Câu trước" Background="#F1F5F9" Foreground="#64748B"/>
 
                     <!-- Mark for review -->
-                    <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Background="#FFFBF0" CornerRadius="10" Padding="14,7" Cursor="Hand">
+                    <Border Grid.Column="1" x:Name="BtnMarkReview" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Background="#FFFBF0" CornerRadius="10" Padding="14,7" Cursor="Hand" MouseLeftButtonUp="BtnMarkReview_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="🚩" FontSize="13" VerticalAlignment="Center"/>
                             <TextBlock Text="  Đánh dấu xem lại" FontSize="12" Foreground="#CA8A04" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -217,11 +225,11 @@
 
                     <!-- Next + Submit -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <Button x:Name="BtnNext" Style="{StaticResource NavBtn}"
+                        <Button x:Name="BtnNext" Style="{StaticResource NavBtn}" Click="BtnNext_Click"
                                 Content="Câu tiếp theo →" Background="#EFF6FF" Foreground="#3B82F6"
-                                Margin="0,0,10,0" Click="BtnNext_Click"/>
-                        <Button x:Name="BtnSubmit" Style="{StaticResource NavBtn}"
-                                Content="🏁  Nộp bài" Background="#3B82F6" Foreground="White" Click="BtnSubmit_Click">
+                                Margin="0,0,10,0"/>
+                        <Button x:Name="BtnSubmit" Style="{StaticResource NavBtn}" Click="BtnSubmit_Click"
+                                Content="🏁  Nộp bài" Background="#3B82F6" Foreground="White">
                             <Button.Effect>
                                 <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.2" Color="#3B82F6"/>
                             </Button.Effect>
@@ -260,7 +268,9 @@
 
                 <!-- Question Grid Map -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <WrapPanel x:Name="QuestionMapPanel" Margin="14,14,14,8" Orientation="Horizontal"/>
+                    <WrapPanel x:Name="PanelQuestionMap" Margin="14,14,14,8" Orientation="Horizontal">
+                        <!-- Will be generated dynamically -->
+                    </WrapPanel>
                 </ScrollViewer>
 
                 <!-- Summary Stats -->
@@ -268,19 +278,19 @@
                     <StackPanel>
                         <Grid Margin="0,0,0,6">
                             <TextBlock Text="Đã làm" FontSize="12" Foreground="#64748B"/>
-                            <TextBlock Text="6 / 15" FontSize="12" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Right"/>
+                            <TextBlock x:Name="TxtStatsDone" Text="0 / --" FontSize="12" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Right"/>
                         </Grid>
                         <Grid Margin="0,0,0,6">
                             <TextBlock Text="Đánh dấu xem lại" FontSize="12" Foreground="#64748B"/>
-                            <TextBlock Text="2 câu" FontSize="12" FontWeight="Bold" Foreground="#CA8A04" HorizontalAlignment="Right"/>
+                            <TextBlock x:Name="TxtStatsReview" Text="0 câu" FontSize="12" FontWeight="Bold" Foreground="#CA8A04" HorizontalAlignment="Right"/>
                         </Grid>
                         <Grid>
                             <TextBlock Text="Chưa làm" FontSize="12" Foreground="#64748B"/>
-                            <TextBlock Text="7 câu" FontSize="12" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Right"/>
+                            <TextBlock x:Name="TxtStatsTodo" Text="-- câu" FontSize="12" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Right"/>
                         </Grid>
 
-                        <Button Margin="0,14,0,0" Background="#DC2626" Foreground="White" FontWeight="Bold"
-                                FontSize="13" Height="44" BorderThickness="0" Cursor="Hand">
+                        <Button x:Name="BtnSubmitRight" Margin="0,14,0,0" Background="#DC2626" Foreground="White" FontWeight="Bold"
+                                FontSize="13" Height="44" BorderThickness="0" Cursor="Hand" Click="BtnSubmit_Click">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="0,0,0,0">

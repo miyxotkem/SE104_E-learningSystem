@@ -230,29 +230,27 @@ namespace e_learning_app
 
         private void Refresh()
         {
-            if (ExamsPanel == null) return;
+            if (ExamsList == null) return;
 
             var filtered = GetFilteredExams().ToList();
 
             // Update statistics
             UpdateStats();
 
-            // Render exams
-            ExamsPanel.Children.Clear();
+            // Render exams using ListBox binding
+            ExamsList.ItemsSource = filtered;
+            
             if (filtered.Count == 0)
             {
                 if (EmptyState != null)
                     EmptyState.Visibility = Visibility.Visible;
+                ExamsList.Visibility = Visibility.Collapsed;
             }
             else
             {
                 if (EmptyState != null)
                     EmptyState.Visibility = Visibility.Collapsed;
-                foreach (var exam in filtered)
-                {
-                    var examCard = BuildExamCard(exam);
-                    ExamsPanel.Children.Add(examCard);
-                }
+                ExamsList.Visibility = Visibility.Visible;
             }
         }
 
@@ -362,6 +360,30 @@ namespace e_learning_app
         {
             _searchText = TxtSearch.Text;
             Refresh();
+        }
+
+        private void ExamCard_ViewClicked(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is Exam exam)
+            {
+                ViewExam(exam);
+            }
+        }
+
+        private void ExamCard_EditClicked(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is Exam exam)
+            {
+                EditExam(exam);
+            }
+        }
+
+        private void ExamCard_DeleteClicked(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is Exam exam)
+            {
+                DeleteExam(exam);
+            }
         }
 
         private void BtnCreateExam_Click(object sender, RoutedEventArgs e)

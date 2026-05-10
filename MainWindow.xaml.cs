@@ -87,7 +87,7 @@ namespace e_learning_app
 
         private void NavSchedule_Click(object sender, RoutedEventArgs e)
         {
-            MainContentArea.Content = new TeachingScheduleView();
+            MainContentArea.Content = new TeachingScheduleView(_dbManager);
         }
 
         public void NavClasses_Click(object sender, RoutedEventArgs e)

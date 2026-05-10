@@ -47,17 +47,54 @@ namespace e_learning_app
 
             try
             {
-                var coursesSnap = await _dbManager.GetDb.Collection("Courses")
-                    .WhereEqualTo("InstructorId", currentUser.Id)
-                    .WhereEqualTo("IsActive", true)
-                    .GetSnapshotAsync();
-
                 _currentSchedule.Clear();
+                List<Course> enrolledCourses = new List<Course>();
 
-                foreach (var doc in coursesSnap.Documents)
+                if (currentUser.Role == "Instructor")
                 {
-                    var c = doc.ConvertTo<Course>();
-                    
+                    TxtTitle.Text = "📅 Lịch giảng dạy";
+                    TxtSubtitle.Text = "Lịch giảng dạy các lớp học trong tuần";
+                    BtnPrint.Content = "🖨️ In lịch dạy";
+
+                    var coursesSnap = await _dbManager.GetDb.Collection("Courses")
+                        .WhereEqualTo("InstructorId", currentUser.Id)
+                        .WhereEqualTo("IsActive", true)
+                        .GetSnapshotAsync();
+
+                    foreach (var doc in coursesSnap.Documents)
+                    {
+                        var c = doc.ConvertTo<Course>();
+                        c.Id = doc.Id;
+                        enrolledCourses.Add(c);
+                    }
+                }
+                else // Student
+                {
+                    TxtTitle.Text = "📅 Thời khóa biểu";
+                    TxtSubtitle.Text = "Lịch học tập các lớp học trong tuần";
+                    BtnPrint.Content = "🖨️ In thời khóa biểu";
+
+                    var registrationsSnap = await _dbManager.GetDb.Collection("courseRegistrations")
+                        .WhereEqualTo("userId", currentUser.Id)
+                        .WhereEqualTo("status", "accepted")
+                        .GetSnapshotAsync();
+
+                    foreach (var reg in registrationsSnap.Documents)
+                    {
+                        string courseId = reg.GetValue<string>("courseId");
+                        var courseSnap = await _dbManager.GetDb.Collection("Courses").Document(courseId).GetSnapshotAsync();
+
+                        if (courseSnap.Exists)
+                        {
+                            var c = courseSnap.ConvertTo<Course>();
+                            c.Id = courseSnap.Id;
+                            if (c.IsActive) enrolledCourses.Add(c);
+                        }
+                    }
+                }
+
+                foreach (var c in enrolledCourses)
+                {
                     int dayOfWeek = ConvertDayStringToNumber(c.DayOfWeek);
                     string timeStr = ConvertPeriodsToTime(c.StartPeriod, c.EndPeriod);
                     string colorHex = string.IsNullOrEmpty(c.AccentColor) ? "#DBEAFE" : c.AccentColor;
@@ -76,7 +113,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải lịch giảng dạy: {ex.Message}", "Lỗi");
+                MessageBox.Show($"Lỗi tải lịch học: {ex.Message}", "Lỗi");
             }
         }
 
@@ -91,6 +128,7 @@ namespace e_learning_app
                 "Thứ 6" => 5,
                 "Thứ 7" => 6,
                 "Chủ nhật" => 7,
+                "Hình thức 2" => 0,
                 _ => 1
             };
         }
@@ -127,9 +165,10 @@ namespace e_learning_app
             CanvasSunday.Children.Clear();
             GridLinesCanvas.Children.Clear();
             TimeLabelsCanvas.Children.Clear();
+            WrapOtherForms.Children.Clear();
 
-            // 1. Draw Time Axis and Grid Lines (07:00 to 17:00 -> 10 hours)
-            for (int i = 0; i <= 10; i++)
+            // 1. Draw Time Axis and Grid Lines (07:00 to 18:00 -> 11 hours)
+            for (int i = 0; i <= 11; i++)
             {
                 double y = i * 60;
                 
@@ -141,7 +180,7 @@ namespace e_learning_app
                     Foreground = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
                     FontWeight = FontWeights.SemiBold
                 };
-                Canvas.SetTop(lbl, y - 8); // Offset to vertically center with line
+                Canvas.SetTop(lbl, y - 8); 
                 Canvas.SetRight(lbl, 10);
                 TimeLabelsCanvas.Children.Add(lbl);
 
@@ -150,7 +189,7 @@ namespace e_learning_app
                 {
                     X1 = 0,
                     Y1 = y,
-                    X2 = 2000, // Arbitrarily large width
+                    X2 = 2000, 
                     Y2 = y,
                     Stroke = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9)),
                     StrokeThickness = 1
@@ -163,22 +202,43 @@ namespace e_learning_app
             // 2. Draw Events
             foreach (var ev in _currentSchedule)
             {
+                if (ev.DayOfWeek == 0) // Hình thức 2
+                {
+                    var card = BuildScheduleCard(ev, null); // Pass null to indicate it's not on a canvas
+                    WrapOtherForms.Children.Add(card);
+                    continue;
+                }
+
                 if (ev.DayOfWeek < 1 || ev.DayOfWeek > 7) continue;
 
-                var card = BuildScheduleCard(ev, columns[ev.DayOfWeek - 1]);
-                columns[ev.DayOfWeek - 1].Children.Add(card);
+                var canvas = columns[ev.DayOfWeek - 1];
+                var cardGrid = BuildScheduleCard(ev, canvas);
+                canvas.Children.Add(cardGrid);
             }
 
             // 3. Draw Current Time Indicator
             var now = DateTime.Now;
             int currentMinutes = (now.Hour - 7) * 60 + now.Minute;
+            int dayIndex = (int)now.DayOfWeek; // 0: Sunday, 1: Monday, ..., 6: Saturday
             
+            // Map DayOfWeek (0-6) to Timetable Index (1-7, where 1 is Monday, 7 is Sunday)
+            int timetableDay = dayIndex == 0 ? 7 : dayIndex;
+
             if (currentMinutes >= 0 && currentMinutes <= 660)
             {
                 CurrentTimeLine.Visibility = Visibility.Visible;
                 CurrentTimeDot.Visibility = Visibility.Visible;
                 Canvas.SetTop(CurrentTimeLine, currentMinutes);
                 Canvas.SetTop(CurrentTimeDot, currentMinutes);
+
+                // Position Dot on the correct day column
+                // Logic: (DayIndex - 1) * (ColumnWidth + Gap)
+                double columnWidth = CanvasMonday.ActualWidth;
+                if (columnWidth > 0)
+                {
+                    double left = (timetableDay - 1) * (columnWidth + 10);
+                    Canvas.SetLeft(CurrentTimeDot, left);
+                }
             }
             else
             {
@@ -192,6 +252,8 @@ namespace e_learning_app
             // Parse Time "07:30 - 09:00"
             double top = 0;
             double height = 60;
+            bool isFixedTime = false;
+
             try
             {
                 var parts = ev.Time.Split('-');
@@ -205,8 +267,12 @@ namespace e_learning_app
                     int endHr = int.Parse(endParts[0]);
                     int endMin = int.Parse(endParts[1]);
 
-                    top = (startHr - 7) * 60 + startMin;
-                    height = (endHr - startHr) * 60 + endMin - startMin;
+                    if (startHr > 0)
+                    {
+                        top = (startHr - 7) * 60 + startMin;
+                        height = (endHr - startHr) * 60 + endMin - startMin;
+                        isFixedTime = true;
+                    }
                 }
             }
             catch { }
@@ -214,16 +280,20 @@ namespace e_learning_app
             var border = new Border
             {
                 Background = GetColorWithFallback(ev.ColorHex, "#DBEAFE"),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(8),
-                Margin = new Thickness(0),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(10),
+                Margin = parentCanvas == null ? new Thickness(0, 0, 10, 10) : new Thickness(0),
                 Cursor = System.Windows.Input.Cursors.Hand,
-                Height = height
+                Height = parentCanvas == null ? double.NaN : height,
+                MinWidth = parentCanvas == null ? 260 : 0
             };
 
-            // Bind width to parent canvas width
-            border.SetBinding(FrameworkElement.WidthProperty, new Binding("ActualWidth") { Source = parentCanvas });
-            Canvas.SetTop(border, top);
+            if (parentCanvas != null)
+            {
+                // Bind width to parent canvas width for timetable cards
+                border.SetBinding(FrameworkElement.WidthProperty, new Binding("ActualWidth") { Source = parentCanvas });
+                Canvas.SetTop(border, top);
+            }
 
             // Add ToolTip
             border.ToolTip = new ToolTip 
@@ -282,9 +352,16 @@ namespace e_learning_app
             // Click event
             border.MouseLeftButtonUp += (s, e) =>
             {
-                if (Window.GetWindow(this) is MainWindow mw && ev.AssociatedCourse != null)
+                if (ev.AssociatedCourse == null) return;
+
+                var win = Window.GetWindow(this);
+                if (win is MainWindow mw)
                 {
                     mw.NavigateTo(new CourseDetailView(_dbManager, ev.AssociatedCourse));
+                }
+                else if (win is StudentMainWindow smw)
+                {
+                    smw.NavigateTo(new CourseDetailView(_dbManager, ev.AssociatedCourse));
                 }
             };
 

@@ -98,6 +98,8 @@
                             Style="{StaticResource StudentNavBtnActive}" Click="BtnDashboard_Click"/>
                     <Button x:Name="BtnCourses"  Content="📚   Khóa học của tôi"
                             Style="{StaticResource StudentNavBtn}" Click="BtnCourses_Click"/>
+                    <Button x:Name="BtnSchedule" Content="📅   Thời khóa biểu"
+                            Style="{StaticResource StudentNavBtn}" Click="BtnSchedule_Click"/>
                     <Button x:Name="BtnQuiz"     Content="📝   Bài kiểm tra"
                             Style="{StaticResource StudentNavBtn}" Click="BtnQuiz_Click"/>
                     <Button x:Name="BtnProfile"  Content="🏆   Hồ sơ &amp; Thành tích"

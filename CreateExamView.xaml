@@ -187,125 +187,150 @@
                 </Viewbox>
             </StackPanel>
 
-            <!-- RIGHT: Form -->
-            <Border Grid.Column="2" Background="White" CornerRadius="16" Padding="30">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.06" Color="Black"/>
-                </Border.Effect>
+        <!-- RIGHT: Form -->
+        <Border Grid.Column="2" Background="White" CornerRadius="20" Padding="40">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="30" ShadowDepth="4" Opacity="0.08" Color="#1E293B"/>
+            </Border.Effect>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <!-- Section 1: Class Selection -->
-                        <TextBlock Text="🎓 CHỌN LỚP HỌC" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <!-- Section 1: Class Selection -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                        <TextBlock Text="🎓" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="CHỌN LỚP HỌC" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center"/>
+                    </StackPanel>
 
-                        <ComboBox x:Name="CbClass" Style="{StaticResource ModernComboBox}" Margin="0,0,0,8" SelectionChanged="CbClass_SelectionChanged"/>
-                        <TextBlock x:Name="TxtClassInfo" FontSize="11" Foreground="#10B981" Margin="0,0,0,20" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="CbClass" Style="{StaticResource ModernComboBox}" Margin="0,0,0,8" SelectionChanged="CbClass_SelectionChanged"/>
+                    <TextBlock x:Name="TxtClassInfo" FontSize="12" Foreground="#10B981" Margin="4,0,0,24" TextWrapping="Wrap" FontWeight="SemiBold"/>
 
-                        <!-- Section 2: Basic Info -->
-                        <TextBlock Text="📝 THÔNG TIN CƠ BẢN" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14"/>
+                    <!-- Section 2: Basic Info -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                        <TextBlock Text="📝" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="THÔNG TIN CƠ BẢN" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center"/>
+                    </StackPanel>
 
-                        <TextBlock Text="Tên bài thi" Style="{StaticResource FieldLabelStyle}"/>
-                        <TextBox x:Name="TxtTitle" Style="{StaticResource ModernTextBox}" Height="42" Margin="0,0,0,16" TextChanged="Sync_UI"/>
+                    <TextBlock Text="Tên bài thi" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox x:Name="TxtTitle" Style="{StaticResource ModernTextBox}" Height="46" Margin="0,0,0,20" TextChanged="Sync_UI" Tag="VD: Kiểm tra giữa kỳ..."/>
 
-                        <TextBlock Text="Mô tả chi tiết" Style="{StaticResource FieldLabelStyle}"/>
-                        <TextBox x:Name="TxtDescription" Style="{StaticResource ModernTextBox}" Height="90" Margin="0,0,0,16" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" TextChanged="Sync_UI"/>
+                    <TextBlock Text="Mô tả chi tiết" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox x:Name="TxtDescription" Style="{StaticResource ModernTextBox}" Height="100" Margin="0,0,0,24" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" TextChanged="Sync_UI"/>
 
-                        <!-- Section 3: Configuration -->
-                        <TextBlock Text="⚙️ CẤU HÌNH BÀI THI" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14"/>
+                    <!-- Section 3: Configuration -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                        <TextBlock Text="⚙️" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="CẤU HÌNH BÀI THI" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center"/>
+                    </StackPanel>
 
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Thời gian (phút)" Style="{StaticResource FieldLabelStyle}"/>
-                                <ComboBox x:Name="CbTimeLimit" Style="{StaticResource ModernComboBox}" SelectionChanged="Sync_UI_Selection">
-                                    <ComboBoxItem Content="15"/>
-                                    <ComboBoxItem Content="30"/>
-                                    <ComboBoxItem Content="45"/>
-                                    <ComboBoxItem Content="60" IsSelected="True"/>
-                                    <ComboBoxItem Content="90"/>
-                                    <ComboBoxItem Content="120"/>
-                                </ComboBox>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Điểm qua (%)" Style="{StaticResource FieldLabelStyle}"/>
-                                <ComboBox x:Name="CbPassingScore" Style="{StaticResource ModernComboBox}" SelectionChanged="Sync_UI_Selection">
-                                    <ComboBoxItem Content="40%"/>
-                                    <ComboBoxItem Content="50%" IsSelected="True"/>
-                                    <ComboBoxItem Content="60%"/>
-                                    <ComboBoxItem Content="70%"/>
-                                    <ComboBoxItem Content="80%"/>
-                                </ComboBox>
-                            </StackPanel>
-                        </Grid>
-
-                        <StackPanel Margin="0,0,0,16">
-                            <TextBlock Text="Tổng số câu" Style="{StaticResource FieldLabelStyle}"/>
-                            <TextBox x:Name="TxtTotalQuestions" Style="{StaticResource ModernTextBox}" Height="42" Text="0" TextChanged="Sync_UI"/>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Thời gian (phút)" Style="{StaticResource FieldLabelStyle}"/>
+                            <ComboBox x:Name="CbTimeLimit" Style="{StaticResource ModernComboBox}" SelectionChanged="Sync_UI_Selection">
+                                <ComboBoxItem Content="15"/>
+                                <ComboBoxItem Content="30"/>
+                                <ComboBoxItem Content="45"/>
+                                <ComboBoxItem Content="60" IsSelected="True"/>
+                                <ComboBoxItem Content="90"/>
+                                <ComboBoxItem Content="120"/>
+                            </ComboBox>
                         </StackPanel>
 
-                        <!-- Section 4: Advanced Settings -->
-                        <TextBlock Text="🔧 CÀI ĐẶT NÂNG CAO" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14"/>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Điểm qua (%)" Style="{StaticResource FieldLabelStyle}"/>
+                            <ComboBox x:Name="CbPassingScore" Style="{StaticResource ModernComboBox}" SelectionChanged="Sync_UI_Selection">
+                                <ComboBoxItem Content="40%"/>
+                                <ComboBoxItem Content="50%" IsSelected="True"/>
+                                <ComboBoxItem Content="60%"/>
+                                <ComboBoxItem Content="70%"/>
+                                <ComboBoxItem Content="80%"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
 
-                        <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,20" BorderBrush="#E2E8F0" BorderThickness="1">
-                            <StackPanel>
-                                <CheckBox x:Name="ChkPublished" Content="✅ Công bố bài thi ngay" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="False" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
-                                <CheckBox x:Name="ChkAllowReview" Content="👁️ Cho phép xem lại đáp án" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
-                                <CheckBox x:Name="ChkRandomize" Content="🔀 Xáo trộn thứ tự câu hỏi" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="False" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
-                                <CheckBox x:Name="ChkShowScore" Content="📊 Hiển thị điểm ngay" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
-                                <CheckBox x:Name="ChkMultipleAttempts" Content="🔁 Cho phép thi nhiều lần" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Action Buttons -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="14"/>
-                                <ColumnDefinition Width="140"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Button Grid.Column="0" x:Name="BtnSubmit" Content="Tiếp theo: Soạn câu hỏi ➡️" Height="50" Background="#3B82F6" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnSubmit_Click" FontSize="13">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="12">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="border" Property="Background" Value="#2563EB"/>
-                                            </Trigger>
-                                            <Trigger Property="IsPressed" Value="True">
-                                                <Setter TargetName="border" Property="Background" Value="#1D4ED8"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-
-                            <Button Grid.Column="2" x:Name="BtnCancel" Content="❌ Hủy" Height="50" Background="#F1F5F9" Foreground="#64748B" FontWeight="Bold" Cursor="Hand" Click="BtnCancel_Click" FontSize="13" BorderBrush="#E2E8F0" BorderThickness="1">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="border" Property="Background" Value="#E2E8F0"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-                        </Grid>
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="Tổng số câu hỏi dự kiến" Style="{StaticResource FieldLabelStyle}"/>
+                        <TextBox x:Name="TxtTotalQuestions" Style="{StaticResource ModernTextBox}" Height="46" Text="10" TextChanged="Sync_UI"/>
                     </StackPanel>
-                </ScrollViewer>
-            </Border>
+
+                    <!-- Section 4: Advanced Settings -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                        <TextBlock Text="🔧" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="CÀI ĐẶT NÂNG CAO" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Border Background="#F8FAFC" CornerRadius="16" Padding="20" Margin="0,0,0,32" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <StackPanel>
+                            <CheckBox x:Name="ChkPublished" Content="✅ Công bố bài thi ngay sau khi tạo" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="False" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
+                            <CheckBox x:Name="ChkAllowReview" Content="👁️ Cho phép học sinh xem lại đáp án" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
+                            <CheckBox x:Name="ChkRandomize" Content="🔀 Xáo trộn thứ tự câu hỏi cho mỗi lượt thi" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="False" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
+                            <CheckBox x:Name="ChkShowScore" Content="📊 Hiển thị điểm số ngay khi nộp bài" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="Sync_UI_Toggle" Unchecked="Sync_UI_Toggle"/>
+                            <CheckBox x:Name="ChkMultipleAttempts" Content="🔁 Cho phép học sinh thực hiện nhiều lần" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="True" Checked="ChkMultipleAttempts_Changed" Unchecked="ChkMultipleAttempts_Changed"/>
+
+                            <StackPanel x:Name="PanelMaxAttempts" Margin="30,0,0,10">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="Số lần làm tối đa" Style="{StaticResource FieldLabelStyle}" Margin="0"/>
+                                    <TextBlock Text=" (1-10)" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                </StackPanel>
+                                <TextBox x:Name="TxtMaxAttempts" Style="{StaticResource ModernTextBox}" Width="100" HorizontalAlignment="Left" Text="3" TextChanged="Sync_UI"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Action Buttons -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="150"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" x:Name="BtnSubmit" Content="Tiếp theo: Soạn câu hỏi ➔" Height="54" Background="#3B82F6" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnSubmit_Click" FontSize="15">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="14">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.2" Color="#3B82F6"/>
+                                        </Border.Effect>
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="#2563EB"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="#1D4ED8"/>
+                                            <Setter TargetName="border" Property="Margin" Value="1"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <Button Grid.Column="2" x:Name="BtnCancel" Content="❌ Hủy" Height="54" Background="White" Foreground="#64748B" FontWeight="Bold" Cursor="Hand" Click="BtnCancel_Click" FontSize="14" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="14">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="#F8FAFC"/>
+                                            <Setter TargetName="border" Property="BorderBrush" Value="#CBD5E1"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
         </Grid>
     </Grid>
 </UserControl>

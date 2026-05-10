@@ -44,7 +44,7 @@
 
     <Grid>
         <!-- Header -->
-        <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="24,20" VerticalAlignment="Top" Height="95">
+        <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="32,24" VerticalAlignment="Top" Height="100">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -52,16 +52,22 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="✏️ Soạn Câu Hỏi Bài Thi" FontSize="26" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
-                    <TextBlock x:Name="TxtExamInfo" Text="Đang tạo bài thi: ..." FontSize="13" Foreground="#64748B"/>
+                    <TextBlock Text="✏️ Soạn Câu Hỏi Bài Thi" FontSize="28" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
+                    <TextBlock x:Name="TxtExamInfo" Text="Đang soạn thảo nội dung bài thi..." FontSize="14" Foreground="#64748B"/>
                 </StackPanel>
 
-                <Button x:Name="BtnBack" Grid.Column="1" Content="← Quay Lại Thiết Lập" Background="White" Foreground="#475569" BorderBrush="#E2E8F0" BorderThickness="1" Padding="14,10" Cursor="Hand" Click="BtnBack_Click" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center">
+                <Button x:Name="BtnBack" Grid.Column="1" Content="← Quay Lại Thiết Lập" Background="White" Foreground="#475569" BorderBrush="#E2E8F0" BorderThickness="1" Padding="18,10" Cursor="Hand" Click="BtnBack_Click" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
                                 <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#F8FAFC"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#CBD5E1"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
@@ -69,17 +75,17 @@
         </Border>
 
         <!-- Main Content -->
-        <Grid VerticalAlignment="Stretch" Margin="24,100,24,24">
+        <Grid VerticalAlignment="Stretch" Margin="32,124,32,32">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="5*"/>
-                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="6*"/>
+                <ColumnDefinition Width="32"/>
                 <ColumnDefinition Width="4*"/>
             </Grid.ColumnDefinitions>
 
             <!-- LEFT: Preview Questions List -->
-            <Border Grid.Column="0" Background="White" CornerRadius="16" Padding="20">
+            <Border Grid.Column="0" Background="White" CornerRadius="20" Padding="24">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.06" Color="Black"/>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="2" Opacity="0.05" Color="#1E293B"/>
                 </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -88,26 +94,41 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
-                        <TextBlock Text="📋 Danh Sách Câu Hỏi" FontSize="18" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
-                        <Border Background="#EFF6FF" CornerRadius="12" Padding="10,4" Margin="10,0,0,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="TxtQuestionCount" Text="0 câu" FontSize="12" FontWeight="Bold" Foreground="#3B82F6"/>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,24">
+                        <TextBlock Text="📋 Danh Sách Câu Hỏi" FontSize="20" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                        <Border Background="#EFF6FF" CornerRadius="12" Padding="12,4" Margin="16,0,0,0" VerticalAlignment="Center" BorderBrush="#DBEAFE" BorderThickness="1">
+                            <TextBlock x:Name="TxtQuestionCount" Text="0 câu" FontSize="13" FontWeight="Bold" Foreground="#3B82F6"/>
                         </Border>
                     </StackPanel>
 
-                    <Grid Grid.Row="1" Margin="0,0,0,16">
+                    <Grid Grid.Row="1" Margin="0,0,0,24">
                         <!-- Questions List -->
                         <ScrollViewer x:Name="ManualListScroller" VerticalScrollBarVisibility="Auto">
-                            <StackPanel x:Name="QuestionsListPanel">
+                            <StackPanel x:Name="QuestionsListPanel" Margin="0,0,10,0">
                                 <!-- Items will be generated dynamically -->
+
+                                <!-- ĐÃ SỬA: Thay BorderDashArray bằng Rectangle có StrokeDashArray -->
+                                <Grid Margin="0,0,0,16">
+                                    <!-- Nền và viền nét đứt -->
+                                    <Rectangle Fill="#F8FAFC" Stroke="#E2E8F0" StrokeThickness="1" StrokeDashArray="4 2" RadiusX="12" RadiusY="12"/>
+                                    <!-- Nội dung bên trong -->
+                                    <StackPanel HorizontalAlignment="Center" Margin="40">
+                                        <TextBlock Text="✨" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                                        <TextBlock Text="Chưa có câu hỏi nào" FontWeight="SemiBold" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Bắt đầu thêm câu hỏi từ bên phải hoặc import từ Excel" FontSize="12" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>
 
-                    <Button Grid.Row="2" x:Name="BtnSubmit" Content="✅ Hoàn Tất Tạo Bài Thi" Height="50" Background="#10B981" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnSubmit_Click" FontSize="14">
+                    <Button Grid.Row="2" x:Name="BtnSubmit" Content="✅ Hoàn Tất &amp; Lưu Bài Thi" Height="56" Background="#10B981" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnSubmit_Click" FontSize="16">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
-                                <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="12">
+                                <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="14">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.2" Color="#10B981"/>
+                                    </Border.Effect>
                                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <ControlTemplate.Triggers>
@@ -122,92 +143,105 @@
             </Border>
 
             <!-- RIGHT: Add Question Form -->
-            <Border Grid.Column="2" Background="White" CornerRadius="16" Padding="24">
+            <Border Grid.Column="2" Background="White" CornerRadius="20" Padding="30">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.06" Color="Black"/>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="2" Opacity="0.05" Color="#1E293B"/>
                 </Border.Effect>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <!-- Import Section -->
-                        <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,24" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <Border Background="#F0F9FF" CornerRadius="16" Padding="20" Margin="0,0,0,32" BorderBrush="#BAE6FD" BorderThickness="1">
                             <StackPanel>
-                                <Grid Margin="0,0,0,12">
-                                    <TextBlock Text="📥 Import từ Excel (.xlsx)" FontWeight="Bold" FontSize="14" Foreground="#1E293B" VerticalAlignment="Center"/>
-                                    <Button x:Name="BtnDownloadTemplate" Content="⬇️ Tải file mẫu" HorizontalAlignment="Right" Background="Transparent" Foreground="#3B82F6" FontWeight="SemiBold" BorderThickness="0" Cursor="Hand" Click="BtnDownloadTemplate_Click"/>
+                                <Grid Margin="0,0,0,16">
+                                    <TextBlock Text="📥 Import từ Excel" FontWeight="Bold" FontSize="15" Foreground="#0369A1" VerticalAlignment="Center"/>
+                                    <Button x:Name="BtnDownloadTemplate" Content="⬇️ Tải file mẫu" HorizontalAlignment="Right" Background="Transparent" Foreground="#3B82F6" FontWeight="Bold" BorderThickness="0" Cursor="Hand" Click="BtnDownloadTemplate_Click" FontSize="12"/>
                                 </Grid>
-                                
-                                <!-- Drag Drop Area -->
-                                <Border x:Name="DropZone" BorderBrush="#CBD5E1" BorderThickness="2" CornerRadius="8" Height="100" Background="White" AllowDrop="True" DragEnter="DropZone_DragEnter" DragLeave="DropZone_DragLeave" Drop="DropZone_Drop" MouseLeftButtonDown="DropZone_MouseLeftButtonDown" Cursor="Hand">
-                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock x:Name="TxtDropIcon" Text="📄" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,4"/>
-                                        <TextBlock Text="Kéo thả file Excel vào đây" FontWeight="SemiBold" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,0,0,4"/>
-                                        <TextBlock Text="hoặc click để chọn file" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Center"/>
-                                    </StackPanel>
+
+                                <!-- ĐÃ SỬA: Drag Drop Area -->
+                                <!-- Giữ nguyên Border để nhận sự kiện chuột/kéo thả, sử dụng Rectangle bên trong để vẽ viền đứt -->
+                                <Border x:Name="DropZone" Height="110" Background="White" CornerRadius="12" AllowDrop="True" 
+                                        DragEnter="DropZone_DragEnter" DragLeave="DropZone_DragLeave" Drop="DropZone_Drop" 
+                                        MouseLeftButtonDown="DropZone_MouseLeftButtonDown" Cursor="Hand">
+                                    <Grid>
+                                        <!-- Viền nét đứt -->
+                                        <Rectangle Stroke="#7DD3FC" StrokeThickness="2" StrokeDashArray="3 3" RadiusX="12" RadiusY="12" IsHitTestVisible="False"/>
+                                        <!-- Nội dung -->
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                                            <TextBlock x:Name="TxtDropIcon" Text="📄" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                            <TextBlock Text="Kéo thả file .xlsx vào đây" FontWeight="Bold" Foreground="#0284C7" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                            <TextBlock Text="hoặc click để chọn tệp tin" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
                                 </Border>
 
                                 <!-- Progress Panel -->
                                 <StackPanel x:Name="ProgressPanel" Visibility="Collapsed" Margin="0,16,0,0">
-                                    <TextBlock x:Name="TxtImportStatus" Text="Đang xử lý dữ liệu..." FontSize="12" Foreground="#64748B" Margin="0,0,0,4"/>
-                                    <ProgressBar x:Name="ImportProgress" Height="6" Minimum="0" Maximum="100" Value="0" Foreground="#10B981" BorderThickness="0"/>
+                                    <TextBlock x:Name="TxtImportStatus" Text="Đang xử lý dữ liệu..." FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
+                                    <ProgressBar x:Name="ImportProgress" Height="8" Minimum="0" Maximum="100" Value="0" Foreground="#10B981" BorderThickness="0" Background="#E2E8F0"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
 
-                        <TextBlock Text="Hoặc Thêm Thủ Công:" FontWeight="Bold" FontSize="14" Foreground="#1E293B" Margin="0,0,0,16"/>
+                        <TextBlock Text="➕ THÊM CÂU HỎI THỦ CÔNG" FontWeight="Bold" FontSize="13" Foreground="#475569" Margin="0,0,0,20"/>
 
                         <!-- Question Content -->
                         <TextBlock Text="Nội dung câu hỏi" Style="{StaticResource FieldLabelStyle}"/>
-                        <TextBox x:Name="TxtContent" Style="{StaticResource ModernTextBox}" Height="80" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Margin="0,0,0,16"/>
+                        <TextBox x:Name="TxtContent" Style="{StaticResource ModernTextBox}" Height="90" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Margin="0,0,0,20"/>
 
                         <!-- Points -->
                         <TextBlock Text="Điểm số" Style="{StaticResource FieldLabelStyle}"/>
-                        <TextBox x:Name="TxtPoints" Style="{StaticResource ModernTextBox}" Height="40" Text="1" Margin="0,0,0,16"/>
+                        <TextBox x:Name="TxtPoints" Style="{StaticResource ModernTextBox}" Height="44" Text="1.0" Margin="0,0,0,24"/>
 
                         <!-- Options -->
-                        <TextBlock Text="Các đáp án (Chọn Radio cho đáp án đúng)" Style="{StaticResource FieldLabelStyle}"/>
-                        
-                        <Grid Margin="0,0,0,8">
+                        <TextBlock Text="Các đáp án (Chọn đáp án đúng)" Style="{StaticResource FieldLabelStyle}"/>
+
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <RadioButton x:Name="RbOptA" GroupName="CorrectAnswer" Content="A" IsChecked="True" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
-                            <TextBox Grid.Column="1" x:Name="TxtOptA" Style="{StaticResource ModernTextBox}" Height="40"/>
+                            <RadioButton x:Name="RbOptA" GroupName="CorrectAnswer" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBox Grid.Column="1" x:Name="TxtOptA" Style="{StaticResource ModernTextBox}" Height="44" Tag="Đáp án A"/>
                         </Grid>
 
-                        <Grid Margin="0,0,0,8">
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <RadioButton x:Name="RbOptB" GroupName="CorrectAnswer" Content="B" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
-                            <TextBox Grid.Column="1" x:Name="TxtOptB" Style="{StaticResource ModernTextBox}" Height="40"/>
+                            <RadioButton x:Name="RbOptB" GroupName="CorrectAnswer" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBox Grid.Column="1" x:Name="TxtOptB" Style="{StaticResource ModernTextBox}" Height="44" Tag="Đáp án B"/>
                         </Grid>
 
-                        <Grid Margin="0,0,0,8">
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <RadioButton x:Name="RbOptC" GroupName="CorrectAnswer" Content="C" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
-                            <TextBox Grid.Column="1" x:Name="TxtOptC" Style="{StaticResource ModernTextBox}" Height="40"/>
+                            <RadioButton x:Name="RbOptC" GroupName="CorrectAnswer" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBox Grid.Column="1" x:Name="TxtOptC" Style="{StaticResource ModernTextBox}" Height="44" Tag="Đáp án C"/>
                         </Grid>
 
-                        <Grid Margin="0,0,0,16">
+                        <Grid Margin="0,0,0,24">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <RadioButton x:Name="RbOptD" GroupName="CorrectAnswer" Content="D" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
-                            <TextBox Grid.Column="1" x:Name="TxtOptD" Style="{StaticResource ModernTextBox}" Height="40"/>
+                            <RadioButton x:Name="RbOptD" GroupName="CorrectAnswer" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBox Grid.Column="1" x:Name="TxtOptD" Style="{StaticResource ModernTextBox}" Height="44" Tag="Đáp án D"/>
                         </Grid>
 
-                        <Button x:Name="BtnAddManual" Content="➕ Thêm Câu Hỏi" Height="42" Background="#3B82F6" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnAddManual_Click" FontSize="13">
+                        <Button x:Name="BtnAddManual" Content="➕ Thêm Vào Danh Sách" Height="48" Background="#3B82F6" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnAddManual_Click" FontSize="14">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="12">
                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#2563EB"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>

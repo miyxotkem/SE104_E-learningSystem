@@ -71,7 +71,11 @@ namespace e_learning_app
                     if (ChkAllowReview != null) ChkAllowReview.IsChecked = _existingExam.AllowReview;
                     if (ChkRandomize != null) ChkRandomize.IsChecked = _existingExam.RandomizeQuestions;
                     if (ChkShowScore != null) ChkShowScore.IsChecked = _existingExam.ShowScore;
-                    if (ChkMultipleAttempts != null) ChkMultipleAttempts.IsChecked = _existingExam.AllowMultipleAttempts;
+                    if (ChkMultipleAttempts != null)
+                    {
+                        ChkMultipleAttempts.IsChecked = _existingExam.AllowMultipleAttempts;
+                        if (TxtMaxAttempts != null) TxtMaxAttempts.Text = _existingExam.MaxAttempts.ToString();
+                    }
                 }
                 else
                 {
@@ -172,6 +176,15 @@ namespace e_learning_app
             if (_isInitialized) UpdatePreview();
         }
 
+        private void ChkMultipleAttempts_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!_isInitialized || PanelMaxAttempts == null) return;
+            
+            bool allow = ChkMultipleAttempts.IsChecked ?? false;
+            PanelMaxAttempts.Visibility = allow ? Visibility.Visible : Visibility.Collapsed;
+            UpdatePreview();
+        }
+
         // ========== SUBMIT ==========
         private void BtnSubmit_Click(object sender, RoutedEventArgs e)
         {
@@ -189,9 +202,13 @@ namespace e_learning_app
 
             try
             {
+                int maxAtt = 1;
+                if (ChkMultipleAttempts.IsChecked == true && int.TryParse(TxtMaxAttempts.Text, out int m))
+                    maxAtt = m;
+
                 var newExam = new Exam
                 {
-                    Id = Guid.NewGuid().ToString("N"),
+                    Id = _existingExam != null ? _existingExam.Id : Guid.NewGuid().ToString("N"),
                     ClassId = _selectedCourse.Id,
                     ClassName = $"{_selectedCourse.ClassName} - {_selectedCourse.Title}",
                     Title = TxtTitle.Text.Trim(),
@@ -205,9 +222,9 @@ namespace e_learning_app
                     RandomizeQuestions = ChkRandomize?.IsChecked ?? false,
                     ShowScore = ChkShowScore?.IsChecked ?? true,
                     AllowMultipleAttempts = ChkMultipleAttempts?.IsChecked ?? true,
-                    MaxAttempts = 3,
-                    QuestionIds = new List<string>(),
-                    CreatedAt = DateTime.UtcNow,
+                    MaxAttempts = maxAtt,
+                    QuestionIds = _existingExam != null ? _existingExam.QuestionIds : new List<string>(),
+                    CreatedAt = _existingExam != null ? _existingExam.CreatedAt : DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
 
