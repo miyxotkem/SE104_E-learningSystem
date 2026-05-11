@@ -143,6 +143,7 @@ namespace e_learning_app
 
                 var loginWin = new LoginWindow(true);
                 loginWin.Show();
+                _isForceLogout = true;
                 this.Close();
             }
         }

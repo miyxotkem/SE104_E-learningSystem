@@ -49,6 +49,8 @@ namespace e_learning_app
             AdminContentArea.Content = new Views.Admin.AdminSettingsView();
         }
 
+        private bool _isForceLogout = false;
+
         private async void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
             var confirmed = CustomDialog.Confirm(
@@ -69,25 +71,12 @@ namespace e_learning_app
 
                 var loginWin = new LoginWindow(true);
                 loginWin.Show();
+                _isForceLogout = true;
                 this.Close();
             }
         }
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            var result = CustomDialog.ShowExit("Bạn muốn làm gì trước khi thoát Admin Panel?", "Xác nhận");
-            if (result == CustomDialogResult.Cancel)
-            {
-                e.Cancel = true;
-                return;
-            }
-
-            if (result == CustomDialogResult.Logout)
-            {
-                string credPath = "gg.auth.api";
-                var dataStore = new FileDataStore(credPath, true);
-                dataStore.ClearAsync().Wait();
-                FirebaseService.SignOut();
-            }
             base.OnClosing(e);
         }
     }
