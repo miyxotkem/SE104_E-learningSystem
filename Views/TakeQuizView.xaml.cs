@@ -1,3 +1,4 @@
+using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +57,7 @@ namespace e_learning_app.Views
 
                     if (attemptCount >= limit)
                     {
-                        MessageBox.Show("Bạn đã hết lượt làm bài cho bài thi này!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        CustomDialog.Show("Bạn đã hết lượt làm bài cho bài thi này!", "Thông báo", DialogType.Warning);
                         if (Window.GetWindow(this) is MainWindow mw)
                             mw.MainContentArea.Content = new QuizHistoryView(_dbManager, _exam);
                         else if (Window.GetWindow(this) is StudentMainWindow smw)
@@ -70,7 +71,7 @@ namespace e_learning_app.Views
 
                 if (_questions == null || _questions.Count == 0)
                 {
-                    MessageBox.Show("Không tìm thấy câu hỏi cho bài thi này.", "Thông báo");
+                    CustomDialog.Show("Không tìm thấy câu hỏi cho bài thi này.", "Thông báo", DialogType.Info);
                     return;
                 }
 
@@ -89,7 +90,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải bài thi: {ex.Message}");
+                CustomDialog.Show($"Lỗi tải bài thi: {ex.Message}", "Lỗi", DialogType.Error);
             }
         }
 
@@ -115,7 +116,7 @@ namespace e_learning_app.Views
                 {
                     _timer.Stop();
                     TimeProgressFill.Width = 0;
-                    MessageBox.Show("Hết giờ làm bài! Hệ thống sẽ tự động nộp bài.", "Hết giờ");
+                    CustomDialog.Show("Hết giờ làm bài! Hệ thống sẽ tự động nộp bài.", "Hết giờ", DialogType.Warning);
                     _ = SubmitQuiz(); // Use discard for async call in non-async event
                 }
                 else if (_remainingTime.TotalMinutes < 1)
@@ -272,8 +273,8 @@ namespace e_learning_app.Views
 
         private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show("Bạn có chắc chắn muốn nộp bài?", "Xác nhận nộp bài", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (result == MessageBoxResult.Yes)
+            var confirmed = CustomDialog.Confirm("Bạn có chắc chắn muốn nộp bài?", "Xác nhận nộp bài", "Nộp bài", "Hủy", DialogType.Question);
+            if (confirmed)
             {
                 await SubmitQuiz();
             }
@@ -310,7 +311,6 @@ namespace e_learning_app.Views
 
                 if (graded != null)
                 {
-                    MessageBox.Show($"Nộp bài thành công!\nĐiểm của bạn: {graded.Score:F1} / {_questions.Sum(q => q.Points)} ({graded.Percentage:F1}%)", "Kết quả");
                     string msg = "Nộp bài thành công!";
                     if (_exam.ShowScore)
                     {
@@ -321,7 +321,7 @@ namespace e_learning_app.Views
                         msg += "\nKết quả của bạn đã được ghi nhận.";
                     }
 
-                    MessageBox.Show(msg, "Kết quả");
+                    CustomDialog.Show(msg, "Kết quả", DialogType.Success);
 
                     // Navigate back to student dashboard or quiz list
                     if (Window.GetWindow(this) is MainWindow mw)
@@ -330,7 +330,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi nộp bài: {ex.Message}");
+                CustomDialog.Show($"Lỗi nộp bài: {ex.Message}", "Lỗi", DialogType.Error);
             }
         }
     }

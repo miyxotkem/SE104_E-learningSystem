@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,12 +21,66 @@ namespace e_learning_app
     /// </summary>
     public partial class LoginWindow : Window
     {
-        public LoginWindow()
+        public LoginWindow() : this(skipAutoLogin: false) { }
+        public LoginWindow(bool skipAutoLogin = false)
         {
+
             InitializeComponent();
-            MainContentHolder.Content = new LoginControl();
+            if (skipAutoLogin)
+            {
+                MainContentHolder.Content = new LoginControl();
+                MainContentHolder.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                CheckAutoLoginAsync();
+            }
         }
 
+        private async void CheckAutoLoginAsync()
+        {
+            MainContentHolder.Visibility = Visibility.Collapsed;
+
+            try
+            {
+                await Task.Delay(500);
+
+                var currentUser = FirebaseService.Auth?.User;
+
+                if (currentUser != null && FirebaseService.Db != null)
+                {
+                    var doc = await FirebaseService.Db
+                        .Collection("Users")
+                        .Document(currentUser.Uid)
+                        .GetSnapshotAsync();
+
+                    if (doc.Exists)
+                    {
+                        var user = doc.ConvertTo<User>();
+                        user.Id = doc.Id;
+
+                        if (!user.IsBlocked)
+                        {
+                            if (user.Role == "Instructor")
+                                new MainWindow(user).Show();
+                            else
+                                new StudentMainWindow(user).Show();
+
+                            this.Close();
+                            return;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // ✅ Log ra để dễ debug thay vì bỏ trống
+                System.Diagnostics.Debug.WriteLine("AutoLogin error: " + ex.Message);
+            }
+
+            MainContentHolder.Content = new LoginControl();
+            MainContentHolder.Visibility = Visibility.Visible;
+        }
         private void btnclose(object sender, RoutedEventArgs e)
         {
             this.Close();

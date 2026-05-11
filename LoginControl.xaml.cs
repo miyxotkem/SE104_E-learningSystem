@@ -11,8 +11,18 @@ namespace e_learning_app
         public LoginControl()
         {
             InitializeComponent();
+            this.Loaded += LoginControl_Loaded;
         }
+        private void LoginControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            bool remembered = Properties.Settings.Default.RememberMe;
+            chkRememberMe.IsChecked = remembered;
 
+            if (remembered)
+            {
+                txtEmail.Text = Properties.Settings.Default.SavedEmail;
+            }
+        }
 
         private void OpenMainWindow(User user)
         {
@@ -76,7 +86,7 @@ namespace e_learning_app
 
                                 if (stored != null && stored.IsBlocked)
                                 {
-                                    MessageBox.Show("Tài khoản của bạn đã bị khóa bởi Admin!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                                    CustomDialog.Show("Tài khoản của bạn đã bị khóa bởi Admin!", "Thông báo", DialogType.Warning);
                                     return;
                                 }
                             }
@@ -89,7 +99,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi đăng nhập Google: " + ex.Message);
+                CustomDialog.Show("Lỗi đăng nhập Google: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {
@@ -185,13 +195,30 @@ namespace e_learning_app
                         }
                     }
                 }
-                catch { /* không bắt buộc */ }
+                catch {}
+                if (chkRememberMe.IsChecked == true)
+                {
+                    Properties.Settings.Default.SavedEmail = email;
+                    Properties.Settings.Default.SavedPassword = password;
+                    Properties.Settings.Default.RememberMe = true;
+                }
+                else
+                {
+                    Properties.Settings.Default.SavedEmail = "";
+                    Properties.Settings.Default.SavedPassword = "";
+                    Properties.Settings.Default.RememberMe = false;
+
+                    // Xóa session Firebase để lần sau không tự động đăng nhập
+                    var repo = new SimpleUserRepository();
+                    repo.DeleteUser();
+                }
+                Properties.Settings.Default.Save();
 
                 OpenMainWindow(user);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi kết nối: " + ex.Message);
+                CustomDialog.Show("Lỗi kết nối: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {
@@ -200,19 +227,14 @@ namespace e_learning_app
         }
 
         // ─── Quên mật khẩu ─────────────────────────────────────────
-        private async void ForgotPassword_click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void ForgotPassword_click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             string email = txtEmail.Text.Trim();
-            if (string.IsNullOrWhiteSpace(email))
+            var parent = Window.GetWindow(this) as LoginWindow;
+            if (parent != null)
             {
-                txtstatus.Text = "Vui lòng nhập Email để đặt lại mật khẩu!";
-                return;
+                parent.MainContentHolder.Content = new ForgotPasswordControl(email);
             }
-            bool ok = await FirebaseService.SendPasswordResetAsync(email);
-            if (ok)
-                MessageBox.Show("Email đặt lại mật khẩu đã được gửi!", "Thành công");
-            else
-                MessageBox.Show("Không thể gửi email. Vui lòng kiểm tra lại địa chỉ email.", "Lỗi");
         }
 
         // ─── Chuyển sang màn hình đăng ký ──────────────────────────

@@ -190,13 +190,13 @@ namespace e_learning_app
         {
             if (_selectedCourse == null)
             {
-                MessageBox.Show("⚠️ Vui lòng chọn lớp học!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("⚠️ Vui lòng chọn lớp học!", "Lỗi", DialogType.Warning);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(TxtTitle.Text))
             {
-                MessageBox.Show("⚠️ Vui lòng nhập tên bài thi!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("⚠️ Vui lòng nhập tên bài thi!", "Lỗi", DialogType.Warning);
                 return;
             }
 
@@ -236,7 +236,7 @@ namespace e_learning_app
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Submit Error: {ex.Message}");
-                MessageBox.Show($"❌ Lỗi: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomDialog.Show($"❌ Lỗi: {ex.Message}", "Lỗi", DialogType.Error);
             }
         }
 

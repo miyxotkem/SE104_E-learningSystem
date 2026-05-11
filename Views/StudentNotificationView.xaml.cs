@@ -133,19 +133,23 @@ namespace e_learning_app.Views
                             {
                                 if (deadlineLocal > DateTime.Now)
                                 {
-                                    string notifId = $"deadline_{c.Id}_{asm.Id}";
-                                    _allNotifications.Add(new NotifDisplayItem
+                                    double hoursLeft = (deadlineLocal - DateTime.Now).TotalHours;
+                                    if (hoursLeft <= 48)
                                     {
-                                        Id = $"deadline_{c.Id}_{asm.Id}",
-                                        TargetCourse = c,
-                                        Title = "Nhắc nhở bài tập",
-                                        Content = $"Bạn chưa nộp bài tập '{title}' của lớp {c.ClassName}.",
-                                        Icon = "📝",
-                                        TimeDisplay = $"Hạn chót: {deadlineLocal:dd/MM - HH:mm}",
-                                        SortTime = deadlineLocal,
-                                        Type = "Homework",
-                                        IsUnread = !NotificationService.ReadNotifKeys.Contains(notifId)
-                                    });
+                                        string notifId = $"deadline_{c.Id}_{asm.Id}";
+                                        _allNotifications.Add(new NotifDisplayItem
+                                        {
+                                            Id = notifId,
+                                            TargetCourse = c,
+                                            Title = "Sắp hết hạn nộp bài!",
+                                            Content = $"Bài tập '{title}' của lớp {c.ClassName} sắp hết hạn nộp. Hãy hoàn thành ngay!",
+                                            Icon = "⏰",
+                                            TimeDisplay = $"Hạn chót: {deadlineLocal:dd/MM - HH:mm}",
+                                            SortTime = DateTime.Now, 
+                                            Type = "Homework",
+                                            IsUnread = !NotificationService.ReadNotifKeys.Contains(notifId)
+                                        });
+                                    }
                                 }
                                 else
                                 {

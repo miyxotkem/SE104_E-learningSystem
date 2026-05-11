@@ -1,3 +1,4 @@
+using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,7 +47,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải chi tiết: {ex.Message}");
+                CustomDialog.Show($"Lỗi tải chi tiết: {ex.Message}", "Lỗi", DialogType.Error);
             }
         }
 

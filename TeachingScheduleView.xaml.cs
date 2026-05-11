@@ -1,3 +1,4 @@
+using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -113,7 +114,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải lịch học: {ex.Message}", "Lỗi");
+                CustomDialog.Show($"Lỗi tải lịch học: {ex.Message}", "Lỗi", DialogType.Error);
             }
         }
 
@@ -370,12 +371,12 @@ namespace e_learning_app
 
         private void BtnPrevWeek_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Chức năng đang được phát triển...", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            CustomDialog.Show("Chức năng đang được phát triển...", "Thông báo", DialogType.Info);
         }
 
         private void BtnNextWeek_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Chức năng đang được phát triển...", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            CustomDialog.Show("Chức năng đang được phát triển...", "Thông báo", DialogType.Info);
         }
 
         private void BtnPrint_Click(object sender, RoutedEventArgs e)

@@ -1,3 +1,4 @@
+using e_learning_app;
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
@@ -41,13 +42,13 @@ namespace e_learning_app.Views
             // Kiểm tra kết nối trước khi load
             if (_dbManager?.GetDb == null)
             {
-                MessageBox.Show("Chưa kết nối được Firestore. Vui lòng khởi động lại ứng dụng.", "Lỗi kết nối");
+                CustomDialog.Show("Chưa kết nối được Firestore. Vui lòng khởi động lại ứng dụng.", "Lỗi kết nối", DialogType.Error);
                 return;
             }
 
             if (_dbManager.GetCurrentUser() == null)
             {
-                MessageBox.Show("Không xác định được người dùng. Vui lòng đăng nhập lại.", "Lỗi");
+                CustomDialog.Show("Không xác định được người dùng. Vui lòng đăng nhập lại.", "Lỗi", DialogType.Error);
                 return;
             }
 
@@ -115,7 +116,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi Tải Dữ Liệu", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomDialog.Show($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi Tải Dữ Liệu", DialogType.Error);
             }
         }
 
@@ -315,7 +316,7 @@ namespace e_learning_app.Views
 
                     await registrationRef.SetAsync(registrationData);
 
-                    MessageBox.Show("Đã gửi yêu cầu đăng ký thành công! Vui lòng chờ giảng viên duyệt.", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomDialog.Show("Đã gửi yêu cầu đăng ký thành công! Vui lòng chờ giảng viên duyệt.", "Thành công", DialogType.Success);
 
                     // 1. Cập nhật lại danh sách cache cục bộ
                     _myRegistrations[courseId] = "pending";
@@ -328,7 +329,7 @@ namespace e_learning_app.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Lỗi khi đăng ký: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomDialog.Show("Lỗi khi đăng ký: " + ex.Message, "Lỗi", DialogType.Error);
                     btn.IsEnabled = true;
                     btn.Content = "Gửi yêu cầu";
                 }
@@ -343,10 +344,10 @@ namespace e_learning_app.Views
                 string courseName = course != null ? course.Title : "khóa học này";
 
                 // 1. Hiện thông báo xác nhận
-                var result = MessageBox.Show($"Bạn có chắc chắn muốn hủy yêu cầu đăng ký lớp \"{courseName}\" không?",
-                    "Xác nhận hủy", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                var confirmed = CustomDialog.Confirm($"Bạn có chắc chắn muốn hủy yêu cầu đăng ký lớp \"{courseName}\" không?",
+                    "Xác nhận hủy", "Hủy yêu cầu", "Quay lại", DialogType.Question);
 
-                if (result == MessageBoxResult.Yes)
+                if (confirmed)
                 {
                     try
                     {
@@ -361,13 +362,13 @@ namespace e_learning_app.Views
 
                         // 3. Cập nhật giao diện
                         _myRegistrations.Remove(courseId);
-                        MessageBox.Show("Đã hủy yêu cầu đăng ký thành công.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                        CustomDialog.Show("Đã hủy yêu cầu đăng ký thành công.", "Thông báo", DialogType.Success);
 
                         ApplyFilter(); // Cập nhật lại màn hình chính
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Lỗi khi hủy: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                        CustomDialog.Show("Lỗi khi hủy: " + ex.Message, "Lỗi", DialogType.Error);
                         btn.IsEnabled = true;
                         btn.Content = "Đang chờ duyệt - Nhấn để hủy";
                     }

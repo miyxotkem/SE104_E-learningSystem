@@ -1,12 +1,12 @@
 using e_learning_app.Class;
 using Firebase.Auth;
 using Firebase.Auth.Providers;
+using System.Text.Json;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google.Api;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Util.Store;
-using Google.Cloud.Firestore;
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
@@ -16,14 +16,89 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using static Google.Apis.Auth.OAuth2.Web.AuthorizationCodeWebApp;
+using Firebase.Auth.Repository;
 
 namespace e_learning_app
 {
+    public class AuthData
+    {
+        public string Uid { get; set; }
+        public string Email { get; set; }
+        public string DisplayName { get; set; }
+        public string IdToken { get; set; }
+        public string RefreshToken { get; set; }
+        public int ExpiresIn { get; set; }
+    }
+
+    public class SimpleUserRepository : IUserRepository
+    {
+        private readonly string _filePath;
+
+        public SimpleUserRepository()
+        {
+            var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EduSmart");
+            Directory.CreateDirectory(folder);
+            _filePath = Path.Combine(folder, "auth.json");
+        }
+
+        public bool UserExists() => File.Exists(_filePath);
+
+        public (UserInfo, FirebaseCredential) ReadUser()
+        {
+            if (!File.Exists(_filePath)) return (null, null);
+            try
+            {
+                var json = File.ReadAllText(_filePath);
+                var data = JsonSerializer.Deserialize<AuthData>(json);
+                if (data == null || string.IsNullOrEmpty(data.IdToken)) return (null, null);
+
+                // Khởi tạo đối tượng rỗng trước
+                var info = new UserInfo();
+                info.Uid = data.Uid;
+                info.Email = data.Email;
+                info.DisplayName = data.DisplayName;
+
+                var cred = new FirebaseCredential();
+                cred.IdToken = data.IdToken;
+                cred.RefreshToken = data.RefreshToken;
+                cred.ExpiresIn = data.ExpiresIn;
+
+                return (info, cred);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Auto-Login Read Error: " + ex.Message);
+                return (null, null);
+            }
+        }
+
+        public void SaveUser(Firebase.Auth.User user)
+        {
+            var data = new AuthData
+            {
+                Uid = user.Info.Uid,
+                Email = user.Info.Email,
+                DisplayName = user.Info.DisplayName,
+                IdToken = user.Credential.IdToken,
+                RefreshToken = user.Credential.RefreshToken,
+                ExpiresIn = user.Credential.ExpiresIn
+            };
+            var json = JsonSerializer.Serialize(data);
+            File.WriteAllText(_filePath, json);
+        }
+
+        public void DeleteUser()
+        {
+            if (File.Exists(_filePath)) File.Delete(_filePath);
+        }
+    }
+
     public static class FirebaseService
     {
         private const string ApiKey = "AIzaSyDU5RuicqibEcEx5dmagllQ14WOJ467yic";
         private const string ProjectId = "e-learning-cd1b3";
         private static FirebaseAuthClient ?_authClient;
+        public static FirebaseAuthClient? Auth => _authClient;
         public static FirestoreDb ?Db { get; private set; }
 
         /// <summary>
@@ -58,7 +133,8 @@ namespace e_learning_app
                     {
                         new EmailProvider(),
                         new GoogleProvider()
-                    }
+                    },
+                    UserRepository = new SimpleUserRepository()
                 };
                 _authClient = new FirebaseAuthClient(config);
 
@@ -80,19 +156,25 @@ namespace e_learning_app
                 }
                 else
                 {
-                    MessageBox.Show("Không tìm thấy file cấu hình Firebase trong ứng dụng!", "Lỗi");
+                    CustomDialog.Show("Không tìm thấy file cấu hình Firebase trong ứng dụng!", "Lỗi", DialogType.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi khởi tạo Firebase: " + ex.Message);
+                CustomDialog.Show("Lỗi khởi tạo Firebase: " + ex.Message, "Lỗi", DialogType.Error);
             }
+        }
+
+        public static void SignOut()
+        {
+            _authClient?.SignOut();
         }
 
         public static async Task<string> LoginAsync(string email, string password)
         {
             try
             {
+                if (_authClient == null) return null;
                 var userCredential = await _authClient.SignInWithEmailAndPasswordAsync(email, password);
                 return userCredential.User.Uid;
             }
@@ -112,7 +194,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi đăng ký: " + ex.Message);
+                CustomDialog.Show("Lỗi đăng ký: " + ex.Message, "Lỗi", DialogType.Error);
                 return null;
             }
         }
@@ -172,11 +254,11 @@ namespace e_learning_app
                 if (ex.Message.Contains("stale") || ex.Message.Contains("INVALID_ID_RESPONSE"))
                 {
                     await dataStore.ClearAsync();
-                    MessageBox.Show("Phiên đăng nhập cũ bị lỗi. Hệ thống đã tự động làm mới, vui lòng nhấn Đăng nhập lại một lần nữa nhé!", "Thông báo");
+                    CustomDialog.Show("Phiên đăng nhập cũ bị lỗi. Hệ thống đã tự động làm mới, vui lòng nhấn Đăng nhập lại một lần nữa nhé!", "Thông báo", DialogType.Info);
                 }
                 else
                 {
-                    MessageBox.Show("Lỗi đăng nhập Google: " + ex.Message);
+                    CustomDialog.Show("Lỗi đăng nhập Google: " + ex.Message, "Lỗi", DialogType.Error);
                 }
                 return null;
             }
@@ -187,6 +269,7 @@ namespace e_learning_app
         {
             try
             {
+                if (_authClient == null) return false;
                 await _authClient.ResetEmailPasswordAsync(email);
                 return true;
             }
@@ -220,7 +303,7 @@ namespace e_learning_app
             {
                 if (Db == null)
                 {
-                    MessageBox.Show("Chưa kết nối được Firestore!");
+                    CustomDialog.Show("Chưa kết nối được Firestore!", "Lỗi kết nối", DialogType.Error);
                     return false;
                 }
 
@@ -265,7 +348,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi tạo user trong Firestore: " + ex.Message);
+                CustomDialog.Show("Lỗi tạo user trong Firestore: " + ex.Message, "Lỗi", DialogType.Error);
                 return false;
             }
         }        

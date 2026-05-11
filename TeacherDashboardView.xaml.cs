@@ -1,3 +1,4 @@
+using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -359,7 +360,7 @@ namespace e_learning_app.Views
 
         private void BtnCreateExam_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Tính năng soạn bài kiểm tra trắc nghiệm đang được cập nhật.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            CustomDialog.Show("Tính năng soạn bài kiểm tra trắc nghiệm đang được cập nhật.", "Thông báo", DialogType.Info);
         }
 
         private void BtnViewAllNotif_Click(object sender, RoutedEventArgs e) { }

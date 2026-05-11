@@ -1,3 +1,4 @@
+using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -92,7 +93,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải lịch sử: {ex.Message}");
+                CustomDialog.Show($"Lỗi tải lịch sử: {ex.Message}", "Lỗi", DialogType.Error);
             }
         }
 
@@ -102,7 +103,7 @@ namespace e_learning_app.Views
             {
                 if (!_exam.AllowReview)
                 {
-                    MessageBox.Show("Giảng viên đã tắt tính năng xem lại bài làm cho bài thi này.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomDialog.Show("Giảng viên đã tắt tính năng xem lại bài làm cho bài thi này.", "Thông báo", DialogType.Info);
                     return;
                 }
 

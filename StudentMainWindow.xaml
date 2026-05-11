@@ -94,7 +94,7 @@
                 <!-- Nav items -->
                 <StackPanel Grid.Row="1">
                     <!-- Section label -->
-                    <Button x:Name="BtnDashboard" Content="🏠   Trang chủ"
+                    <Button x:Name="BtnDashboard" Content="🏠   Bảng điều khiển"
                             Style="{StaticResource StudentNavBtnActive}" Click="BtnDashboard_Click"/>
                     <Button x:Name="BtnCourses"  Content="📚   Khóa học của tôi"
                             Style="{StaticResource StudentNavBtn}" Click="BtnCourses_Click"/>
@@ -102,15 +102,12 @@
                             Style="{StaticResource StudentNavBtn}" Click="BtnSchedule_Click"/>
                     <Button x:Name="BtnQuiz"     Content="📝   Bài kiểm tra"
                             Style="{StaticResource StudentNavBtn}" Click="BtnQuiz_Click"/>
-                    <Button x:Name="BtnProfile"  Content="🏆   Hồ sơ &amp; Thành tích"
-                            Style="{StaticResource StudentNavBtn}" Click="BtnProfile_Click"/>
                     <Button x:Name="BtnNotifications" Content="🔔   Thông báo"
                             Style="{StaticResource StudentNavBtn}" Click="BtnNotifications_Click"/>
                 </StackPanel>
 
                 <!-- User info (Clickable) -->
                 <StackPanel Grid.Row="2" VerticalAlignment="Bottom" Margin="10,0,10,10">
-                    <Button Content="🚪   Đăng xuất" Style="{StaticResource NavButtonStyle}" Click="BtnLogout_Click" Foreground="#EF4444" Margin="0"/>
                     <Button Click="OpenProfile_Click" Background="Transparent" BorderThickness="0" Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
@@ -133,6 +130,7 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
+                    <Button Content="🚪   Đăng xuất" Style="{StaticResource NavButtonStyle}" Click="BtnLogout_Click" Foreground="#EF4444" Margin="0"/>
                 </StackPanel>
             </Grid>
             

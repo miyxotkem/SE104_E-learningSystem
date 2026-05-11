@@ -1,3 +1,4 @@
+using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -222,7 +223,7 @@ namespace e_learning_app
         {
             if (_submissions == null || _submissions.Count == 0)
             {
-                MessageBox.Show("Chưa có dữ liệu để xuất!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("Chưa có dữ liệu để xuất!", "Thông báo", DialogType.Warning);
                 return;
             }
             var dlg = new Microsoft.Win32.SaveFileDialog { FileName = $"BaoCao_{_exam.Title.Replace(" ", "_")}.csv", DefaultExt = ".csv", Filter = "CSV (*.csv)|*.csv" };
@@ -234,9 +235,9 @@ namespace e_learning_app
                     sb.AppendLine("Học sinh,Thời gian nộp,Điểm,Phần trăm,Thời gian làm(giây)");
                     foreach (var s in _submissions) sb.AppendLine($"{s.StudentName},{s.SubmittedAt:dd/MM/yyyy HH:mm},{s.Score},{s.Percentage:0.0}%,{s.TimeSpentSeconds}");
                     System.IO.File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
-                    MessageBox.Show($"Đã xuất thành công: {dlg.FileName}", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomDialog.Show($"Đã xuất thành công: {dlg.FileName}", "Thành công", DialogType.Success);
                 }
-                catch (Exception ex) { MessageBox.Show($"Lỗi khi xuất file: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error); }
+                catch (Exception ex) { CustomDialog.Show($"Lỗi khi xuất file: {ex.Message}", "Lỗi", DialogType.Error); }
             }
         }
     }

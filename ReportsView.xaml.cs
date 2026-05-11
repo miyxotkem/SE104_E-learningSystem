@@ -1,4 +1,5 @@
-﻿using System;
+using e_learning_app;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -246,9 +247,9 @@ namespace e_learning_app.Views
                 foreach (var r in _reports)
                     sb.AppendLine($"{r.Subject},{r.ClassName},{r.StudentCount},{r.AvgScore:0.0},{r.PassRate:0}%,{r.ExcelRate:0}%");
                 File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
-                MessageBox.Show($"Đã xuất: {dlg.FileName}", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomDialog.Show($"Đã xuất: {dlg.FileName}", "Thành công", DialogType.Success);
             }
-            catch (Exception ex) { MessageBox.Show($"Lỗi: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error); }
+            catch (Exception ex) { CustomDialog.Show($"Lỗi: {ex.Message}", "Lỗi", DialogType.Error); }
         }
 
         private void BtnPrint_Click(object sender, RoutedEventArgs e)
@@ -263,10 +264,10 @@ namespace e_learning_app.Views
             string cls = btn.Tag?.ToString() ?? "";
             var r = _reports.FirstOrDefault(x => x.ClassName == cls);
             if (r == null) return;
-            MessageBox.Show(
+            CustomDialog.Show(
                 $"Lớp: {r.Subject} – {r.ClassName}\nSĩ số: {r.StudentCount}  |  Điểm TB: {r.AvgScore:0.0}\n" +
                 $"Tỷ lệ đạt: {r.PassRate:0}%  |  Xuất sắc: {r.ExcelRate:0}%",
-                "Chi tiết lớp", MessageBoxButton.OK, MessageBoxImage.Information);
+                "Chi tiết lớp", DialogType.Info);
         }
 
         private void BtnViewAllClasses_Click(object sender, RoutedEventArgs e)

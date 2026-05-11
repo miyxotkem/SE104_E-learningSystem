@@ -28,17 +28,17 @@ namespace e_learning_app
                     try
                     {
                         await _dbManager.UpdateFullProfile(user.Id, user);
-                        MessageBox.Show("Password updated successfully!");
+                        CustomDialog.Show("Password updated successfully!", "Success", DialogType.Success);
                         _mainProfile.ClosePasswordView();
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Failed to update: {ex.Message}");
+                        CustomDialog.Show($"Failed to update: {ex.Message}", "Error", DialogType.Error);
                     }
                 }
             }
             else
-                MessageBox.Show("Passwords not match!");
+                CustomDialog.Show("Passwords do not match!", "Warning", DialogType.Warning);
         }
     }
 }

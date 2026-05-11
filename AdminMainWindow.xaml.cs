@@ -23,7 +23,6 @@ namespace e_learning_app
         {
             BtnDashboard.Style = (Style)FindResource("AdminNavBtn");
             BtnUsers.Style     = (Style)FindResource("AdminNavBtn");
-            BtnReports.Style   = (Style)FindResource("AdminNavBtn");
             BtnSettings.Style  = (Style)FindResource("AdminNavBtn");
         }
 
@@ -43,13 +42,6 @@ namespace e_learning_app
         }
 
 
-        private void BtnReports_Click(object sender, RoutedEventArgs e)
-        {
-            ClearNavSelection();
-            BtnReports.Style = (Style)FindResource("AdminNavBtnActive");
-            AdminContentArea.Content = new Views.Admin.AdminReportsView(_dbManager);
-        }
-
         private void BtnSettings_Click(object sender, RoutedEventArgs e)
         {
             ClearNavSelection();
@@ -59,21 +51,44 @@ namespace e_learning_app
 
         private async void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
-            string credPath = "gg.auth.api";
-            var dataStore = new FileDataStore(credPath, true);
-            await dataStore.ClearAsync();
-            var result = MessageBox.Show(
+            var confirmed = CustomDialog.Confirm(
                 "Bạn có chắc muốn đăng xuất khỏi Admin Panel?",
                 "Xác nhận đăng xuất",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+                "Đăng xuất", "Hủy",
+                DialogType.Question);
 
-            if (result == MessageBoxResult.Yes)
+            if (confirmed)
             {
-                var loginWin = new LoginWindow();
+                // Xóa cache Google nếu có
+                string credPath = "gg.auth.api";
+                var dataStore = new FileDataStore(credPath, true);
+                await dataStore.ClearAsync();
+
+                // Đăng xuất Firebase (Xóa Token session)
+                FirebaseService.SignOut();
+
+                var loginWin = new LoginWindow(true);
                 loginWin.Show();
                 this.Close();
             }
+        }
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            var result = CustomDialog.ShowExit("Bạn muốn làm gì trước khi thoát Admin Panel?", "Xác nhận");
+            if (result == CustomDialogResult.Cancel)
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            if (result == CustomDialogResult.Logout)
+            {
+                string credPath = "gg.auth.api";
+                var dataStore = new FileDataStore(credPath, true);
+                dataStore.ClearAsync().Wait();
+                FirebaseService.SignOut();
+            }
+            base.OnClosing(e);
         }
     }
 }

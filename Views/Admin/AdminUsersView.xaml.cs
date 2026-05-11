@@ -1,3 +1,4 @@
+using e_learning_app;
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
@@ -122,27 +123,27 @@ namespace e_learning_app.Views.Admin
             {
                 if (string.IsNullOrEmpty(row.Uid))
                 {
-                    MessageBox.Show("Không tìm thấy ID người dùng!");
+                    CustomDialog.Show("Không tìm thấy ID người dùng!", "Lỗi", DialogType.Error);
                     return;
                 }
                 string newRole = row.Role == "Instructor" ? "Student" : "Instructor";
                 
-                var result = MessageBox.Show($"Bạn có chắc muốn đổi vai trò của {row.FullName} thành {newRole} không?", 
-                                           "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                var confirmed = CustomDialog.Confirm($"Bạn có chắc muốn đổi vai trò của {row.FullName} thành {newRole} không?", 
+                                           "Xác nhận thay đổi", "Đồng ý", "Hủy", DialogType.Question);
                 
-                if (result == MessageBoxResult.Yes)
+                if (confirmed)
                 {
                     try
                     {
                         await _db.GetDb.Collection("Users").Document(row.Uid).UpdateAsync("Role", newRole);
-                        MessageBox.Show("Cập nhật vai trò thành công!", "Thông báo");
+                        CustomDialog.Show("Cập nhật vai trò thành công!", "Thông báo", DialogType.Success);
                         
                         // Load lại dữ liệu
                         UserControl_Loaded(null, null);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Lỗi: {ex.Message}");
+                        CustomDialog.Show($"Lỗi: {ex.Message}", "Lỗi", DialogType.Error);
                     }
                 }
             }
@@ -155,18 +156,18 @@ namespace e_learning_app.Views.Admin
                 bool newBlockStatus = !row.IsBlocked;
                 string action = newBlockStatus ? "khóa" : "mở khóa";
 
-                var result = MessageBox.Show($"Bạn có chắc muốn {action} tài khoản {row.FullName}?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (result == MessageBoxResult.Yes)
+                var confirmed = CustomDialog.Confirm($"Bạn có chắc muốn {action} tài khoản {row.FullName}?", "Xác nhận", "Thực hiện", "Hủy", DialogType.Warning);
+                if (confirmed)
                 {
                     try
                     {
                         await _db.GetDb.Collection("Users").Document(row.Uid).UpdateAsync("IsBlocked", newBlockStatus);
-                        MessageBox.Show($"Đã {action} tài khoản thành công!", "Thông báo");
+                        CustomDialog.Show($"Đã {action} tài khoản thành công!", "Thông báo", DialogType.Success);
                         UserControl_Loaded(null, null);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Lỗi: {ex.Message}");
+                        CustomDialog.Show($"Lỗi: {ex.Message}", "Lỗi", DialogType.Error);
                     }
                 }
             }
@@ -176,18 +177,18 @@ namespace e_learning_app.Views.Admin
         {
             if (sender is Button btn && btn.DataContext is AdminUserRow row)
             {
-                var result = MessageBox.Show($"CẢNH BÁO: Bạn có chắc muốn XÓA VĨNH VIỄN tài khoản {row.FullName}? \n\nHành động này không thể hoàn tác!", "Xác nhận xóa", MessageBoxButton.YesNo, MessageBoxImage.Stop);
-                if (result == MessageBoxResult.Yes)
+                var confirmed = CustomDialog.Confirm($"CẢNH BÁO: Bạn có chắc muốn XÓA VĨNH VIỄN tài khoản {row.FullName}? \n\nHành động này không thể hoàn tác!", "Xác nhận xóa", "Xóa vĩnh viễn", "Hủy", DialogType.Error);
+                if (confirmed)
                 {
                     try
                     {
                         await _db.GetDb.Collection("Users").Document(row.Uid).DeleteAsync();
-                        MessageBox.Show("Đã xóa tài khoản thành công!", "Thông báo");
+                        CustomDialog.Show("Đã xóa tài khoản thành công!", "Thông báo", DialogType.Success);
                         UserControl_Loaded(null, null);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Lỗi: {ex.Message}");
+                        CustomDialog.Show($"Lỗi: {ex.Message}", "Lỗi", DialogType.Error);
                     }
                 }
             }

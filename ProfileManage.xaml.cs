@@ -34,7 +34,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi tải thông tin: " + ex.Message);
+                CustomDialog.Show("Lỗi tải thông tin: " + ex.Message, "Lỗi", DialogType.Error);
             }
         }
 
@@ -48,11 +48,11 @@ namespace e_learning_app
 
             if (issent)
             {
-                MessageBox.Show("Hệ thống đã gửi link khôi phục vào Email của bạn. Hãy kiểm tra nhé!");
+                CustomDialog.Show("Hệ thống đã gửi link khôi phục vào Email của bạn. Hãy kiểm tra nhé!", "Thành công", DialogType.Success);
             }
             else
             {
-                MessageBox.Show("Email không chính xác hoặc không tồn tại. Hãy kiểm tra nhé!");
+                CustomDialog.Show("Email không chính xác hoặc không tồn tại. Hãy kiểm tra nhé!", "Lỗi", DialogType.Error);
             }
             btnChangePassword.IsEnabled = true;
         }
@@ -86,11 +86,11 @@ namespace e_learning_app
                 // Cập nhật lại local state để các màn hình khác (Sidebar) thấy được sự thay đổi
                 _dbManager.SetCurrentUser(user);
 
-                MessageBox.Show("Cập nhật thông tin thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomDialog.Show("Cập nhật thông tin thành công!", "Thông báo", DialogType.Success);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi cập nhật: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomDialog.Show("Lỗi cập nhật: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {

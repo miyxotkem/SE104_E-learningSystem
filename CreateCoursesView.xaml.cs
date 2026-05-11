@@ -86,8 +86,8 @@ namespace e_learning_app
                 string.IsNullOrWhiteSpace(TxtCategory.Text) ||
                 string.IsNullOrWhiteSpace(TxtDescription.Text))
             {
-                MessageBox.Show("Vui lòng điền đầy đủ tất cả các thông tin (Tên môn, Mô tả, Mã lớp, Chuyên ngành) trước khi tạo lớp!",
-                                "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("Vui lòng điền đầy đủ tất cả các thông tin (Tên môn, Mô tả, Mã lớp, Chuyên ngành) trước khi tạo lớp!",
+                                "Thiếu thông tin", DialogType.Warning);
                 return;
             }
 
@@ -102,8 +102,8 @@ namespace e_learning_app
                 if (!int.TryParse(TxtStartPeriod.Text, out startP) || !int.TryParse(TxtEndPeriod.Text, out endP) ||
                     startP >= endP || !((startP >= 1 && endP <= 5) || (startP >= 6 && endP <= 10)))
                 {
-                    MessageBox.Show("Tiết học không hợp lệ!\n- Tiết bắt đầu phải nhỏ hơn tiết kết thúc.\n- Cùng thuộc 1 buổi (Sáng: 1-5, Chiều: 6-10).",
-                                    "Lỗi nhập liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    CustomDialog.Show("Tiết học không hợp lệ!\n- Tiết bắt đầu phải nhỏ hơn tiết kết thúc.\n- Cùng thuộc 1 buổi (Sáng: 1-5, Chiều: 6-10).",
+                                    "Lỗi nhập liệu", DialogType.Warning);
                     BtnSubmit.IsEnabled = true;
                     BtnSubmit.Content = "Hoàn tất và Tạo lớp";
                     return;
@@ -147,7 +147,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi lưu vào Firebase: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomDialog.Show($"Lỗi khi lưu vào Firebase: {ex.Message}", "Lỗi", DialogType.Error);
                 BtnSubmit.IsEnabled = true;
                 BtnSubmit.Content = "Hoàn tất và Tạo lớp";
             }

@@ -39,8 +39,8 @@ namespace e_learning_app
             }
             else
             {
-                MessageBox.Show("Firestore chưa được khởi tạo. Hãy đảm bảo FirebaseService.Initialize() đã được gọi trước.",
-                                "Lỗi Kết Nối", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomDialog.Show("Firestore chưa được khởi tạo. Hãy đảm bảo FirebaseService.Initialize() đã được gọi trước.",
+                                "Lỗi Kết Nối", DialogType.Error);
             }
         }
 

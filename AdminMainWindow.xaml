@@ -112,8 +112,6 @@
 
                         <TextBlock Text="HỆ THỐNG" FontSize="10" FontWeight="Bold" Foreground="#CBD5E1"
                                    Margin="25,14,0,8"/>
-                        <Button x:Name="BtnReports"  Content="📊   Báo cáo &amp; Thống kê"
-                                Style="{StaticResource AdminNavBtn}" Click="BtnReports_Click"/>
                         <Button x:Name="BtnSettings" Content="⚙️   Cài đặt hệ thống"
                                 Style="{StaticResource AdminNavBtn}" Click="BtnSettings_Click"/>
                     </StackPanel>

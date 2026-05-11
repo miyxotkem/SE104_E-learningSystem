@@ -1,4 +1,5 @@
-﻿using System;
+using e_learning_app;
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
@@ -236,17 +237,17 @@ namespace e_learning_app.Views
         {
             CollectFromUI();
             var (ok, err) = Validate();
-            if (!ok) { MessageBox.Show(err, "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            if (!ok) { CustomDialog.Show(err, "Lỗi dữ liệu", DialogType.Warning); return; }
             SaveConfig();
             _dirty = false;
-            MessageBox.Show("Đã lưu cài đặt học kỳ thành công! ✅", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+            CustomDialog.Show("Đã lưu cài đặt học kỳ thành công! ✅", "Thành công", DialogType.Success);
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
             if (!_dirty) return;
-            if (MessageBox.Show("Hủy tất cả thay đổi chưa lưu?", "Xác nhận",
-                MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            var confirmed = CustomDialog.Confirm("Hủy tất cả thay đổi chưa lưu?", "Xác nhận", "Hủy thay đổi", "Quay lại", DialogType.Question);
+            if (confirmed)
             {
                 Clone(_saved, _cfg);
                 PushToUI();
@@ -255,8 +256,8 @@ namespace e_learning_app.Views
 
         private void BtnResetDefaults_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show("Đặt lại tất cả về mặc định?", "Xác nhận",
-                MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            var confirmed = CustomDialog.Confirm("Đặt lại tất cả về mặc định?", "Xác nhận", "Đặt lại", "Hủy", DialogType.Warning);
+            if (!confirmed) return;
             _cfg = new SemesterConfig();
             PushToUI();
             _dirty = true;
@@ -266,8 +267,7 @@ namespace e_learning_app.Views
         public bool CanLeave()
         {
             if (!_dirty) return true;
-            return MessageBox.Show("Có thay đổi chưa lưu. Rời đi?", "Cảnh báo",
-                MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+            return CustomDialog.Confirm("Có thay đổi chưa lưu. Rời đi?", "Cảnh báo", "Rời đi", "Ở lại", DialogType.Warning);
         }
 
         public SemesterConfig CurrentConfig => _cfg;

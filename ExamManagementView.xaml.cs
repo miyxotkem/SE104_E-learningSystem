@@ -153,7 +153,7 @@ namespace e_learning_app
             {
                 if (_dbManager == null)
                 {
-                    MessageBox.Show("Lỗi: DatabaseManager chưa được khởi tạo!", "Lỗi");
+                    CustomDialog.Show("Lỗi: DatabaseManager chưa được khởi tạo!", "Lỗi", DialogType.Error);
                     return;
                 }
 
@@ -185,7 +185,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"❌ Lỗi tải dữ liệu:\n{ex.Message}", "Lỗi");
+                CustomDialog.Show($"❌ Lỗi tải dữ liệu:\n{ex.Message}", "Lỗi", DialogType.Error);
             }
         }
 
@@ -407,11 +407,11 @@ namespace e_learning_app
 
         private async void DeleteExam(Exam exam)
         {
-            var result = MessageBox.Show(
+            var confirmed = CustomDialog.Confirm(
                 $"Bạn có chắc chắn muốn xóa bài thi:\n\n\"{exam.Title}\"?\n\nHành động này không thể hoàn tác.",
-                "Xác Nhận Xóa", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                "Xác Nhận Xóa", "Xóa ngay", "Hủy", DialogType.Warning);
 
-            if (result == MessageBoxResult.Yes)
+            if (confirmed)
             {
                 try
                 {
@@ -426,8 +426,7 @@ namespace e_learning_app
                     {
                         _allExams.Remove(exam);
                         Refresh();
-                        MessageBox.Show("✅ Xóa bài thi thành công!", "Thành Công",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
+                        CustomDialog.Show("✅ Xóa bài thi thành công!", "Thành Công", DialogType.Success);
                     }
                     else
                     {
@@ -436,8 +435,7 @@ namespace e_learning_app
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"❌ Lỗi khi xóa:\n{ex.Message}", "Lỗi",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomDialog.Show($"❌ Lỗi khi xóa:\n{ex.Message}", "Lỗi", DialogType.Error);
                 }
             }
         }       
@@ -580,8 +578,7 @@ namespace e_learning_app
                         Refresh();
                         dialogWindow.Close();
 
-                        MessageBox.Show("✅ Cập nhật bài thi thành công!", "Thành Công",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
+                        CustomDialog.Show("✅ Cập nhật bài thi thành công!", "Thành Công", DialogType.Success);
                     }
                     else
                     {
@@ -590,8 +587,7 @@ namespace e_learning_app
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"❌ Lỗi khi lưu:\n{ex.Message}", "Lỗi",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomDialog.Show($"❌ Lỗi khi lưu:\n{ex.Message}", "Lỗi", DialogType.Error);
 
                     ((Button)s).IsEnabled = true;
                     ((Button)s).Content = "💾 Lưu Thay Đổi";

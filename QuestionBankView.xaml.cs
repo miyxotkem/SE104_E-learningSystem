@@ -1,4 +1,5 @@
-﻿using System;
+using e_learning_app;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -238,9 +239,14 @@ namespace e_learning_app.Views
             if (sender is not Button btn || btn.Tag is not int id) return;
             var q = _all.FirstOrDefault(x => x.Id == id);
             if (q == null) return;
-            if (MessageBox.Show($"Xóa câu hỏi này?\n\"{q.Content[..Math.Min(60, q.Content.Length)]}\"",
-                "Xác nhận xóa", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-            { _all.Remove(q); Refresh(); }
+            var confirmed = CustomDialog.Confirm($"Xóa câu hỏi này?\n\"{q.Content[..Math.Min(60, q.Content.Length)]}\"",
+                "Xác nhận xóa", "Xóa ngay", "Hủy", DialogType.Warning);
+            
+            if (confirmed)
+            { 
+                _all.Remove(q); 
+                Refresh(); 
+            }
         }
 
         private void BtnImport_Click(object sender, RoutedEventArgs e)
@@ -248,7 +254,7 @@ namespace e_learning_app.Views
             var dlg = new Microsoft.Win32.OpenFileDialog
             { Filter = "Excel (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv", Title = "Chọn file câu hỏi" };
             if (dlg.ShowDialog() == true)
-                MessageBox.Show($"Import: {dlg.FileName}\n(Đang phát triển)", "Import", MessageBoxButton.OK);
+                CustomDialog.Show($"Import: {dlg.FileName}\n(Đang phát triển)", "Import", DialogType.Info);
         }
 
         // ── Add/Edit dialog ──────────────────────────────────────────
@@ -319,7 +325,7 @@ namespace e_learning_app.Views
             };
             save.Click += (_, _) =>
             {
-                if (string.IsNullOrWhiteSpace(txt.Text)) { MessageBox.Show("Vui lòng nhập nội dung."); return; }
+                if (string.IsNullOrWhiteSpace(txt.Text)) { CustomDialog.Show("Vui lòng nhập nội dung.", "Thông báo", DialogType.Warning); return; }
                 if (isEdit && existing != null)
                 {
                     existing.Content = txt.Text;

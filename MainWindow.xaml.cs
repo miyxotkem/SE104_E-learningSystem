@@ -12,7 +12,7 @@ namespace e_learning_app
     {
         private readonly DatabaseManager _dbManager;
         private FirestoreChangeListener _userListener;
-
+        private bool _isForceLogout = false;
         public MainWindow(User loggedInUser)
         {
             InitializeComponent();
@@ -48,10 +48,14 @@ namespace e_learning_app
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             _userListener?.StopAsync();
-                            MessageBox.Show("Tài khoản của bạn đã bị Admin khóa. Bạn sẽ bị đăng xuất ngay lập tức.", "Cảnh báo bảo mật", MessageBoxButton.OK, MessageBoxImage.Stop);
+                            CustomDialog.Show("Tài khoản của bạn đã bị Admin khóa. Bạn sẽ bị đăng xuất ngay lập tức.", "Cảnh báo bảo mật", DialogType.Error);
 
-                            var loginWin = new LoginWindow();
+                            // Đăng xuất Firebase
+                            FirebaseService.SignOut();
+
+                            var loginWin = new LoginWindow(true);
                             loginWin.Show();
+                            _isForceLogout = true;
                             this.Close();
                         });
                     }
@@ -64,7 +68,7 @@ namespace e_learning_app
             var user = _dbManager.GetCurrentUser();
             if (user == null)
             {
-                MessageBox.Show("Không thể xác định thông tin người dùng. Vui lòng đăng nhập lại.", "Lỗi");
+                CustomDialog.Show("Không thể xác định thông tin người dùng. Vui lòng đăng nhập lại.", "Lỗi", DialogType.Error);
                 BtnLogout_Click(null, null);
                 return;
             }
@@ -95,30 +99,19 @@ namespace e_learning_app
             MainContentArea.Content = new MyClassesView(_dbManager);
         }
 
-        public void NavQuestions_Click(object sender, RoutedEventArgs e)
-        {
-            MainContentArea.Content = new QuestionBankView();
-        }
 
         public void NavExams_Click(object sender, RoutedEventArgs e)
         {
             MainContentArea.Content = new ExamManagementView(_dbManager);
         }
 
-        public void NavReports_Click(object sender, RoutedEventArgs e)
-        {
-            MainContentArea.Content = new ReportsView(_dbManager);
-        }
 
         public void NavNotifications_Click(object sender, RoutedEventArgs e)
         {
             MainContentArea.Content = new NotificationsView(_dbManager);
         }
 
-        public void NavSemestersettings_Click(object sender, RoutedEventArgs e)
-        {
-            MainContentArea.Content = new SemesterSettingsView();
-        }
+
 
         public void NavigateTo(UserControl view) => MainContentArea.Content = view;
 
@@ -129,21 +122,52 @@ namespace e_learning_app
 
         private async void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
-            string credPath = "gg.auth.api";
-            var dataStore = new FileDataStore(credPath, true);
-            await dataStore.ClearAsync();
-            var result = MessageBox.Show(
+            var confirmed = CustomDialog.Confirm(
                         "Bạn có chắc muốn đăng xuất?",
                         "Xác nhận đăng xuất",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
+                        "Đăng xuất", "Hủy",
+                        DialogType.Question);
 
-            if (result == MessageBoxResult.Yes)
+            if (confirmed)
             {
-                var loginWin = new LoginWindow();
+                // Xóa cache Google nếu có
+                string credPath = "gg.auth.api";
+                var dataStore = new FileDataStore(credPath, true);
+                await dataStore.ClearAsync();
+
+                // Đăng xuất Firebase (Xóa Token session)
+                FirebaseService.SignOut();
+
+                var loginWin = new LoginWindow(true);
                 loginWin.Show();
                 this.Close();
             }
+        }
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            // Nếu đang bị force close (bị admin khóa) thì không hỏi
+            if (_isForceLogout)
+            {
+                base.OnClosing(e);
+                return;
+            }
+
+            var result = CustomDialog.ShowExit("Bạn muốn làm gì trước khi thoát?", "Xác nhận");
+            if (result == CustomDialogResult.Cancel)
+            {
+                e.Cancel = true; // Ở lại app
+                return;
+            }
+
+            if (result == CustomDialogResult.Logout)
+            {
+                // Đăng xuất: xóa token
+                string credPath = "gg.auth.api";
+                var dataStore = new FileDataStore(credPath, true);
+                dataStore.ClearAsync().Wait();
+                FirebaseService.SignOut();
+            }
+            base.OnClosing(e);
         }
     }
 }

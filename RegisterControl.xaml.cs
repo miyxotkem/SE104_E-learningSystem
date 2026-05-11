@@ -33,22 +33,22 @@ namespace e_learning_app
 
             if (string.IsNullOrWhiteSpace(fullName))
             {
-                MessageBox.Show("Vui lòng nhập họ và tên!!");
+                CustomDialog.Show("Vui lòng nhập họ và tên!!", "Thông báo", DialogType.Warning);
                 return;
             }
             if (string.IsNullOrEmpty(email))
             {
-                MessageBox.Show("Vui lòng nhập email!!");
+                CustomDialog.Show("Vui lòng nhập email!!", "Thông báo", DialogType.Warning);
                 return;
             }
             if (string.IsNullOrEmpty(password))
             {
-                MessageBox.Show("Vui lòng nhập mật khẩu!!");
+                CustomDialog.Show("Vui lòng nhập mật khẩu!!", "Thông báo", DialogType.Warning);
                 return;
             }
             if (password.Length < 6)
             {
-                MessageBox.Show("Mật khẩu phải có ít nhất 6 ký tự!!");
+                CustomDialog.Show("Mật khẩu phải có ít nhất 6 ký tự!!", "Thông báo", DialogType.Warning);
                 return;
             }
             try
@@ -59,7 +59,7 @@ namespace e_learning_app
                 if (newUserId != null)
                 {
                     await FirebaseService.CreateUserInFirestore(newUserId, email, fullName); // Lưu vào Firestore với Email và FullName
-                    MessageBox.Show("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.");
+                    CustomDialog.Show("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.", "Thành công", DialogType.Success);
                     var parent_window=Window.GetWindow(this) as LoginWindow;
                     if (parent_window != null)
                     {
@@ -68,7 +68,7 @@ namespace e_learning_app
                 }
             }
             catch (Exception ex) {
-               MessageBox.Show("lỗi đăng ký"+ ex.Message);
+                CustomDialog.Show("Lỗi đăng ký: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {

@@ -1,3 +1,4 @@
+using e_learning_app;
 using e_learning_app.Class;
 using Microsoft.Win32;
 using System;
@@ -204,7 +205,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi tải nội dung: " + ex.Message);
+                CustomDialog.Show("Lỗi tải nội dung: " + ex.Message, "Lỗi", DialogType.Error);
             }
         }
 
@@ -221,7 +222,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi tải danh sách video: " + ex.Message);
+                CustomDialog.Show("Lỗi tải danh sách video: " + ex.Message, "Lỗi", DialogType.Error);
             }
         }
 
@@ -264,14 +265,15 @@ namespace e_learning_app.Views
         {
             if (string.IsNullOrWhiteSpace(InputVideoTitle.Text))
             {
-                MessageBox.Show("Vui lòng nhập tiêu đề video!", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("Vui lòng nhập tiêu đề video!", "Cảnh báo", DialogType.Warning);
                 return;
             }
 
             string sourcePath = TxtSelectedVideoFile.Tag?.ToString();
+
             if (string.IsNullOrWhiteSpace(sourcePath) || !System.IO.File.Exists(sourcePath))
             {
-                MessageBox.Show("Vui lòng chọn một tệp video hợp lệ!", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("Vui lòng chọn một tệp video hợp lệ!", "Cảnh báo", DialogType.Warning);
                 return;
             }
 
@@ -308,7 +310,7 @@ namespace e_learning_app.Views
                     if (_lessons == null) _lessons = new ObservableCollection<Lesson>();
                     _lessons.Add(newLesson);
                     
-                    MessageBox.Show("Tải video lên thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomDialog.Show("Tải video lên thành công!", "Thành công", DialogType.Success);
                     CloseAddVideoDrawer_Click(null, null);
                 }
                 else
@@ -318,7 +320,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi khi tải video lên: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomDialog.Show("Lỗi khi tải video lên: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {
@@ -420,7 +422,7 @@ namespace e_learning_app.Views
                                 UseShellExecute = true
                             });
                         }
-                        else MessageBox.Show("Đường dẫn tệp không hợp lệ.", "Lỗi Mạng", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        else CustomDialog.Show("Đường dẫn tệp không hợp lệ.", "Lỗi Mạng", DialogType.Warning);
                     }
                     else if (selectedContent.Type == "Note")
                     {
@@ -432,7 +434,7 @@ namespace e_learning_app.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Không thể mở tệp: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomDialog.Show($"Không thể mở tệp: {ex.Message}", "Lỗi", DialogType.Error);
                 }
             }
         }
@@ -469,7 +471,7 @@ namespace e_learning_app.Views
                 for (int i = 0; i < _courseContents.Count; i++) _courseContents[i].OrderIndex = i;
 
                 try { await _dbManager.UpdateCourseContentOrderAsync(_course.Id, _courseContents.ToList()); }
-                catch (Exception ex) { MessageBox.Show("Lỗi khi lưu thứ tự mới: " + ex.Message); LoadCourseContent(); }
+                catch (Exception ex) { CustomDialog.Show("Lỗi khi lưu thứ tự mới: " + ex.Message, "Lỗi", DialogType.Error); LoadCourseContent(); }
             }
         }
 
@@ -640,7 +642,7 @@ namespace e_learning_app.Views
         {
             if (string.IsNullOrWhiteSpace(AddTitleInput.Text))
             {
-                MessageBox.Show("Vui lòng nhập tiêu đề!"); return;
+                CustomDialog.Show("Vui lòng nhập tiêu đề!", "Cảnh báo", DialogType.Warning); return;
             }
 
             string type = (AddTypeInput.SelectedItem as ComboBoxItem)?.Content.ToString();
@@ -649,18 +651,18 @@ namespace e_learning_app.Views
             if (type == "Link")
             {
                 data = AddLinkInput.Text;
-                if (string.IsNullOrWhiteSpace(data)) { MessageBox.Show("Vui lòng nhập link!"); return; }
+                if (string.IsNullOrWhiteSpace(data)) { CustomDialog.Show("Vui lòng nhập link!", "Cảnh báo", DialogType.Warning); return; }
             }
             else if (type == "Note")
             {
                 data = AddNoteInput.Text;
-                if (string.IsNullOrWhiteSpace(data)) { MessageBox.Show("Vui lòng nhập ghi chú!"); return; }
+                if (string.IsNullOrWhiteSpace(data)) { CustomDialog.Show("Vui lòng nhập ghi chú!", "Cảnh báo", DialogType.Warning); return; }
             }
             else if (type == "Document")
             {
                 string sourcePath = AddDocPathInput.Tag?.ToString();
 
-                if (string.IsNullOrWhiteSpace(sourcePath)) { MessageBox.Show("Vui lòng chọn tệp hợp lệ!"); return; }
+                if (string.IsNullOrWhiteSpace(sourcePath)) { CustomDialog.Show("Vui lòng chọn tệp hợp lệ!", "Cảnh báo", DialogType.Warning); return; }
 
                 if (!sourcePath.StartsWith("http") && File.Exists(sourcePath))
                 {
@@ -681,7 +683,7 @@ namespace e_learning_app.Views
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Lỗi khi tải tệp lên đám mây: " + ex.Message);
+                        CustomDialog.Show("Lỗi khi tải tệp lên đám mây: " + ex.Message, "Lỗi", DialogType.Error);
                         BtnSubmitContent.Content = _editingContent != null ? "Lưu thay đổi" : "Thêm vào lớp";
                         BtnSubmitContent.IsEnabled = true; return;
                     }
@@ -860,7 +862,7 @@ namespace e_learning_app.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Lỗi khi xóa bài tập: " + ex.Message);
+                    CustomDialog.Show("Lỗi khi xóa bài tập: " + ex.Message, "Lỗi", DialogType.Error);
                 }
             }
             CloseDeleteAssignmentModal_Click(null, null);
@@ -900,7 +902,7 @@ namespace e_learning_app.Views
         {
             if (string.IsNullOrWhiteSpace(AssignTitleInput.Text) || !AssignDatePicker.SelectedDate.HasValue)
             {
-                MessageBox.Show("Vui lòng nhập Tên bài tập và Chọn ngày Hạn nộp!"); return;
+                CustomDialog.Show("Vui lòng nhập Tên bài tập và Chọn ngày Hạn nộp!", "Cảnh báo", DialogType.Warning); return;
             }
 
             DateTime deadlineDate = AssignDatePicker.SelectedDate.Value;
@@ -934,7 +936,7 @@ namespace e_learning_app.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Lỗi tải file đính kèm: " + ex.Message);
+                    CustomDialog.Show("Lỗi tải file đính kèm: " + ex.Message, "Lỗi", DialogType.Error);
                     BtnConfirmAddAssignment.Content = _editingAssignment == null ? "Tạo bài tập" : "Lưu thay đổi";
                     BtnConfirmAddAssignment.IsEnabled = true; return;
                 }
@@ -986,7 +988,7 @@ namespace e_learning_app.Views
                 LoadAssignments();
                 CloseAddAssignmentDrawer_Click(null, null);
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi lưu Database: " + ex.Message); }
+            catch (Exception ex) { CustomDialog.Show("Lỗi lưu Database: " + ex.Message, "Lỗi", DialogType.Error); }
             finally
             {
                 BtnConfirmAddAssignment.Content = _editingAssignment == null ? "Tạo bài tập" : "Lưu thay đổi";
@@ -1188,7 +1190,7 @@ namespace e_learning_app.Views
 
                     if (snapshot.Count == 0)
                     {
-                        MessageBox.Show("Chưa có sinh viên nào nộp bài.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                        CustomDialog.Show("Chưa có sinh viên nào nộp bài.", "Thông báo", DialogType.Info);
                         return;
                     }
 
@@ -1216,11 +1218,11 @@ namespace e_learning_app.Views
                         }
                     }
 
-                    MessageBox.Show("Đã tải xuống thành công tất cả bài nộp!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomDialog.Show("Đã tải xuống thành công tất cả bài nộp!", "Thành công", DialogType.Success);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Lỗi khi tải dữ liệu: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomDialog.Show("Lỗi khi tải dữ liệu: " + ex.Message, "Lỗi", DialogType.Error);
                 }
                 finally
                 {
@@ -1286,7 +1288,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi tải danh sách chấm bài: " + ex.Message);
+                CustomDialog.Show("Lỗi tải danh sách chấm bài: " + ex.Message, "Lỗi", DialogType.Error);
             }
         }
 
@@ -1324,7 +1326,7 @@ namespace e_learning_app.Views
                 }
                 else
                 {
-                    MessageBox.Show("Điểm phải là số từ 0 đến 10!", "Lỗi nhập liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    CustomDialog.Show("Điểm phải là số từ 0 đến 10!", "Lỗi nhập liệu", DialogType.Warning);
                     return;
                 }
             }
@@ -1359,12 +1361,12 @@ namespace e_learning_app.Views
                 }
                 else
                 {
-                    MessageBox.Show("Đã chấm xong bài cuối cùng trong danh sách!", "Hoàn tất", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomDialog.Show("Đã chấm xong bài cuối cùng trong danh sách!", "Hoàn tất", DialogType.Success);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi khi lưu điểm: " + ex.Message);
+                CustomDialog.Show("Lỗi khi lưu điểm: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {
@@ -1391,8 +1393,8 @@ namespace e_learning_app.Views
         {
             if (_currentViewedAssignment == null) return;
 
-            var result = MessageBox.Show("Bạn có chắc chắn muốn công khai điểm cho toàn bộ sinh viên?\nSinh viên sẽ nhận được thông báo và xem được điểm ngay lập tức.", "Công khai điểm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result == MessageBoxResult.Yes)
+            var confirmed = CustomDialog.Confirm("Bạn có chắc chắn muốn công khai điểm cho toàn bộ sinh viên?\nSinh viên sẽ nhận được thông báo và xem được điểm ngay lập tức.", "Công khai điểm", "Công khai", "Hủy", DialogType.Warning);
+            if (confirmed)
             {
                 try
                 {
@@ -1407,13 +1409,13 @@ namespace e_learning_app.Views
                     TxtInstructorGradingStatus.Text = "Trạng thái: Đã công khai";
                     TxtInstructorGradingStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
 
-                    MessageBox.Show("Đã công khai điểm thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomDialog.Show("Đã công khai điểm thành công!", "Thành công", DialogType.Success);
 
                     if (btn != null) { btn.Content = "Công khai điểm"; btn.IsEnabled = true; }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Lỗi khi công khai điểm: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomDialog.Show("Lỗi khi công khai điểm: " + ex.Message, "Lỗi", DialogType.Error);
                     var btn = sender as Button;
                     if (btn != null) { btn.Content = "Công khai điểm"; btn.IsEnabled = true; }
                 }
@@ -1459,7 +1461,7 @@ namespace e_learning_app.Views
 
             if (string.IsNullOrEmpty(_selectedSubmissionFilePath) || !File.Exists(_selectedSubmissionFilePath))
             {
-                MessageBox.Show("Vui lòng chọn hoặc kéo thả tệp bài làm của bạn vào ô nét đứt trước khi nộp!", "Chưa chọn tệp", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("Vui lòng chọn hoặc kéo thả tệp bài làm của bạn vào ô nét đứt trước khi nộp!", "Chưa chọn tệp", DialogType.Warning);
                 return;
             }
 
@@ -1533,11 +1535,11 @@ namespace e_learning_app.Views
                 TxtSelectedFile.Text = "Kéo thả tệp vào đây hoặc nhấn để chọn";
 
                 string statusMsg = isLate ? "Đã cập nhật bài nộp (TRỄ HẠN) thành công!" : "Đã cập nhật bài nộp (ĐÚNG HẠN) thành công!";
-                MessageBox.Show(statusMsg, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomDialog.Show(statusMsg, "Thành công", DialogType.Success);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi trong quá trình nộp bài: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomDialog.Show("Lỗi trong quá trình nộp bài: " + ex.Message, "Lỗi", DialogType.Error);
                 BtnDetailSubmit.Content = DetailSubmissionStatus.Text == "Đã nộp bài" ? "Nộp lại tệp khác" : "Tải lên tệp bài làm";
             }
             finally
@@ -1586,7 +1588,7 @@ namespace e_learning_app.Views
                 if (!int.TryParse(EditTxtStartPeriod.Text, out startP) || !int.TryParse(EditTxtEndPeriod.Text, out endP) ||
                     startP >= endP || !((startP >= 1 && endP <= 5) || (startP >= 6 && endP <= 10)))
                 {
-                    MessageBox.Show("Tiết học không hợp lệ!\n- Tiết bắt đầu phải nhỏ hơn tiết kết thúc.\n- Cùng thuộc 1 buổi (Sáng: 1-5, Chiều: 6-10).", "Lỗi nhập liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    CustomDialog.Show("Tiết học không hợp lệ!\n- Tiết bắt đầu phải nhỏ hơn tiết kết thúc.\n- Cùng thuộc 1 buổi (Sáng: 1-5, Chiều: 6-10).", "Lỗi nhập liệu", DialogType.Warning);
                     return;
                 }
             }
@@ -1811,7 +1813,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi tải danh sách chờ duyệt: " + ex.Message);
+                CustomDialog.Show("Lỗi tải danh sách chờ duyệt: " + ex.Message, "Lỗi", DialogType.Error);
             }
         }
 
@@ -1834,7 +1836,7 @@ namespace e_learning_app.Views
                     TxtStudentCount.Text = _course.StudentCount.ToString();
                     await LoadPendingRequestsAsync();
                 }
-                catch (Exception ex) { MessageBox.Show("Lỗi duyệt: " + ex.Message); }
+                catch (Exception ex) { CustomDialog.Show("Lỗi duyệt: " + ex.Message, "Lỗi", DialogType.Error); }
             }
         }
 
@@ -1848,7 +1850,7 @@ namespace e_learning_app.Views
                     await regRef.UpdateAsync("status", "rejected");
                     await LoadPendingRequestsAsync();
                 }
-                catch (Exception ex) { MessageBox.Show("Lỗi từ chối: " + ex.Message); }
+                catch (Exception ex) { CustomDialog.Show("Lỗi từ chối: " + ex.Message, "Lỗi", DialogType.Error); }
             }
         }
 
@@ -1879,11 +1881,11 @@ namespace e_learning_app.Views
                 TxtStudentCount.Text = _course.StudentCount.ToString();
                 await LoadPendingRequestsAsync();
 
-                MessageBox.Show("Đã duyệt tất cả yêu cầu thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomDialog.Show("Đã duyệt tất cả yêu cầu thành công!", "Thành công", DialogType.Success);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi duyệt tất cả: " + ex.Message);
+                CustomDialog.Show("Lỗi duyệt tất cả: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {
@@ -1962,7 +1964,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi tải danh sách sinh viên: " + ex.Message);
+                CustomDialog.Show("Lỗi tải danh sách sinh viên: " + ex.Message, "Lỗi", DialogType.Error);
             }
         }
 
@@ -1970,8 +1972,8 @@ namespace e_learning_app.Views
         {
             if (sender is Button btn && btn.Tag is string regId)
             {
-                var result = MessageBox.Show("Bạn có chắc chắn muốn loại bỏ sinh viên này khỏi lớp? Trạng thái sẽ được chuyển thành 'Từ chối'.", "Xác nhận loại bỏ", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (result == MessageBoxResult.Yes)
+                var confirmed = CustomDialog.Confirm("Bạn có chắc chắn muốn loại bỏ sinh viên này khỏi lớp? Trạng thái sẽ được chuyển thành 'Từ chối'.", "Xác nhận loại bỏ", "Loại bỏ", "Hủy", DialogType.Warning);
+                if (confirmed)
                 {
                     btn.IsEnabled = false;
 
@@ -1994,11 +1996,11 @@ namespace e_learning_app.Views
 
                         await LoadEnrolledStudentsAsync();
 
-                        MessageBox.Show("Đã loại bỏ sinh viên và chặn quyền truy cập thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                        CustomDialog.Show("Đã loại bỏ sinh viên và chặn quyền truy cập thành công!", "Thông báo", DialogType.Success);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Lỗi khi xử lý: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                        CustomDialog.Show("Lỗi khi xử lý: " + ex.Message, "Lỗi", DialogType.Error);
                         btn.IsEnabled = true;
                     }
                 }

@@ -25,6 +25,7 @@
         <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="10" Padding="15,10" Margin="0,8,0,10">
             <PasswordBox KeyDown="login_enter" x:Name="txtPassword" Background="Transparent" BorderThickness="0" FontSize="14" VerticalAlignment="Center" />
         </Border>
+        <CheckBox x:Name="chkRememberMe" Content="Ghi nhớ đăng nhập" Foreground="#64748B" FontSize="13" Margin="0,0,0,10" VerticalAlignment="Center" Cursor="Hand"/>
         <TextBlock x:Name="txtstatus" FontWeight="Bold" Foreground="Red" Margin="0,0,0,10"/>
 
         <Grid Margin="0,10,0,30">

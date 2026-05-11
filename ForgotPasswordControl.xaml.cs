@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,9 +20,10 @@ namespace e_learning_app
     /// </summary>
     public partial class ForgotPasswordControl : UserControl
     {
-        public ForgotPasswordControl()
+        public ForgotPasswordControl(string email = "")
         {
             InitializeComponent();
+            txtResetEmail.Text = email;
         }
 
         private async void btnSendRequest_Click(object sender, RoutedEventArgs e)
@@ -39,7 +40,7 @@ namespace e_learning_app
 
             if (issent)
             {
-                MessageBox.Show("Hệ thống đã gửi link khôi phục vào Email của bạn. Hãy kiểm tra nhé!");
+                CustomDialog.Show("Hệ thống đã gửi link khôi phục vào Email của bạn. Hãy kiểm tra nhé!", "Thành công", DialogType.Success);
                 var parent = Window.GetWindow(this) as LoginWindow;
                 if (parent != null)
                 {

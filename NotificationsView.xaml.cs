@@ -1,3 +1,4 @@
+using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -280,7 +281,7 @@ namespace e_learning_app.Views
         private void BtnMarkAllRead_Click(object sender, RoutedEventArgs e) { }
         private void BtnCreateNotif_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Tính năng tạo thông báo đang được cập nhật.", "Thông báo");
+            CustomDialog.Show("Tính năng tạo thông báo đang được cập nhật.", "Thông báo", DialogType.Info);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

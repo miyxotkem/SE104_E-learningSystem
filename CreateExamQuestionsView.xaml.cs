@@ -81,7 +81,7 @@ namespace e_learning_app
         {
             if (_questions.Count == 0)
             {
-                MessageBox.Show("Vui lòng thêm ít nhất 1 câu hỏi hợp lệ cho bài thi!", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("Vui lòng thêm ít nhất 1 câu hỏi hợp lệ cho bài thi!", "Cảnh báo", DialogType.Warning);
                 return;
             }
 
@@ -101,7 +101,7 @@ namespace e_learning_app
 
                 if (success)
                 {
-                    MessageBox.Show($"✅ Tạo bài thi thành công!\nTổng cộng: {_questions.Count} câu hỏi.", "Thành Công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomDialog.Show($"✅ Tạo bài thi thành công!\nTổng cộng: {_questions.Count} câu hỏi.", "Thành Công", DialogType.Success);
                     if (Window.GetWindow(this) is MainWindow mw)
                     {
                         mw.NavigateTo(new ExamManagementView(_dbManager));
@@ -114,7 +114,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"❌ Lỗi khi lưu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomDialog.Show($"❌ Lỗi khi lưu: {ex.Message}", "Lỗi", DialogType.Error);
                 BtnSubmit.IsEnabled = true;
                 BtnSubmit.Content = "✅ Hoàn Tất Tạo Bài Thi";
             }
@@ -126,7 +126,7 @@ namespace e_learning_app
                 string.IsNullOrWhiteSpace(TxtOptA.Text) || string.IsNullOrWhiteSpace(TxtOptB.Text) ||
                 string.IsNullOrWhiteSpace(TxtOptC.Text) || string.IsNullOrWhiteSpace(TxtOptD.Text))
             {
-                MessageBox.Show("Vui lòng nhập đầy đủ nội dung câu hỏi và 4 đáp án.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("Vui lòng nhập đầy đủ nội dung câu hỏi và 4 đáp án.", "Cảnh báo", DialogType.Warning);
                 return;
             }
 
@@ -198,7 +198,7 @@ namespace e_learning_app
                     worksheet.Columns().AdjustToContents();
                     
                     workbook.SaveAs(dlg.FileName);
-                    MessageBox.Show("Đã tải file mẫu thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomDialog.Show("Đã tải file mẫu thành công!", "Thành công", DialogType.Success);
                 }
             }
         }
@@ -249,7 +249,7 @@ namespace e_learning_app
         {
             if (!filePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
             {
-                MessageBox.Show("Vui lòng chọn file Excel (.xlsx) hợp lệ.", "Lỗi định dạng", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomDialog.Show("Vui lòng chọn file Excel (.xlsx) hợp lệ.", "Lỗi định dạng", DialogType.Warning);
                 return;
             }
 
@@ -335,11 +335,11 @@ namespace e_learning_app
                 
                 string msg = $"Đã import thành công {added} câu hỏi lên danh sách.";
                 if (failed > 0) msg += $"\nĐã tự động bỏ qua {failed} câu bị lỗi/thiếu dữ liệu trong file.";
-                MessageBox.Show(msg, "Đọc file hoàn tất", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomDialog.Show(msg, "Đọc file hoàn tất", DialogType.Success);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi đọc file: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomDialog.Show("Lỗi đọc file: " + ex.Message, "Lỗi", DialogType.Error);
                 ProgressPanel.Visibility = Visibility.Collapsed;
             }
         }

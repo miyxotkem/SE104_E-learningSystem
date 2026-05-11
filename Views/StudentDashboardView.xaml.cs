@@ -344,9 +344,9 @@ namespace e_learning_app.Views
         {
             if (sender is Button btn && btn.Tag is Course course)
             {
-                if (Window.GetWindow(this) is MainWindow mw)
+                if (Window.GetWindow(this) is StudentMainWindow mw)
                 {
-                    mw.MainContentArea.Content = new CourseDetailView(_dbManager, course);
+                    mw.StudentContentArea.Content = new CourseDetailView(_dbManager, course);
                 }
             }
         }
@@ -386,19 +386,13 @@ namespace e_learning_app.Views
 
         private void BtnQuickCourses_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (Window.GetWindow(this) is MainWindow mw)
+            if (Window.GetWindow(this) is StudentMainWindow mw)
             {
-                mw.NavClasses_Click(null, null);
+                mw.StudentContentArea.Content = new TeachingScheduleView(_dbManager);
+
             }
         }
 
-        private void BtnQuickProfile_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (Window.GetWindow(this) is MainWindow mw)
-            {
-                mw.OpenProfile_Click(null, null);
-            }
-        }
 
         private void BtnViewAllNotif_Click(object sender, RoutedEventArgs e)
         {
