@@ -167,7 +167,14 @@ namespace e_learning_app
 
         public static void SignOut()
         {
-            _authClient?.SignOut();
+            try
+            {
+                if (_authClient != null)
+                {
+                    _authClient.SignOut();
+                }
+            }
+            catch { /* Ignore signout errors if client is not initialized */ }
         }
 
         public static async Task<string> LoginAsync(string email, string password)
@@ -234,12 +241,17 @@ namespace e_learning_app
                 }
 
                 string[] scopes = { "openid", "email", "profile" };
+                
+                // Sử dụng bộ nhận mã (Code Receiver) tùy chỉnh để hiển thị trang thành công đẹp mắt
+                var receiver = new EduSmartCodeReceiver();
+
                 var googleCredential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                     secrets,
                     scopes,
                     "user",
                     CancellationToken.None,
-                    dataStore);
+                    dataStore,
+                    receiver); // Truyền receiver vào đây
 
                 string idToken = googleCredential.Token.IdToken;
 

@@ -167,10 +167,6 @@ namespace e_learning_app
                 var dataStore = new FileDataStore(credPath, true);
                 dataStore.ClearAsync().Wait();
                 FirebaseService.SignOut();
-
-                // Mở màn hình Login
-                var loginWin = new LoginWindow(true);
-                loginWin.Show();
             }
             base.OnClosing(e);
         }

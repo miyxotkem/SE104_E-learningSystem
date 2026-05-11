@@ -61,14 +61,7 @@ namespace e_learning_app
 
             if (confirmed)
             {
-                // Xóa cache Google nếu có
-                string credPath = "gg.auth.api";
-                var dataStore = new FileDataStore(credPath, true);
-                await dataStore.ClearAsync();
-
-                // Đăng xuất Firebase (Xóa Token session)
-                FirebaseService.SignOut();
-
+                // Đối với Admin, chỉ cần quay về Login, không cần sign out Firebase
                 var loginWin = new LoginWindow(true);
                 loginWin.Show();
                 _isForceLogout = true;
@@ -77,6 +70,25 @@ namespace e_learning_app
         }
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
+            if (_isForceLogout)
+            {
+                base.OnClosing(e);
+                return;
+            }
+
+            var result = CustomDialog.ShowExit("Bạn muốn làm gì trước khi thoát Admin Panel?", "Xác nhận");
+            if (result == CustomDialogResult.Cancel)
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            if (result == CustomDialogResult.Logout)
+            {
+                FirebaseService.SignOut();
+                var loginWin = new LoginWindow(true);
+                loginWin.Show();
+            }
             base.OnClosing(e);
         }
     }
