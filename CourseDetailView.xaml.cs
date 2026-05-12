@@ -106,6 +106,9 @@ namespace e_learning_app.Views
         private Assignment _editingAssignment = null;
         private Assignment _assignmentToDelete = null;
 
+        private Lesson _editingLesson = null;
+        private Lesson _lessonToDelete = null;
+
         private string _selectedAssignFilePath = "";
         private readonly Cloudinary _cloudinary;
 
@@ -270,62 +273,87 @@ namespace e_learning_app.Views
             }
 
             string sourcePath = TxtSelectedVideoFile.Tag?.ToString();
+            string videoUrl = _editingLesson?.VideoUrl ?? ""; // Nếu đang sửa thì giữ URL cũ
 
-            if (string.IsNullOrWhiteSpace(sourcePath) || !System.IO.File.Exists(sourcePath))
-            {
-                CustomDialog.Show("Vui lòng chọn một tệp video hợp lệ!", "Cảnh báo", DialogType.Warning);
-                return;
-            }
-
-            BtnConfirmAddVideo.Content = "Đang tải lên...";
+            BtnConfirmAddVideo.Content = "Đang xử lý...";
             BtnConfirmAddVideo.IsEnabled = false;
 
             try
             {
-                var uploadParams = new VideoUploadParams()
+                if (!string.IsNullOrWhiteSpace(sourcePath) && System.IO.File.Exists(sourcePath))
                 {
-                    File = new FileDescription(sourcePath),
-                    UseFilename = true,
-                    UniqueFilename = true
-                };
+                    if (_editingLesson != null && !string.IsNullOrEmpty(_editingLesson.VideoUrl))
+                    {
+                        string oldPublicId = GetPublicIdFromUrl(_editingLesson.VideoUrl);
+                        if (!string.IsNullOrEmpty(oldPublicId))
+                            await _cloudinary.DestroyAsync(new DeletionParams(oldPublicId) { ResourceType = ResourceType.Video });
+                    }
 
-                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-                if (uploadResult.Error != null) throw new Exception(uploadResult.Error.Message);
-                
-                string videoUrl = uploadResult.SecureUrl.ToString();
+                    var uploadParams = new VideoUploadParams()
+                    {
+                        File = new FileDescription(sourcePath),
+                        UseFilename = true,
+                        UniqueFilename = true
+                    };
 
-                var newLesson = new Lesson
+                    var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                    if (uploadResult.Error != null) throw new Exception(uploadResult.Error.Message);
+                    videoUrl = uploadResult.SecureUrl.ToString();
+                }
+                else if (_editingLesson == null)
                 {
-                    CourseId = _course.Id,
-                    Title = InputVideoTitle.Text,
-                    Description = InputVideoDesc.Text,
-                    VideoUrl = videoUrl,
-                    CreatedAt = DateTime.UtcNow
-                };
+                    CustomDialog.Show("Vui lòng chọn tệp video!", "Cảnh báo", DialogType.Warning);
+                    BtnConfirmAddVideo.IsEnabled = true;
+                    BtnConfirmAddVideo.Content = "Tải lên Video";
+                    return;
+                }
 
-                string newId = await _dbManager.AddLessonAsync(newLesson);
-                if (!string.IsNullOrEmpty(newId))
+                if (_editingLesson != null)
                 {
-                    newLesson.Id = newId;
-                    if (_lessons == null) _lessons = new ObservableCollection<Lesson>();
-                    _lessons.Add(newLesson);
-                    
-                    CustomDialog.Show("Tải video lên thành công!", "Thành công", DialogType.Success);
-                    CloseAddVideoDrawer_Click(null, null);
+                    _editingLesson.Title = InputVideoTitle.Text;
+                    _editingLesson.Description = InputVideoDesc.Text;
+                    _editingLesson.VideoUrl = videoUrl;
+
+                    bool success = await _dbManager.UpdateLessonAsync(_editingLesson);
+                    if (success)
+                    {
+                        int index = _lessons.IndexOf(_editingLesson);
+                        _lessons.RemoveAt(index);
+                        _lessons.Insert(index, _editingLesson);
+                        CustomDialog.Show("Cập nhật video thành công!", "Thành công", DialogType.Success);
+                    }
                 }
                 else
                 {
-                    throw new Exception("Không thể lưu thông tin video vào database.");
+                    var newLesson = new Lesson
+                    {
+                        CourseId = _course.Id,
+                        Title = InputVideoTitle.Text,
+                        Description = InputVideoDesc.Text,
+                        VideoUrl = videoUrl,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    string newId = await _dbManager.AddLessonAsync(newLesson);
+                    if (!string.IsNullOrEmpty(newId))
+                    {
+                        newLesson.Id = newId;
+                        if (_lessons == null) _lessons = new ObservableCollection<Lesson>();
+                        _lessons.Add(newLesson);
+                        CustomDialog.Show("Tải video lên thành công!", "Thành công", DialogType.Success);
+                    }
                 }
+                CloseAddVideoDrawer_Click(null, null);
             }
             catch (Exception ex)
             {
-                CustomDialog.Show("Lỗi khi tải video lên: " + ex.Message, "Lỗi", DialogType.Error);
+                CustomDialog.Show("Lỗi: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {
                 BtnConfirmAddVideo.Content = "Tải lên Video";
                 BtnConfirmAddVideo.IsEnabled = true;
+                _editingLesson = null;
             }
         }
 
@@ -529,21 +557,31 @@ namespace e_learning_app.Views
             {
                 if (await _dbManager.DeleteCourseContentAsync(_course.Id, _contentToDelete.Id))
                 {
-                    if (_contentToDelete.Type == "Document" && _contentToDelete.Data.StartsWith("http"))
-                    {
-                        try
-                        {
-                            string publicId = GetPublicIdFromUrl(_contentToDelete.Data);
-                            if (!string.IsNullOrEmpty(publicId))
-                            {
-                                await _cloudinary.DestroyAsync(new DeletionParams(publicId) { ResourceType = ResourceType.Raw });
-                            }
-                        }
-                        catch (Exception ex) { Debug.WriteLine("Lỗi xóa Cloudinary: " + ex.Message); }
-                    }
                     _courseContents.Remove(_contentToDelete);
+                    _contentToDelete = null;
                 }
             }
+            else if (_lessonToDelete != null)
+            {
+                bool success = await _dbManager.DeleteLessonAsync(_lessonToDelete.Id);
+                if (success)
+                {
+                    try
+                    {
+                        string publicId = GetPublicIdFromUrl(_lessonToDelete.VideoUrl);
+                        if (!string.IsNullOrEmpty(publicId))
+                        {
+                            await _cloudinary.DestroyAsync(new DeletionParams(publicId) { ResourceType = ResourceType.Video });
+                        }
+                    }
+                    catch { }
+
+                    _lessons.Remove(_lessonToDelete);
+                    _lessonToDelete = null;
+                    CustomDialog.Show("Đã xóa video thành công!", "Thông báo", DialogType.Success);
+                }
+            }
+
             CloseDeleteContentModal_Click(null, null);
         }
 
@@ -2061,7 +2099,6 @@ namespace e_learning_app.Views
 
         private void LessonItem_Click(object sender, MouseButtonEventArgs e)
         {
-            // Lấy ra bài học (Lesson) tương ứng với dòng vừa click thông qua DataContext
             if (sender is FrameworkElement element && element.DataContext is Lesson selectedLesson)
             {
                 var mainWin = Window.GetWindow(this) as MainWindow;
@@ -2075,6 +2112,39 @@ namespace e_learning_app.Views
                 if (studentWin != null)
                 {
                     studentWin.StudentContentArea.Content = new StudentCourseView(_dbManager, _course, selectedLesson);
+                }
+            }
+        }
+
+        private void BtnEditVideo_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string lessonId)
+            {
+                _editingLesson = _lessons.FirstOrDefault(l => l.Id == lessonId);
+                if (_editingLesson == null) return;
+
+                TxtContentFormTitle.Text = "Chỉnh sửa Video";
+                InputVideoTitle.Text = _editingLesson.Title;
+                InputVideoDesc.Text = _editingLesson.Description;
+                TxtSelectedVideoFile.Text = "Video đã tải lên (Nhấn để thay đổi)";
+                TxtSelectedVideoFile.Tag = null;
+
+                BtnConfirmAddVideo.Content = "Lưu thay đổi";
+
+                MainScrollViewer.Effect = new BlurEffect { Radius = 10 };
+                AddVideoDrawer.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void BtnDeleteVideo_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string lessonId)
+            {
+                _lessonToDelete = _lessons.FirstOrDefault(l => l.Id == lessonId);
+                if (_lessonToDelete != null)
+                {
+                    MainScrollViewer.Effect = new BlurEffect { Radius = 10 };
+                    DeleteContentOverlay.Visibility = Visibility.Visible;
                 }
             }
         }

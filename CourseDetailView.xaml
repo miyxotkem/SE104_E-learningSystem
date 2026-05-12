@@ -420,31 +420,64 @@
                             </Grid>
 
                             <ListBox x:Name="LessonsList" Margin="0" Padding="0" BorderThickness="0" Background="Transparent" 
-                                 ItemContainerStyle="{StaticResource ContentItemStyle}"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">         
+                                ItemContainerStyle="{StaticResource ContentItemStyle}"
+                                ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Background="Transparent" Cursor="Hand" MouseLeftButtonDown="LessonItem_Click">
+                                        <Grid Background="Transparent">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Border Grid.Column="0" Width="40" Height="40" Background="#F1F5F9" CornerRadius="8" Margin="0,0,15,0">
+
+                                            <!-- Icon Video -->
+                                            <Border Grid.Column="0" Width="40" Height="40" Background="#F1F5F9" CornerRadius="8" Margin="0,0,15,0" Cursor="Hand" MouseLeftButtonDown="LessonItem_Click">
                                                 <TextBlock Text="🎥" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+
+                                            <!-- Thông tin Video -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonDown="LessonItem_Click">
                                                 <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B" TextWrapping="Wrap"/>
                                                 <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                            </StackPanel>
+
+                                            <!-- Nút Sửa/Xóa (Chỉ hiện khi giảng viên có quyền - dựa trên Visibility của nút Thêm) -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Visibility="{Binding ElementName=BtnAddVideo, Path=Visibility}">
+                                                <Button Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,10,0" ToolTip="Chỉnh sửa video" Tag="{Binding Id}" Click="BtnEditVideo_Click">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="Transparent">
+                                                                <Path x:Name="IconPath" Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" Fill="{Binding CourseAccentBrush, ElementName=Root}" Width="16" Height="16" Stretch="Uniform"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="IconPath" Property="Opacity" Value="0.7"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                                <Button Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Xóa video" Tag="{Binding Id}" Click="BtnDeleteVideo_Click">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="Transparent">
+                                                                <Path x:Name="IconPath" Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" Fill="#EF4444" Width="16" Height="16" Stretch="Uniform"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="IconPath" Property="Opacity" Value="0.7"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
                         </StackPanel>
-
-                        <!-- Phân cách dọc -->
-                        <Border Grid.Column="3" Background="#E2E8F0" Margin="0,0,20,0"/>
-
                         <!-- CỘT 3: BÀI TẬP -->
                         <StackPanel Grid.Column="4">
                             <Grid Margin="0,0,0,20">
