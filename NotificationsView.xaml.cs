@@ -174,8 +174,37 @@ namespace e_learning_app.Views
                     }
                 }
 
-                // 2. Tạm thời vô hiệu hóa chuyển hướng chi tiết môn học vì cần thêm TargetCourseId vào DB
-                // Khi nào rảnh, bạn thêm trường CourseId vào Class/Notification.cs là sẽ chuyển hướng được.
+                // 2. Chuyển hướng chi tiết môn học
+                if (!string.IsNullOrEmpty(n.CourseId))
+                {
+                    try
+                    {
+                        var courseDoc = await _dbManager.GetDb.Collection("Courses").Document(n.CourseId).GetSnapshotAsync();
+                        if (courseDoc.Exists)
+                        {
+                            var targetCourse = courseDoc.ConvertTo<Course>();
+                            targetCourse.Id = courseDoc.Id;
+
+                            var window = Window.GetWindow(this);
+                            if (window is StudentMainWindow smw)
+                            {
+                                smw.StudentContentArea.Content = new CourseDetailView(_dbManager, targetCourse);
+                            }
+                            else if (window is MainWindow mw)
+                            {
+                                mw.MainContentArea.Content = new CourseDetailView(_dbManager, targetCourse);
+                            }
+                        }
+                        else
+                        {
+                            CustomDialog.Show("Lớp học này không còn tồn tại.", "Thông báo", DialogType.Warning);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Lỗi chuyển hướng: " + ex.Message);
+                    }
+                }
             }
         }
 

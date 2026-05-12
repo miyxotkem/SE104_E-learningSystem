@@ -221,58 +221,50 @@ namespace e_learning_app.Views
                 var notifList = new ObservableCollection<NotifItem>();
                 int pendingGradingCount = 0;
 
+                // 1. Tính toán pendingGradingCount
                 foreach (var c in myCourses)
                 {
-                    var pendingSnap = await _dbManager.GetDb.Collection("courseRegistrations")
-                        .WhereEqualTo("courseId", c.Id)
-                        .WhereEqualTo("status", "pending")
-                        .GetSnapshotAsync();
-
-                    if (pendingSnap.Count > 0)
-                    {
-                        string notifKey = $"req_{c.Id}";
-                        notifList.Add(new NotifItem
-                        {
-                            NotifKey = notifKey,
-                            TargetCourse = c,
-                            Title = $"Có yêu cầu mới từ {pendingSnap.Count} sinh viên muốn tham gia lớp {c.ClassName}.",
-                            Time = "Chờ phê duyệt",
-                            IsUnread = !NotificationService.ReadNotifKeys.Contains(notifKey)
-                        });
-                    }
-
                     var assigns = await _dbManager.GetDb.Collection("Courses").Document(c.Id).Collection("Assignments").GetSnapshotAsync();
                     foreach (var asm in assigns.Documents)
                     {
                         if (asm.ContainsField("Deadline"))
                         {
-                            var title = asm.GetValue<string>("Title");
                             var deadlineUtc = asm.GetValue<DateTime>("Deadline");
                             var deadlineLocal = deadlineUtc.ToLocalTime();
-
-                            if (deadlineLocal < DateTime.Now)
-                            {
-                                pendingGradingCount++;
-                                string notifKey = $"grade_{c.Id}_{asm.Id}";
-                                bool isRecent = (DateTime.Now - deadlineLocal).TotalDays <= 7;
-
-                                if (isRecent)
-                                {
-                                    notifList.Add(new NotifItem
-                                    {
-                                        NotifKey = notifKey,
-                                        TargetCourse = c,
-                                        Title = $"Đã hết hạn nộp bài '{title}' của lớp {c.ClassName}. Vui lòng chấm điểm.",
-                                        Time = $"Hạn nộp: {deadlineLocal:dd/MM/yyyy}",
-                                        IsUnread = !NotificationService.ReadNotifKeys.Contains(notifKey)
-                                    });
-                                }
-                            }
+                            if (deadlineLocal < DateTime.Now) pendingGradingCount++;
                         }
                     }
                 }
 
                 TxtPendingGrading.Text = pendingGradingCount.ToString();
+
+                // 2. Lấy danh sách Notifications đồng bộ
+                var notifsSnap = await _dbManager.GetDb.Collection("Notifications")
+                    .WhereEqualTo("TargetId", currentUser.Id)
+                    .OrderByDescending("CreatedAt")
+                    .Limit(5)
+                    .GetSnapshotAsync();
+
+                foreach (var doc in notifsSnap.Documents)
+                {
+                    var n = doc.ConvertTo<Notification>();
+                    n.Id = doc.Id;
+                    
+                    Course course = null;
+                    if (!string.IsNullOrEmpty(n.CourseId))
+                    {
+                        course = myCourses.FirstOrDefault(c => c.Id == n.CourseId);
+                    }
+
+                    notifList.Add(new NotifItem
+                    {
+                        NotifKey = n.Id,
+                        TargetCourse = course,
+                        Title = n.Title,
+                        Time = n.TimeAgo,
+                        IsUnread = !NotificationService.ReadNotifKeys.Contains(n.Id)
+                    });
+                }
 
                 if (notifList.Count == 0)
                 {

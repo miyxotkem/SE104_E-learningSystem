@@ -13,7 +13,7 @@ namespace e_learning_app
         /// <summary>
         /// Gửi thông báo đến một người dùng cụ thể
         /// </summary>
-        public static async Task SendNotificationAsync(DatabaseManager db, string targetUserId, string title, string content, string type, string senderId = "System", string senderName = "Hệ thống")
+        public static async Task SendNotificationAsync(DatabaseManager db, string targetUserId, string title, string content, string type, string senderId = "System", string senderName = "Hệ thống", string courseId = "")
         {
             try
             {
@@ -22,6 +22,7 @@ namespace e_learning_app
                     Title = title,
                     Content = content,
                     TargetId = targetUserId,
+                    CourseId = courseId,
                     Type = type,
                     SenderId = senderId,
                     SenderName = senderName,
@@ -62,6 +63,7 @@ namespace e_learning_app
                         Title = title,
                         Content = content,
                         TargetId = studentId, // Gửi đích danh cho từng học sinh
+                        CourseId = courseId,
                         Type = type,
                         SenderId = senderId,
                         SenderName = senderName,

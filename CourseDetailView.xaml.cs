@@ -340,6 +340,7 @@ namespace e_learning_app.Views
                         newLesson.Id = newId;
                         if (_lessons == null) _lessons = new ObservableCollection<Lesson>();
                         _lessons.Add(newLesson);
+                        await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Video bài giảng mới", $"Giáo viên vừa tải lên video: {newLesson.Title}", "Course", CurrentUserId, "Giáo viên");
                         CustomDialog.Show("Tải video lên thành công!", "Thành công", DialogType.Success);
                     }
                 }
@@ -777,6 +778,7 @@ namespace e_learning_app.Views
                 newContent.Id = docRef.Id;
                 if (_courseContents == null) _courseContents = new ObservableCollection<CourseContent>();
                 _courseContents.Add(newContent);
+                await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Tài liệu mới", $"Giáo viên vừa thêm tài liệu: {newContent.Title}", "Course", CurrentUserId, "Giáo viên");
             }
             CloseAddDrawer_Click(null, null);
         }
@@ -1019,6 +1021,7 @@ namespace e_learning_app.Views
 
                     _course.AssignmentCount++;
                     await _dbManager.GetDb.Collection("Courses").Document(_course.Id).UpdateAsync("AssignmentCount", _course.AssignmentCount);
+                    await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Bài tập mới", $"Giáo viên vừa tạo bài tập: {newAssignment.Title}", "Homework");
                 }
 
                 TxtAssignmentCount.Text = _course.AssignmentCount.ToString();
@@ -1387,6 +1390,7 @@ namespace e_learning_app.Views
                 };
 
                 await subRef.UpdateAsync(updates);
+                await NotificationService.SendNotificationAsync(_dbManager, _currentGradingItem.StudentId, "Đã có điểm", $"Bài tập '{_currentViewedAssignment.Title}' của bạn đã có điểm: {score}/10", "Homework", courseId: _course.Id);
 
                 _currentGradingItem.Score = score;
                 _currentGradingItem.Comment = comment;
@@ -1560,6 +1564,7 @@ namespace e_learning_app.Views
                 };
 
                 await subRef.SetAsync(submission);
+                await NotificationService.SendNotificationAsync(_dbManager, _course.InstructorId, "Học sinh nộp bài", $"Có học sinh vừa nộp bài tập '{_currentViewedAssignment.Title}'.", "System", CurrentUserId, "Học sinh", courseId: _course.Id);
 
                 DetailSubmissionStatus.Text = "Đã nộp bài";
                 DetailSubmissionStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
@@ -1867,6 +1872,9 @@ namespace e_learning_app.Views
                         { "status", "accepted" },
                         { "approvedDate", Google.Cloud.Firestore.FieldValue.ServerTimestamp }
                     });
+                    
+                    var req = _pendingRequests.FirstOrDefault(r => r.RegistrationId == regId);
+                    if (req != null) await NotificationService.SendNotificationAsync(_dbManager, req.UserId, "Vào lớp thành công", $"Yêu cầu tham gia lớp '{_course.ClassName}' của bạn đã được chấp nhận.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
 
                     _course.StudentCount++;
                     await _dbManager.GetDb.Collection("Courses").Document(_course.Id).UpdateAsync("StudentCount", _course.StudentCount);
@@ -1886,6 +1894,10 @@ namespace e_learning_app.Views
                 {
                     var regRef = _dbManager.GetDb.Collection("courseRegistrations").Document(regId);
                     await regRef.UpdateAsync("status", "rejected");
+                    
+                    var req = _pendingRequests.FirstOrDefault(r => r.RegistrationId == regId);
+                    if (req != null) await NotificationService.SendNotificationAsync(_dbManager, req.UserId, "Từ chối vào lớp", $"Yêu cầu tham gia lớp '{_course.ClassName}' của bạn đã bị từ chối.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
+
                     await LoadPendingRequestsAsync();
                 }
                 catch (Exception ex) { CustomDialog.Show("Lỗi từ chối: " + ex.Message, "Lỗi", DialogType.Error); }
@@ -1908,6 +1920,7 @@ namespace e_learning_app.Views
                     var regRef = _dbManager.GetDb.Collection("courseRegistrations").Document(req.RegistrationId);
                     batch.Update(regRef, "status", "accepted");
                     batch.Update(regRef, "approvedDate", Google.Cloud.Firestore.FieldValue.ServerTimestamp);
+                    await NotificationService.SendNotificationAsync(_dbManager, req.UserId, "Vào lớp thành công", $"Yêu cầu tham gia lớp '{_course.ClassName}' của bạn đã được chấp nhận.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
                 }
 
                 _course.StudentCount += _pendingRequests.Count;
@@ -2029,6 +2042,12 @@ namespace e_learning_app.Views
                         }
 
                         await _dbManager.GetDb.Collection("Courses").Document(_course.Id).UpdateAsync("StudentCount", _course.StudentCount);
+
+                        var removedStudent = _enrolledStudents.FirstOrDefault(s => s.RegistrationId == regId);
+                        if (removedStudent != null)
+                        {
+                            await NotificationService.SendNotificationAsync(_dbManager, removedStudent.UserId, "Rời khỏi lớp", $"Bạn đã bị giáo viên loại khỏi lớp '{_course.ClassName}'.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
+                        }
 
                         TxtStudentCount.Text = _course.StudentCount.ToString();
 

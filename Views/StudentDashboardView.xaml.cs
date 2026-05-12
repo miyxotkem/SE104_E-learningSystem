@@ -237,15 +237,14 @@ namespace e_learning_app.Views
                 UpcomingScheduleItemsControl.ItemsSource = upcomingScheduleList;
 
                 var notifList = new ObservableCollection<NotifItem>();
-                DateTime threeDaysAgo = DateTime.UtcNow.AddDays(-3);
                 int pendingAssignmentsCount = 0;
 
+                // 1. Tính pendingAssignmentsCount
                 foreach (var c in enrolledCourses)
                 {
                     var assigns = await _dbManager.GetDb.Collection("Courses").Document(c.Id).Collection("Assignments").GetSnapshotAsync();
                     foreach (var asm in assigns.Documents)
                     {
-                        var title = asm.GetValue<string>("Title");
                         bool isSubmitted = false;
                         try
                         {
@@ -253,52 +252,16 @@ namespace e_learning_app.Views
                                 .Collection("Assignments").Document(asm.Id)
                                 .Collection("Submissions").WhereEqualTo("StudentId", currentUser.Id)
                                 .GetSnapshotAsync();
-
                             isSubmitted = subSnap.Count > 0;
                         }
                         catch { }
 
                         if (asm.ContainsField("Deadline"))
                         {
-                            var deadlineUtc = asm.GetValue<DateTime>("Deadline");
-                            var deadlineLocal = deadlineUtc.ToLocalTime();
-
+                            var deadlineLocal = asm.GetValue<DateTime>("Deadline").ToLocalTime();
                             if (!isSubmitted && deadlineLocal > DateTime.Now)
                             {
                                 pendingAssignmentsCount++;
-
-                                if (deadlineLocal <= DateTime.Now.AddHours(48))
-                                {
-                                    var hoursLeft = Math.Round((deadlineLocal - DateTime.Now).TotalHours);
-                                    string notifKey = $"deadline_{c.Id}_{asm.Id}";
-
-                                    notifList.Add(new NotifItem
-                                    {
-                                        NotifKey = notifKey,
-                                        TargetCourse = c,
-                                        Title = $"Bài tập '{title}' của lớp {c.ClassName} sẽ hết hạn trong vòng {hoursLeft} giờ tới!",
-                                        Time = $"Hạn chót: {deadlineLocal:dd/MM - HH:mm}",
-                                        IsUnread = !NotificationService.ReadNotifKeys.Contains(notifKey)
-                                    });
-                                }
-                            }
-                        }
-
-                        if (asm.ContainsField("CreatedAt"))
-                        {
-                            var createdTimeUtc = asm.GetValue<DateTime>("CreatedAt");
-                            if (createdTimeUtc >= threeDaysAgo)
-                            {
-                                string notifKey = $"new_{c.Id}_{asm.Id}";
-
-                                notifList.Add(new NotifItem
-                                {
-                                    NotifKey = notifKey,
-                                    TargetCourse = c,
-                                    Title = $"Có bài tập mới: '{title}' ở lớp {c.ClassName}.",
-                                    Time = "Bài tập mới",
-                                    IsUnread = !NotificationService.ReadNotifKeys.Contains(notifKey)
-                                });
                             }
                         }
                     }
@@ -306,9 +269,39 @@ namespace e_learning_app.Views
 
                 TxtPendingAssignments.Text = pendingAssignmentsCount.ToString();
 
+                // 2. Lấy danh sách Notifications đồng bộ
+                var notifsSnap = await _dbManager.GetDb.Collection("Notifications")
+                    .WhereEqualTo("TargetId", currentUser.Id)
+                    .OrderByDescending("CreatedAt")
+                    .Limit(5)
+                    .GetSnapshotAsync();
+
+                foreach (var doc in notifsSnap.Documents)
+                {
+                    var n = doc.ConvertTo<Notification>();
+                    n.Id = doc.Id;
+                    
+                    Course course = null;
+                    if (!string.IsNullOrEmpty(n.CourseId))
+                    {
+                        course = enrolledCourses.FirstOrDefault(c => c.Id == n.CourseId);
+                    }
+
+                    notifList.Add(new NotifItem
+                    {
+                        NotifKey = n.Id,
+                        TargetCourse = course,
+                        Title = n.Title,
+                        Time = n.TimeAgo,
+                        IsUnread = !NotificationService.ReadNotifKeys.Contains(n.Id)
+                    });
+                }
+
+                TxtPendingAssignments.Text = pendingAssignmentsCount.ToString();
+
                 if (notifList.Count == 0)
                 {
-                    notifList.Add(new NotifItem { NotifKey = "empty", TargetCourse = null, Title = "Tuyệt vời! Bạn không có bài tập nào quá hạn hoặc sắp hết hạn.", Time = "Ngay lúc này", IsUnread = false });
+                    notifList.Add(new NotifItem { NotifKey = "empty", TargetCourse = null, Title = "Tuyệt vời! Bạn không có thông báo nào mới.", Time = "Ngay lúc này", IsUnread = false });
                 }
 
                 NotifItemsControl.ItemsSource = notifList;

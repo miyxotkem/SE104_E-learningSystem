@@ -101,6 +101,24 @@ namespace e_learning_app
 
                 if (success)
                 {
+                    try
+                    {
+                        var currentUser = _dbManager.GetCurrentUser();
+                        await NotificationService.SendToClassAsync(
+                            _dbManager, 
+                            _exam.ClassId, 
+                            "Bài kiểm tra mới", 
+                            $"Giáo viên vừa tạo bài kiểm tra: {_exam.Title}", 
+                            "Exam", 
+                            currentUser?.Id, 
+                            "Giáo viên"
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Lỗi gửi thông báo: " + ex.Message);
+                    }
+
                     CustomDialog.Show($"✅ Tạo bài thi thành công!\nTổng cộng: {_questions.Count} câu hỏi.", "Thành Công", DialogType.Success);
                     if (Window.GetWindow(this) is MainWindow mw)
                     {

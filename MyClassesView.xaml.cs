@@ -316,6 +316,12 @@ namespace e_learning_app.Views
 
                     await registrationRef.SetAsync(registrationData);
 
+                    var course = _allClasses.FirstOrDefault(c => c.Id == courseId);
+                    if (course != null)
+                    {
+                        await NotificationService.SendNotificationAsync(_dbManager, course.InstructorId, "Yêu cầu tham gia lớp", $"Học sinh {currentUser.FullName} đã yêu cầu tham gia lớp {course.ClassName}.", "System", currentUser.Id, currentUser.FullName, courseId: course.Id);
+                    }
+
                     CustomDialog.Show("Đã gửi yêu cầu đăng ký thành công! Vui lòng chờ giảng viên duyệt.", "Thành công", DialogType.Success);
 
                     // 1. Cập nhật lại danh sách cache cục bộ

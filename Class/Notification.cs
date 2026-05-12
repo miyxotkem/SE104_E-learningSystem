@@ -25,6 +25,9 @@ namespace e_learning_app
         public string TargetId { get; set; } // Có thể là UserId, CourseId hoặc "all"
 
         [FirestoreProperty]
+        public string CourseId { get; set; } // Hỗ trợ chuyển hướng đến lớp học
+
+        [FirestoreProperty]
         public string Type { get; set; } // "System", "Course", "Assignment", "Exam"
 
         [FirestoreProperty]
