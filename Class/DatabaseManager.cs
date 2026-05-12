@@ -4,8 +4,9 @@ using Firebase.Auth;
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using static Google.Cloud.Firestore.V1.StructuredQuery.Types;
@@ -164,9 +165,9 @@ namespace e_learning_app
                 await docRef.DeleteAsync();
 
                 // Optional: Xóa luôn comments của bài học này (nếu cần)
-                // var commentsQuery = _db.Collection("Comments").WhereEqualTo("LessonId", lessonId);
-                // var snapshot = await commentsQuery.GetSnapshotAsync();
-                // foreach(var doc in snapshot.Documents) await doc.Reference.DeleteAsync();
+                var commentsQuery = _db.Collection("Comments").WhereEqualTo("LessonId", lessonId);
+                var snapshot = await commentsQuery.GetSnapshotAsync();
+                foreach (var doc in snapshot.Documents) await doc.Reference.DeleteAsync();
                 return true;
             }
             catch (Exception ex)
@@ -605,7 +606,23 @@ namespace e_learning_app
                 return false;
             }
         }
+
+        public async Task<bool> UpdateLessonAsync(Lesson lesson)
+        {
+            try
+            {
+                // Giả sử collection tên là "Lessons"
+                DocumentReference lessonRef = _db.Collection("Lessons").Document(lesson.Id);
+
+                // Cập nhật các trường dữ liệu
+                await lessonRef.SetAsync(lesson, SetOptions.MergeAll);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Lỗi UpdateLessonAsync: " + ex.Message);
+                return false;
+            }
+        }
     }
 }
-
-
