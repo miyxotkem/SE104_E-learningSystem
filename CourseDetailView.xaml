@@ -375,7 +375,7 @@
                                                         </ControlTemplate>
                                                     </Button.Template>
                                                 </Button>
-                                                <Button Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Xóa" Tag="{Binding Id}" Click="BtnDeleteContent_Click">
+                                                <Button Background="Blue" BorderThickness="0" Cursor="Hand" ToolTip="Xóa" Tag="{Binding Id}" Click="BtnDeleteContent_Click">
                                                     <Button.Template>
                                                         <ControlTemplate TargetType="Button">
                                                             <Border Background="Transparent">

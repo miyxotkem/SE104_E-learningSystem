@@ -120,7 +120,7 @@ namespace e_learning_app
         public void BtnNotifications_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnNotifications);
-            StudentContentArea.Content = new StudentNotificationView(_dbManager);
+            StudentContentArea.Content = new NotificationsView(_dbManager);
         }
 
         private async void BtnLogout_Click(object sender, RoutedEventArgs e)

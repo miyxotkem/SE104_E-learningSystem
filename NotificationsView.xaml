@@ -132,7 +132,7 @@
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#1E293B"/>
                                     <TextBlock Text="{Binding Content}" FontSize="13" Foreground="#64748B" Margin="0,4,0,4" TextWrapping="Wrap"/>
-                                    <TextBlock Text="{Binding TimeDisplay}" FontSize="11" Foreground="#94A3B8"/>
+                                    <TextBlock Text="{Binding TimeAgo}" FontSize="11" Foreground="#94A3B8"/>
                                 </StackPanel>
 
                                 <!-- Actions -->
@@ -143,7 +143,7 @@
                             </Grid>
                         </Border>
                         <DataTemplate.Triggers>
-                            <DataTrigger Binding="{Binding IsUnread}" Value="True">
+                            <DataTrigger Binding="{Binding IsRead}" Value="False">
                                 <Setter TargetName="NotifBorder" Property="Style" Value="{StaticResource NotifUnread}"/>
                             </DataTrigger>
                         </DataTemplate.Triggers>
