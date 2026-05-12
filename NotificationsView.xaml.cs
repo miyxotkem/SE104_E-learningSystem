@@ -186,13 +186,28 @@ namespace e_learning_app.Views
                             targetCourse.Id = courseDoc.Id;
 
                             var window = Window.GetWindow(this);
-                            if (window is StudentMainWindow smw)
+                            if (window == null) return;
+                            
+                            if (n.Type == "Exam")
                             {
-                                smw.StudentContentArea.Content = new CourseDetailView(_dbManager, targetCourse);
+                                if (window is StudentMainWindow smw)
+                                {
+                                    smw.StudentContentArea.Content = new e_learning_app.Views.StudentQuizView(_dbManager);
+                                }
+                                else if (window is MainWindow mw)
+                                {
+                                    mw.MainContentArea.Content = new ExamManagementView(_dbManager);
+                                }
+                                return;
                             }
-                            else if (window is MainWindow mw)
+
+                            if (window is StudentMainWindow smw2)
                             {
-                                mw.MainContentArea.Content = new CourseDetailView(_dbManager, targetCourse);
+                                smw2.StudentContentArea.Content = new CourseDetailView(_dbManager, targetCourse);
+                            }
+                            else if (window is MainWindow mw2)
+                            {
+                                mw2.MainContentArea.Content = new CourseDetailView(_dbManager, targetCourse);
                             }
                         }
                         else

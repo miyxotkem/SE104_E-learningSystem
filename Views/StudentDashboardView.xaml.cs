@@ -34,6 +34,8 @@ namespace e_learning_app.Views
             public string NotifKey { get; set; }
             public Course TargetCourse { get; set; }
             public string Title { get; set; }
+            public string Content { get; set; }
+            public string NotifType { get; set; }
             public string Time { get; set; }
 
             private bool _isUnread;
@@ -272,15 +274,16 @@ namespace e_learning_app.Views
                 // 2. Lấy danh sách Notifications đồng bộ
                 var notifsSnap = await _dbManager.GetDb.Collection("Notifications")
                     .WhereEqualTo("TargetId", currentUser.Id)
-                    .OrderByDescending("CreatedAt")
-                    .Limit(5)
                     .GetSnapshotAsync();
 
-                foreach (var doc in notifsSnap.Documents)
+                var sortedDocs = notifsSnap.Documents
+                    .Select(d => { var n = d.ConvertTo<Notification>(); n.Id = d.Id; return n; })
+                    .OrderByDescending(n => n.CreatedAt)
+                    .Take(5)
+                    .ToList();
+
+                foreach (var n in sortedDocs)
                 {
-                    var n = doc.ConvertTo<Notification>();
-                    n.Id = doc.Id;
-                    
                     Course course = null;
                     if (!string.IsNullOrEmpty(n.CourseId))
                     {
@@ -292,6 +295,8 @@ namespace e_learning_app.Views
                         NotifKey = n.Id,
                         TargetCourse = course,
                         Title = n.Title,
+                        Content = n.Content,
+                        NotifType = n.Type,
                         Time = n.TimeAgo,
                         IsUnread = !NotificationService.ReadNotifKeys.Contains(n.Id)
                     });
@@ -368,6 +373,15 @@ namespace e_learning_app.Views
                     {
                         Console.WriteLine("Lỗi lưu trạng thái đã đọc: " + ex.Message);
                     }
+                }
+
+                if (n.NotifType == "Exam")
+                {
+                    if (Window.GetWindow(this) is StudentMainWindow smw_exam)
+                    {
+                        smw_exam.StudentContentArea.Content = new StudentQuizView(_dbManager);
+                    }
+                    return;
                 }
 
                 if (n.TargetCourse != null && Window.GetWindow(this) is StudentMainWindow mw)
