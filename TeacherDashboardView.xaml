@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.Views.TeacherDashboardView"
+<UserControl x:Class="e_learning_app.Views.TeacherDashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F8FAFC"

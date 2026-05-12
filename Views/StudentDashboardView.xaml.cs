@@ -14,7 +14,10 @@ namespace e_learning_app.Views
     public partial class StudentDashboardView : UserControl
     {
         private readonly DatabaseManager _dbManager;
-        //private static HashSet<string> _readNotifKeys = new HashSet<string>();
+        private Google.Cloud.Firestore.FirestoreChangeListener _userNotifListener;
+        private Google.Cloud.Firestore.FirestoreChangeListener _systemNotifListener;
+        private List<Notification> _dashboardNotifs = new List<Notification>();
+        private List<Course> _enrolledCoursesForNotif = new List<Course>();
 
         public class ScheduleItem
         {
@@ -270,50 +273,91 @@ namespace e_learning_app.Views
                 }
 
                 TxtPendingAssignments.Text = pendingAssignmentsCount.ToString();
+                _enrolledCoursesForNotif = enrolledCourses;
 
-                // 2. Lấy danh sách Notifications đồng bộ
-                var notifsSnap = await _dbManager.GetDb.Collection("Notifications")
+                // 2. Thiết lập Lắng nghe thông báo (Real-time)
+                _userNotifListener = _dbManager.GetDb.Collection("Notifications")
                     .WhereEqualTo("TargetId", currentUser.Id)
-                    .GetSnapshotAsync();
-
-                var sortedDocs = notifsSnap.Documents
-                    .Select(d => { var n = d.ConvertTo<Notification>(); n.Id = d.Id; return n; })
-                    .OrderByDescending(n => n.CreatedAt)
-                    .Take(5)
-                    .ToList();
-
-                foreach (var n in sortedDocs)
-                {
-                    Course course = null;
-                    if (!string.IsNullOrEmpty(n.CourseId))
+                    .Listen(snapshot =>
                     {
-                        course = enrolledCourses.FirstOrDefault(c => c.Id == n.CourseId);
-                    }
-
-                    notifList.Add(new NotifItem
-                    {
-                        NotifKey = n.Id,
-                        TargetCourse = course,
-                        Title = n.Title,
-                        Content = n.Content,
-                        NotifType = n.Type,
-                        Time = n.TimeAgo,
-                        IsUnread = !NotificationService.ReadNotifKeys.Contains(n.Id)
+                        Application.Current.Dispatcher.Invoke(() => UpdateNotificationsList(snapshot));
                     });
-                }
 
-                TxtPendingAssignments.Text = pendingAssignmentsCount.ToString();
-
-                if (notifList.Count == 0)
-                {
-                    notifList.Add(new NotifItem { NotifKey = "empty", TargetCourse = null, Title = "Tuyệt vời! Bạn không có thông báo nào mới.", Time = "Ngay lúc này", IsUnread = false });
-                }
-
-                NotifItemsControl.ItemsSource = notifList;
+                _systemNotifListener = _dbManager.GetDb.Collection("Notifications")
+                    .WhereEqualTo("TargetId", "all")
+                    .Listen(snapshot =>
+                    {
+                        Application.Current.Dispatcher.Invoke(() => UpdateNotificationsList(snapshot));
+                    });
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Lỗi load Student Dashboard: " + ex.Message);
+            }
+        }
+
+        private void UpdateNotificationsList(Google.Cloud.Firestore.QuerySnapshot snapshot)
+        {
+            foreach (var change in snapshot.Changes)
+            {
+                var doc = change.Document;
+                var notif = doc.ConvertTo<Notification>();
+                notif.Id = doc.Id;
+                
+                if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Added)
+                {
+                    if (!_dashboardNotifs.Any(n => n.Id == notif.Id))
+                        _dashboardNotifs.Add(notif);
+                }
+                else if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Modified)
+                {
+                    var existing = _dashboardNotifs.FirstOrDefault(n => n.Id == notif.Id);
+                    if (existing != null)
+                    {
+                        _dashboardNotifs.Remove(existing);
+                        _dashboardNotifs.Add(notif);
+                    }
+                }
+                else if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Removed)
+                {
+                    var existing = _dashboardNotifs.FirstOrDefault(n => n.Id == notif.Id);
+                    if (existing != null)
+                        _dashboardNotifs.Remove(existing);
+                }
+            }
+
+            var sortedDocs = _dashboardNotifs.OrderByDescending(n => n.CreatedAt).Take(5).ToList();
+            var notifList = new ObservableCollection<NotifItem>();
+
+            foreach (var n in sortedDocs)
+            {
+                Course course = null;
+                if (!string.IsNullOrEmpty(n.CourseId))
+                {
+                    course = _enrolledCoursesForNotif.FirstOrDefault(c => c.Id == n.CourseId);
+                }
+
+                notifList.Add(new NotifItem
+                {
+                    NotifKey = n.Id,
+                    TargetCourse = course,
+                    Title = n.Title,
+                    Content = n.Content,
+                    NotifType = n.Type,
+                    Time = n.TimeAgo,
+                    IsUnread = !NotificationService.ReadNotifKeys.Contains(n.Id)
+                });
+            }
+
+            if (notifList.Count > 0)
+            {
+                NotifItemsControl.ItemsSource = notifList;
+            }
+            else
+            {
+                var emptyList = new ObservableCollection<NotifItem>();
+                emptyList.Add(new NotifItem { NotifKey = "empty", TargetCourse = null, Title = "Tuyệt vời! Bạn không có thông báo nào mới.", Time = "Ngay lúc này", IsUnread = false });
+                NotifItemsControl.ItemsSource = emptyList;
             }
         }
 

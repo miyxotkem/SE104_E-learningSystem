@@ -15,7 +15,10 @@ namespace e_learning_app.Views
     public partial class TeacherDashboardView : UserControl
     {
         private readonly DatabaseManager _dbManager;
-        // Dùng NotificationService.ReadNotifKeys từ giỏ dùng chung
+        private Google.Cloud.Firestore.FirestoreChangeListener _userNotifListener;
+        private Google.Cloud.Firestore.FirestoreChangeListener _systemNotifListener;
+        private List<Notification> _dashboardNotifs = new List<Notification>();
+        private List<Course> _myCoursesForNotif = new List<Course>();
 
         public class ScheduleItem
         {
@@ -75,6 +78,13 @@ namespace e_learning_app.Views
         {
             InitializeComponent();
             _dbManager = dbManager;
+            this.Unloaded += TeacherDashboardView_Unloaded;
+        }
+
+        private void TeacherDashboardView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _userNotifListener?.StopAsync();
+            _systemNotifListener?.StopAsync();
         }
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -97,7 +107,6 @@ namespace e_learning_app.Views
             var currentUser = _dbManager.GetCurrentUser();
             if (currentUser == null) return;
 
-            // Đồng bộ trạng thái đã đọc từ Firebase
             try
             {
                 var readNotifsSnap = await _dbManager.GetDb.Collection("Users").Document(currentUser.Id)
@@ -220,10 +229,7 @@ namespace e_learning_app.Views
                 }
                 UpcomingScheduleItemsControl.ItemsSource = upcomingScheduleList;
 
-                var notifList = new ObservableCollection<NotifItem>();
                 int pendingGradingCount = 0;
-
-                // 1. Tính toán pendingGradingCount
                 foreach (var c in myCourses)
                 {
                     var assigns = await _dbManager.GetDb.Collection("Courses").Document(c.Id).Collection("Assignments").GetSnapshotAsync();
@@ -239,48 +245,90 @@ namespace e_learning_app.Views
                 }
 
                 TxtPendingGrading.Text = pendingGradingCount.ToString();
+                _myCoursesForNotif = myCourses;
 
-                // 2. Lấy danh sách Notifications đồng bộ
-                var notifsSnap = await _dbManager.GetDb.Collection("Notifications")
+                _userNotifListener = _dbManager.GetDb.Collection("Notifications")
                     .WhereEqualTo("TargetId", currentUser.Id)
-                    .GetSnapshotAsync();
-
-                var sortedDocs = notifsSnap.Documents
-                    .Select(d => { var n = d.ConvertTo<Notification>(); n.Id = d.Id; return n; })
-                    .OrderByDescending(n => n.CreatedAt)
-                    .Take(5)
-                    .ToList();
-
-                foreach (var n in sortedDocs)
-                {
-                    Course course = null;
-                    if (!string.IsNullOrEmpty(n.CourseId))
+                    .Listen(snapshot =>
                     {
-                        course = myCourses.FirstOrDefault(c => c.Id == n.CourseId);
-                    }
-
-                    notifList.Add(new NotifItem
-                    {
-                        NotifKey = n.Id,
-                        TargetCourse = course,
-                        Title = n.Title,
-                        Content = n.Content,
-                        NotifType = n.Type,
-                        Time = n.TimeAgo,
-                        IsUnread = !NotificationService.ReadNotifKeys.Contains(n.Id)
+                        Application.Current.Dispatcher.Invoke(() => UpdateNotificationsList(snapshot));
                     });
-                }
 
-                if (notifList.Count == 0)
-                {
-                    notifList.Add(new NotifItem { NotifKey = "empty", TargetCourse = null, Title = "Tuyệt vời! Không có yêu cầu hay bài tập nào cần xử lý.", Time = "", IsUnread = false });
-                }
-
-                NotifItemsControl.ItemsSource = notifList;
+                _systemNotifListener = _dbManager.GetDb.Collection("Notifications")
+                    .WhereEqualTo("TargetId", "all")
+                    .Listen(snapshot =>
+                    {
+                        Application.Current.Dispatcher.Invoke(() => UpdateNotificationsList(snapshot));
+                    });
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Lỗi load Dashboard: " + ex.Message);
+            }
+        }
+
+        private void UpdateNotificationsList(Google.Cloud.Firestore.QuerySnapshot snapshot)
+        {
+            foreach (var change in snapshot.Changes)
+            {
+                var doc = change.Document;
+                var notif = doc.ConvertTo<Notification>();
+                notif.Id = doc.Id;
+                
+                if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Added)
+                {
+                    if (!_dashboardNotifs.Any(n => n.Id == notif.Id))
+                        _dashboardNotifs.Add(notif);
+                }
+                else if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Modified)
+                {
+                    var existing = _dashboardNotifs.FirstOrDefault(n => n.Id == notif.Id);
+                    if (existing != null)
+                    {
+                        _dashboardNotifs.Remove(existing);
+                        _dashboardNotifs.Add(notif);
+                    }
+                }
+                else if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Removed)
+                {
+                    var existing = _dashboardNotifs.FirstOrDefault(n => n.Id == notif.Id);
+                    if (existing != null)
+                        _dashboardNotifs.Remove(existing);
+                }
+            }
+
+            var sortedDocs = _dashboardNotifs.OrderByDescending(n => n.CreatedAt).Take(5).ToList();
+            var notifList = new ObservableCollection<NotifItem>();
+
+            foreach (var n in sortedDocs)
+            {
+                Course course = null;
+                if (!string.IsNullOrEmpty(n.CourseId))
+                {
+                    course = _myCoursesForNotif.FirstOrDefault(c => c.Id == n.CourseId);
+                }
+
+                notifList.Add(new NotifItem
+                {
+                    NotifKey = n.Id,
+                    TargetCourse = course,
+                    Title = n.Title,
+                    Content = n.Content,
+                    NotifType = n.Type,
+                    Time = n.TimeAgo,
+                    IsUnread = !NotificationService.ReadNotifKeys.Contains(n.Id)
+                });
+            }
+
+            if (notifList.Count > 0)
+            {
+                NotifItemsControl.ItemsSource = notifList;
+            }
+            else
+            {
+                var emptyList = new ObservableCollection<NotifItem>();
+                emptyList.Add(new NotifItem { NotifKey = "empty", TargetCourse = null, Title = "Tuyệt vời! Bạn không có thông báo nào mới.", Time = "Ngay lúc này", IsUnread = false });
+                NotifItemsControl.ItemsSource = emptyList;
             }
         }
 
