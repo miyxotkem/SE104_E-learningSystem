@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Windows.Media.Animation;
 using e_learning_app.Class;
 
 namespace e_learning_app.Views
@@ -119,17 +120,26 @@ namespace e_learning_app.Views
                     CustomDialog.Show("Hết giờ làm bài! Hệ thống sẽ tự động nộp bài.", "Hết giờ", DialogType.Warning);
                     _ = SubmitQuiz(); // Use discard for async call in non-async event
                 }
-                else if (_remainingTime.TotalMinutes < 1)
-                {
-                    // Pulse Red when < 1 min
-                    TxtTimer.Foreground = Brushes.Red;
-                    TimeProgressFill.Background = Brushes.Red;
-                    TxtTimer.Opacity = TxtTimer.Opacity == 1 ? 0.6 : 1;
-                }
                 else if (_remainingTime.TotalMinutes < 5)
                 {
-                    TxtTimer.Foreground = Brushes.OrangeRed;
-                    TimeProgressFill.Background = Brushes.OrangeRed;
+                    // Nguy hiểm: < 5 phút -> Đỏ và nhấp nháy
+                    TxtTimer.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)); // Red-500
+                    TimeProgressFill.Background = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+                    TxtTimer.Opacity = TxtTimer.Opacity >= 0.9 ? 0.5 : 1.0;
+                }
+                else if (_remainingTime.TotalMinutes < 10)
+                {
+                    // Cảnh báo: < 10 phút -> Vàng cam
+                    TxtTimer.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // Amber-500
+                    TimeProgressFill.Background = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
+                    TxtTimer.Opacity = 1.0;
+                }
+                else
+                {
+                    // Bình thường
+                    TxtTimer.Foreground = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B));
+                    TimeProgressFill.Background = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
+                    TxtTimer.Opacity = 1.0;
                 }
             };
             _timer.Start();
@@ -141,6 +151,16 @@ namespace e_learning_app.Views
 
             _currentIndex = index;
             var q = _questions[index];
+
+            // Trigger Animation (Slide & Fade)
+            if (MainContentContainer != null)
+            {
+                var fadeAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250));
+                var slideAnim = new ThicknessAnimation(new Thickness(40, 52, 40, 0), new Thickness(40, 32, 40, 20), TimeSpan.FromMilliseconds(250));
+                slideAnim.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
+                MainContentContainer.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+                MainContentContainer.BeginAnimation(FrameworkElement.MarginProperty, slideAnim);
+            }
 
             // Update UI
             TxtQuestionBadge.Text = $"Câu {index + 1}";
@@ -186,16 +206,14 @@ namespace e_learning_app.Views
             }
 
             // Mark Review state
-            if (_markedForReview.Contains(q.Id))
-                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF9, 0xC3)); // Yellowish
-            else
-                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xF0));
+            BtnMarkReview.IsChecked = _markedForReview.Contains(q.Id);
 
             // Buttons
             BtnPrev.IsEnabled = index > 0;
             BtnNext.Content = index == _questions.Count - 1 ? "Câu cuối" : "Câu tiếp theo →";
 
             UpdateStats();
+            UpdateQuestionMap(); // Cập nhật lại bản đồ để làm nổi bật câu hiện tại
         }
 
         private void UpdateQuestionMap()
@@ -222,27 +240,93 @@ namespace e_learning_app.Views
                 var q = _questions[i];
                 var btn = (Button)PanelQuestionMap.Children[i];
 
-                // Colors based on state
-                if (i == _currentIndex)
+                bool isCurrent = i == _currentIndex;
+                bool isAnswered = _studentAnswers.ContainsKey(q.Id);
+                bool isMarked = _markedForReview.Contains(q.Id);
+
+                // 1. Màu sắc nền và chữ dựa trên trạng thái (Đã làm / Xem lại)
+                if (isMarked && isAnswered)
                 {
-                    btn.Background = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
-                    btn.Foreground = Brushes.White;
-                    btn.Width = 38; btn.Height = 38; // Current is slightly bigger
+                    // Đã làm nhưng đánh dấu xem lại
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7)); // Nền xanh (Đã làm)
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // Chữ cam (Xem lại)
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // Viền cam
                 }
-                else if (_markedForReview.Contains(q.Id))
+                else if (isMarked && !isAnswered)
                 {
-                    btn.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2));
-                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26));
+                    // Chưa làm và đánh dấu xem lại
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF9, 0xC3)); // Nền vàng
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0xD9, 0x77, 0x06)); // Chữ cam đậm
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // Viền cam
                 }
-                else if (_studentAnswers.ContainsKey(q.Id))
+                else if (!isMarked && isAnswered)
                 {
-                    btn.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7));
-                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A));
+                    // Đã làm
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7)); // Nền xanh
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)); // Chữ xanh
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)); // Viền xanh
                 }
                 else
                 {
-                    btn.Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9));
-                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
+                    // Chưa làm
+                    btn.Background = Brushes.White;
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)); // Chữ xám
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0xCB, 0xD5, 0xE1)); // Viền xám
+                }
+
+                // 2. Logic làm nổi bật câu hiện tại (Current Selection)
+                if (isCurrent)
+                {
+                    // Phóng to, viền dày màu xanh dương, thêm đổ bóng
+                    btn.Width = 46; 
+                    btn.Height = 46;
+                    btn.BorderThickness = new Thickness(2.5);
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x25, 0x63, 0xEB)); // Viền xanh dương đậm (Blue-600)
+                    btn.Effect = new System.Windows.Media.Effects.DropShadowEffect 
+                    { 
+                        BlurRadius = 8, 
+                        ShadowDepth = 2, 
+                        Opacity = 0.25, 
+                        Color = Colors.Black 
+                    };
+                }
+                else
+                {
+                    // Trạng thái bình thường
+                    btn.Width = 40; 
+                    btn.Height = 40;
+                    btn.BorderThickness = new Thickness(1);
+                    btn.Effect = null;
+                }
+            }
+        }
+
+        private void BtnToggleMap_Click(object sender, RoutedEventArgs e)
+        {
+            if (ColumnRightPanel.Width.Value > 0)
+            {
+                // Đang mở -> Đóng lại
+                ColumnRightPanel.Width = new GridLength(0);
+                if (BtnFloatingToggle != null)
+                {
+                    BtnFloatingToggle.Content = "⯇";
+                    BtnFloatingToggle.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
+                    BtnFloatingToggle.Foreground = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
+                    if (BtnFloatingToggle.Effect is System.Windows.Media.Effects.DropShadowEffect shadow)
+                        shadow.Opacity = 0.15;
+                }
+            }
+            else
+            {
+                // Đang đóng -> Mở ra
+                ColumnRightPanel.Width = new GridLength(280);
+                if (BtnFloatingToggle != null)
+                {
+                    BtnFloatingToggle.Content = "⯈";
+                    BtnFloatingToggle.Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9));
+                    BtnFloatingToggle.Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
+                    if (BtnFloatingToggle.Effect is System.Windows.Media.Effects.DropShadowEffect shadow)
+                        shadow.Opacity = 0;
                 }
             }
         }
@@ -266,18 +350,16 @@ namespace e_learning_app.Views
                 ShowQuestion(_currentIndex + 1);
         }
 
-        private void BtnMarkReview_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void BtnMarkReview_Click(object sender, RoutedEventArgs e)
         {
             var qId = _questions[_currentIndex].Id;
             if (_markedForReview.Contains(qId))
             {
                 _markedForReview.Remove(qId);
-                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xF0));
             }
             else
             {
                 _markedForReview.Add(qId);
-                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF9, 0xC3)); // Yellowish
             }
 
             UpdateQuestionMap();
