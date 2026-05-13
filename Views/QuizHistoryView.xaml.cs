@@ -55,9 +55,10 @@ namespace e_learning_app.Views
                 double totalPoints = questions.Sum(q => q.Points);
                 if (totalPoints == 0) totalPoints = _exam.TotalQuestions > 0 ? _exam.TotalQuestions : 10;
 
-                // Highest Score Calculation
-                double maxScoreValue = _submissions.Any() ? _submissions.Max(s => s.Score) : 0;
-                TxtHighestScore.Text = _exam.ShowScore ? $"{maxScoreValue:F1} / {totalPoints:F1}" : "---";
+                // Highest Score Calculation (Hệ 10)
+                double maxPercentage = _submissions.Any() ? _submissions.Max(s => s.Percentage) : 0;
+                double maxScoreValue = maxPercentage / 10;
+                TxtHighestScore.Text = _exam.ShowScore ? $"{maxScoreValue:F1} / 10" : "---";
 
                 // Check attempts limit
                 bool isLimitReached = false;
@@ -70,7 +71,21 @@ namespace e_learning_app.Views
                     if (_submissions.Count >= _exam.MaxAttempts) isLimitReached = true;
                 }
 
-                if (isLimitReached)
+                if (!_exam.IsActive)
+                {
+                    BtnStartQuiz.IsEnabled = false;
+                    BtnStartQuiz.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2));
+                    BtnStartQuiz.Foreground = new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26));
+                    BtnStartQuiz.Content = "🔒 Bài thi đang bị khóa";
+                }
+                else if (_exam.Deadline.HasValue && DateTime.Now > _exam.Deadline.Value)
+                {
+                    BtnStartQuiz.IsEnabled = false;
+                    BtnStartQuiz.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2));
+                    BtnStartQuiz.Foreground = new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26));
+                    BtnStartQuiz.Content = "⌛ Đã quá hạn làm bài";
+                }
+                else if (isLimitReached)
                 {
                     BtnStartQuiz.IsEnabled = false;
                     BtnStartQuiz.Background = new SolidColorBrush(Color.FromRgb(0xE2, 0xE8, 0xF0));
@@ -83,7 +98,7 @@ namespace e_learning_app.Views
                 {
                     Submission = s, // Keep reference for click
                     s.SubmittedAt,
-                    ScoreDisplay = _exam.ShowScore ? $"{s.Score:F1} / {totalPoints:F1}" : "Đã nộp",
+                    ScoreDisplay = _exam.ShowScore ? $"{s.Score:F1} / 10" : "Đã nộp",
                     TimeDisplay = $"Thời gian làm bài: {TimeSpan.FromSeconds(s.TimeSpentSeconds):mm\\:ss}",
                     StatusText = !_exam.ShowScore ? "---" : (s.Percentage >= _exam.PassingScore ? "Đạt" : "Không đạt"),
                     StatusBrush = !_exam.ShowScore ? Brushes.Gray : (s.Percentage >= _exam.PassingScore ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)) : new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26)))

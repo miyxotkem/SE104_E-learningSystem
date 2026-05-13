@@ -14,15 +14,17 @@ namespace e_learning_app.Views
         private readonly DatabaseManager _dbManager;
         private readonly Exam _exam;
         private readonly ExamSubmission _submission;
+        private readonly bool _isTeacherView;
         private List<ExamQuestion> _allQuestions = new();
         private List<object> _processedQuestions = new();
 
-        public QuizResultDetailView(DatabaseManager dbManager, Exam exam, ExamSubmission submission)
+        public QuizResultDetailView(DatabaseManager dbManager, Exam exam, ExamSubmission submission, bool isTeacherView = false)
         {
             InitializeComponent();
             _dbManager = dbManager;
             _exam = exam;
             _submission = submission;
+            _isTeacherView = isTeacherView;
             
             LoadDetails();
         }
@@ -40,7 +42,7 @@ namespace e_learning_app.Views
                 _allQuestions = await _dbManager.GetExamQuestionsAsync(_exam.Id);
                 
                 double maxScore = _allQuestions.Sum(q => q.Points);
-                TxtScoreLarge.Text = $"{_submission.Score:F1} / {maxScore:F1}";
+                TxtScoreLarge.Text = $"{_submission.Score:F1} / 10";
 
                 ProcessQuestions();
                 ApplyFilter("All");
@@ -149,7 +151,12 @@ namespace e_learning_app.Views
         private void BtnBack_Click(object sender, RoutedEventArgs e)
         {
             if (Window.GetWindow(this) is MainWindow mw)
-                mw.MainContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+            {
+                if (_isTeacherView)
+                    mw.MainContentArea.Content = new ExamReportView(_exam, _dbManager);
+                else
+                    mw.MainContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+            }
             else if (Window.GetWindow(this) is StudentMainWindow smw)
                 smw.StudentContentArea.Content = new QuizHistoryView(_dbManager, _exam);
         }

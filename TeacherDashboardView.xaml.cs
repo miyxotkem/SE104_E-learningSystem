@@ -414,7 +414,8 @@ namespace e_learning_app.Views
 
         private void BtnCreateExam_Click(object sender, RoutedEventArgs e)
         {
-            CustomDialog.Show("Tính năng soạn bài kiểm tra trắc nghiệm đang được cập nhật.", "Thông báo", DialogType.Info);
+            if (Window.GetWindow(this) is MainWindow mw)
+                mw.NavigateTo(new CreateExamView(_dbManager));
         }
 
         private void BtnViewAllNotif_Click(object sender, RoutedEventArgs e) { }

@@ -62,7 +62,18 @@ namespace e_learning_app
 
                     TxtTitle.Text = _existingExam.Title;
                     TxtDescription.Text = _existingExam.Description;
-                    TxtTotalQuestions.Text = _existingExam.TotalQuestions.ToString();
+
+                    if (_existingExam.Deadline.HasValue)
+                    {
+                        ChkHasDeadline.IsChecked = true;
+                        PanelDeadline.Visibility = Visibility.Visible;
+                        DpDeadlineDate.SelectedDate = _existingExam.Deadline.Value.Date;
+                        string timeStr = _existingExam.Deadline.Value.ToLocalTime().ToString("HH:mm");
+                        if (timeStr == "23:59" || timeStr == "12:00" || timeStr == "17:00" || timeStr == "00:00")
+                            SelectComboBoxItemByContent(CbDeadlineTime, timeStr);
+                        else
+                            CbDeadlineTime.Text = timeStr;
+                    }
 
                     SelectComboBoxItemByContent(CbTimeLimit, _existingExam.TimeLimitMinutes.ToString());
                     SelectComboBoxItemByContent(CbPassingScore, _existingExam.PassingScore.ToString() + "%");
@@ -130,9 +141,24 @@ namespace e_learning_app
 
             try
             {
-                int questions = 0;
-                if (TxtTotalQuestions != null && int.TryParse(TxtTotalQuestions.Text, out int q))
-                    questions = q;
+                int questions = _existingExam?.TotalQuestions ?? 0;
+
+                DateTime? deadline = null;
+                if (ChkHasDeadline?.IsChecked == true && DpDeadlineDate.SelectedDate.HasValue)
+                {
+                    deadline = DpDeadlineDate.SelectedDate.Value.Date;
+                    string timeStr = (CbDeadlineTime.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? CbDeadlineTime.Text;
+                    if (TimeSpan.TryParse(timeStr, out TimeSpan ts)) deadline = deadline.Value.Add(ts);
+                    else if (timeStr == "23:59") deadline = deadline.Value.AddHours(23).AddMinutes(59);
+
+                    // Warning if in the past
+                    if (TxtDeadlineWarning != null)
+                        TxtDeadlineWarning.Visibility = deadline.Value < DateTime.Now ? Visibility.Visible : Visibility.Collapsed;
+                }
+                else if (TxtDeadlineWarning != null)
+                {
+                    TxtDeadlineWarning.Visibility = Visibility.Collapsed;
+                }
 
                 var previewExam = new Exam
                 {
@@ -145,6 +171,7 @@ namespace e_learning_app
                     TotalQuestions = questions,
                     IsActive = true, // Force active for preview styling
                     IsPublished = ChkPublished?.IsChecked ?? false,
+                    Deadline = deadline,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -176,12 +203,24 @@ namespace e_learning_app
             if (_isInitialized) UpdatePreview();
         }
 
+        private void Sync_UI_Date(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitialized) UpdatePreview();
+        }
+
         private void ChkMultipleAttempts_Changed(object sender, RoutedEventArgs e)
         {
             if (!_isInitialized || PanelMaxAttempts == null) return;
             
             bool allow = ChkMultipleAttempts.IsChecked ?? false;
             PanelMaxAttempts.Visibility = allow ? Visibility.Visible : Visibility.Collapsed;
+            UpdatePreview();
+        }
+
+        private void ChkHasDeadline_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!_isInitialized || PanelDeadline == null) return;
+            PanelDeadline.Visibility = ChkHasDeadline.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             UpdatePreview();
         }
 
@@ -206,6 +245,30 @@ namespace e_learning_app
                 if (ChkMultipleAttempts.IsChecked == true && int.TryParse(TxtMaxAttempts.Text, out int m))
                     maxAtt = m;
 
+                DateTime? deadline = null;
+                if (ChkHasDeadline.IsChecked == true)
+                {
+                    if (!DpDeadlineDate.SelectedDate.HasValue)
+                    {
+                        CustomDialog.Show("⚠️ Vui lòng chọn ngày hạn chót!", "Lỗi", DialogType.Warning);
+                        return;
+                    }
+
+                    deadline = DpDeadlineDate.SelectedDate.Value.Date;
+                    string timeStr = (CbDeadlineTime.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? CbDeadlineTime.Text;
+                    if (TimeSpan.TryParse(timeStr, out TimeSpan ts))
+                        deadline = deadline.Value.Add(ts);
+                    else if (timeStr == "23:59")
+                        deadline = deadline.Value.AddHours(23).AddMinutes(59).AddSeconds(59);
+
+                    if (deadline.Value < DateTime.Now)
+                    {
+                        CustomDialog.Show("⚠️ Hạn chót không thể ở trong quá khứ!", "Lỗi", DialogType.Warning);
+                        return;
+                    }
+                    deadline = deadline.Value.ToUniversalTime();
+                }
+
                 var newExam = new Exam
                 {
                     Id = _existingExam != null ? _existingExam.Id : Guid.NewGuid().ToString("N"),
@@ -213,9 +276,10 @@ namespace e_learning_app
                     ClassName = $"{_selectedCourse.ClassName} - {_selectedCourse.Title}",
                     Title = TxtTitle.Text.Trim(),
                     Description = TxtDescription.Text.Trim(),
+                    Deadline = deadline,
                     TimeLimitMinutes = int.Parse((CbTimeLimit?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "60"),
                     PassingScore = double.Parse((CbPassingScore?.SelectedItem as ComboBoxItem)?.Content?.ToString()?.TrimEnd('%') ?? "50"),
-                    TotalQuestions = int.Parse(TxtTotalQuestions.Text ?? "0"),
+                    TotalQuestions = _existingExam?.TotalQuestions ?? 0,
                     IsActive = true,
                     IsPublished = ChkPublished?.IsChecked ?? false,
                     AllowReview = ChkAllowReview?.IsChecked ?? true,

@@ -110,11 +110,57 @@
             BorderThickness="1" 
             CornerRadius="16" 
             Padding="24"
-            Margin="0,0,0,16">
+            Margin="0,0,0,16"
+            RenderTransformOrigin="0.5,0.5">
+        <Border.RenderTransform>
+            <ScaleTransform ScaleX="1" ScaleY="1" />
+        </Border.RenderTransform>
         <!-- Subtle shadow -->
         <Border.Effect>
-            <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.05" Color="#1E293B"/>
+            <DropShadowEffect x:Name="CardShadow" BlurRadius="15" ShadowDepth="2" Opacity="0.05" Color="#1E293B"/>
         </Border.Effect>
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <EventTrigger RoutedEvent="MouseEnter">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.01" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.01" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" To="0.1" Duration="0:0:0.2" />
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)" To="25" Duration="0:0:0.2" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                    <EventTrigger RoutedEvent="MouseLeave">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" To="0.05" Duration="0:0:0.2" />
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)" To="15" Duration="0:0:0.2" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
         
         <StackPanel>
             <!-- ================= TOP BADGES ================= -->
@@ -136,10 +182,28 @@
                 </Border>
                 
                 <!-- Duration Badge -->
-                <Border Background="#F8FAFC" CornerRadius="8" Padding="10,4" BorderBrush="#F1F5F9" BorderThickness="1">
+                <Border Background="#F8FAFC" CornerRadius="8" Padding="10,4" Margin="0,0,12,0" BorderBrush="#F1F5F9" BorderThickness="1">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="⏱" Foreground="#64748B" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding TimeLimitMinutes, StringFormat='\{0\} phút', FallbackValue='30 phút'}" Foreground="#64748B" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Deadline Badge -->
+                <Border Background="#FEF2F2" CornerRadius="8" Padding="10,4" BorderBrush="#FEE2E2" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Deadline}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⏳" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Deadline, StringFormat='Hạn: \{0:dd/MM/yyyy HH:mm\}'}" Foreground="#DC2626" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
             </StackPanel>

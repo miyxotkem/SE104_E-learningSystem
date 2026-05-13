@@ -64,9 +64,9 @@ namespace e_learning_app
 
             int total = _submissions.Count;
             double passRate = _submissions.Count(s => s.Percentage >= _exam.PassingScore) * 100.0 / total;
-            double avgScore = _submissions.Average(s => s.Score);
-            double maxScore = _submissions.Max(s => s.Score);
-            double minScore = _submissions.Min(s => s.Score);
+            double avgScore = _submissions.Average(s => s.Percentage / 10);
+            double maxScore = _submissions.Max(s => s.Percentage / 10);
+            double minScore = _submissions.Min(s => s.Percentage / 10);
 
             TxtTotalSubmissions.Text = total.ToString();
             TxtPassRate.Text = $"{passRate:0.0}%";
@@ -91,13 +91,13 @@ namespace e_learning_app
                 SubmissionId = s.Id,
                 s.StudentName,
                 s.SubmittedAt,
-                ScoreDisplay = $"{s.Score:F1}/{_exam.TotalQuestions}",
+                ScoreDisplay = $"{s.Score:F1} / 10",
                 s.Score,
                 s.Percentage,
                 TimeSpentFormatted = TimeSpan.FromSeconds(s.TimeSpentSeconds).ToString(@"mm\:ss"),
                 StatusBg = s.Percentage >= _exam.PassingScore ? new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7)) : new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2)),
                 StatusFg = s.Percentage >= _exam.PassingScore ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)) : new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26))
-            }).OrderByDescending(s => s.Score).ToList();
+            }).OrderByDescending(s => s.Percentage).ToList();
 
             DgSubmissions.ItemsSource = displayList;
         }
@@ -105,7 +105,7 @@ namespace e_learning_app
         private void UpdateTopStudents()
         {
             TopStudentsPanel.Children.Clear();
-            var top = _submissions.OrderByDescending(s => s.Score).Take(5).ToList();
+            var top = _submissions.OrderByDescending(s => s.Percentage).Take(5).ToList();
             
             for (int i = 0; i < top.Count; i++)
             {
@@ -149,7 +149,7 @@ namespace e_learning_app
                 {
                     if (Window.GetWindow(this) is MainWindow mw)
                     {
-                        mw.NavigateTo(new Views.QuizResultDetailView(_dbManager, _exam, submission));
+                        mw.NavigateTo(new Views.QuizResultDetailView(_dbManager, _exam, submission, isTeacherView: true));
                     }
                 }
             }

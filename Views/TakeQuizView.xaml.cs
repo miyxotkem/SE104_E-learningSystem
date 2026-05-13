@@ -200,17 +200,27 @@ namespace e_learning_app.Views
 
         private void UpdateQuestionMap()
         {
-            PanelQuestionMap.Children.Clear();
+            if (PanelQuestionMap.Children.Count != _questions.Count)
+            {
+                PanelQuestionMap.Children.Clear();
+                for (int i = 0; i < _questions.Count; i++)
+                {
+                    var btn = new Button
+                    {
+                        Style = (Style)Resources["QMapBtn"],
+                        Content = (i + 1).ToString(),
+                        Tag = i,
+                        FontWeight = FontWeights.Bold
+                    };
+                    btn.Click += (s, e) => ShowQuestion((int)(s as Button).Tag);
+                    PanelQuestionMap.Children.Add(btn);
+                }
+            }
+
             for (int i = 0; i < _questions.Count; i++)
             {
                 var q = _questions[i];
-                var btn = new Button
-                {
-                    Style = (Style)Resources["QMapBtn"],
-                    Content = (i + 1).ToString(),
-                    Tag = i,
-                    FontWeight = FontWeights.Bold
-                };
+                var btn = (Button)PanelQuestionMap.Children[i];
 
                 // Colors based on state
                 if (i == _currentIndex)
@@ -234,9 +244,6 @@ namespace e_learning_app.Views
                     btn.Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9));
                     btn.Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
                 }
-
-                btn.Click += (s, e) => ShowQuestion((int)(s as Button).Tag);
-                PanelQuestionMap.Children.Add(btn);
             }
         }
 
@@ -263,12 +270,18 @@ namespace e_learning_app.Views
         {
             var qId = _questions[_currentIndex].Id;
             if (_markedForReview.Contains(qId))
+            {
                 _markedForReview.Remove(qId);
+                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xF0));
+            }
             else
+            {
                 _markedForReview.Add(qId);
+                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF9, 0xC3)); // Yellowish
+            }
 
-            ShowQuestion(_currentIndex); // Refresh UI
             UpdateQuestionMap();
+            UpdateStats();
         }
 
         private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
@@ -284,13 +297,19 @@ namespace e_learning_app.Views
         {
             _timer?.Stop();
 
+            int timeSpent = (int)(DateTime.Now - _startTime).TotalSeconds;
+            if (_totalSeconds > 0 && timeSpent > _totalSeconds)
+            {
+                timeSpent = (int)_totalSeconds;
+            }
+
             var user = _dbManager.GetCurrentUser();
             var submission = new ExamSubmission
             {
                 ExamId = _exam.Id,
                 StudentId = user.Id,
                 StudentName = user.FullName,
-                TimeSpentSeconds = (int)(DateTime.Now - _startTime).TotalSeconds,
+                TimeSpentSeconds = timeSpent,
                 Status = SubmissionStatus.Submitted
             };
 
@@ -314,7 +333,7 @@ namespace e_learning_app.Views
                     string msg = "Nộp bài thành công!";
                     if (_exam.ShowScore)
                     {
-                        msg += $"\nĐiểm của bạn: {graded.Score:F1} / {_questions.Sum(q => q.Points)} ({graded.Percentage:F1}%)";
+                        msg += $"\nĐiểm của bạn: {graded.Score:F1} / 10 ({graded.Percentage:F1}%)";
                     }
                     else
                     {
@@ -326,6 +345,8 @@ namespace e_learning_app.Views
                     // Navigate back to student dashboard or quiz list
                     if (Window.GetWindow(this) is MainWindow mw)
                         mw.NavDashboard_Click(null, null);
+                    else if (Window.GetWindow(this) is StudentMainWindow smw)
+                        smw.StudentContentArea.Content = new StudentDashboardView(_dbManager);
                 }
             }
             catch (Exception ex)

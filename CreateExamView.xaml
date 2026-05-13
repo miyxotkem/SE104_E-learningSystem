@@ -216,6 +216,29 @@
                     <TextBlock Text="Mô tả chi tiết" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox x:Name="TxtDescription" Style="{StaticResource ModernTextBox}" Height="100" Margin="0,0,0,24" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" TextChanged="Sync_UI"/>
 
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <CheckBox x:Name="ChkHasDeadline" Content="⏰ Có hạn chót nộp bài (Deadline)" Style="{StaticResource ModernCheckBoxStyle}" IsChecked="False" Checked="ChkHasDeadline_Changed" Unchecked="ChkHasDeadline_Changed"/>
+                    </StackPanel>
+
+                    <StackPanel x:Name="PanelDeadline" Visibility="Collapsed" Margin="28,0,0,24">
+                        <TextBlock Text="Chọn ngày và giờ kết thúc:" Style="{StaticResource FieldLabelStyle}" Foreground="#64748B" FontSize="12"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="120"/>
+                            </Grid.ColumnDefinitions>
+                            <DatePicker x:Name="DpDeadlineDate" Grid.Column="0" Height="42" Padding="12,0" BorderBrush="#E2E8F0" BorderThickness="1" Background="White" Foreground="#1E293B" SelectedDateChanged="Sync_UI_Date"/>
+                            <ComboBox x:Name="CbDeadlineTime" Grid.Column="2" Style="{StaticResource ModernComboBox}" SelectionChanged="Sync_UI_Selection" IsEditable="True">
+                                <ComboBoxItem Content="23:59" IsSelected="True"/>
+                                <ComboBoxItem Content="12:00"/>
+                                <ComboBoxItem Content="17:00"/>
+                                <ComboBoxItem Content="00:00"/>
+                            </ComboBox>
+                        </Grid>
+                        <TextBlock x:Name="TxtDeadlineWarning" Text="⚠️ Hạn chót phải sau thời điểm hiện tại!" FontSize="11" Foreground="#EF4444" Margin="4,6,0,0" Visibility="Collapsed"/>
+                    </StackPanel>
+
                     <!-- Section 3: Configuration -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
                         <TextBlock Text="⚙️" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
@@ -253,10 +276,7 @@
                         </StackPanel>
                     </Grid>
 
-                    <StackPanel Margin="0,0,0,24">
-                        <TextBlock Text="Tổng số câu hỏi dự kiến" Style="{StaticResource FieldLabelStyle}"/>
-                        <TextBox x:Name="TxtTotalQuestions" Style="{StaticResource ModernTextBox}" Height="46" Text="10" TextChanged="Sync_UI"/>
-                    </StackPanel>
+                    <!-- Question count removed as per request - will be calculated automatically -->
 
                     <!-- Section 4: Advanced Settings -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,14">

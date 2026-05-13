@@ -90,9 +90,9 @@ namespace e_learning_app.Views
                 string statusColor = isDone ? "#3B82F6" : (exam.IsActive ? "#16A34A" : "#64748B");
                 string statusBg = isDone ? "#EFF6FF" : (exam.IsActive ? "#DCFCE7" : "#F1F5F9");
 
-                // Highest Score
+                // Highest Score (Hệ 10)
                 var examSubmissions = _studentSubmissions.Where(s => s.ExamId == exam.Id).ToList();
-                double? maxScore = examSubmissions.Any() ? examSubmissions.Max(s => s.Score) : null;
+                double? maxScore = examSubmissions.Any() ? examSubmissions.Max(s => s.Percentage) / 10 : null;
 
                 examList.Add(new
                 {

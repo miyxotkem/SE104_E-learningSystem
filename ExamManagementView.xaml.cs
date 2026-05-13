@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using e_learning_app.Class;
 
 namespace e_learning_app
@@ -263,19 +264,7 @@ namespace e_learning_app
             TxtPendingExams.Text = _allExams.Count(e => !e.IsPublished).ToString();
         }
 
-        private UIElement BuildExamCard(Exam exam)
-        {
-            var card = new ExamCardView
-            {
-                DataContext = exam
-            };
-
-            card.ViewClicked += (s, e) => ViewExam(exam);
-            card.EditClicked += (s, e) => EditExam(exam);
-            card.DeleteClicked += (s, e) => DeleteExam(exam);
-
-            return card;
-        }
+        
 
         // ==================== HELPER METHODS ====================
 
@@ -402,7 +391,8 @@ namespace e_learning_app
 
         private void EditExam(Exam exam)
         {
-            ShowEditExamDialog(exam);
+            if (Window.GetWindow(this) is MainWindow mw)
+                mw.NavigateTo(new EditExamView(_dbManager, exam));
         }
 
         private async void DeleteExam(Exam exam)
@@ -438,189 +428,6 @@ namespace e_learning_app
                     CustomDialog.Show($"❌ Lỗi khi xóa:\n{ex.Message}", "Lỗi", DialogType.Error);
                 }
             }
-        }       
-
-        /// <summary>
-        /// Dialog chỉnh sửa bài thi
-        /// </summary>
-        private void ShowEditExamDialog(Exam exam)
-        {
-            var dialogWindow = new Window
-            {
-                Title = "✏️ Chỉnh Sửa Bài Thi",
-                Width = 600,
-                Height = 550,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = Window.GetWindow(this),
-                ResizeMode = ResizeMode.NoResize,
-                Background = new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC))
-            };
-
-            var mainStack = new StackPanel { Margin = new Thickness(28) };
-
-            // Title
-            mainStack.Children.Add(CreateLabel("📝 Tên Bài Thi:"));
-            var txtTitle = CreateTextBox(exam.Title);
-            mainStack.Children.Add(txtTitle);
-
-            // Description
-            mainStack.Children.Add(CreateLabel("📄 Mô Tả Chi Tiết:"));
-            var txtDescription = new TextBox
-            {
-                Height = 80,
-                Text = exam.Description,
-                Padding = new Thickness(12, 10, 12, 10),
-                TextWrapping = TextWrapping.Wrap,
-                AcceptsReturn = true,
-                Margin = new Thickness(0, 0, 0, 14),
-                Background = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(0xE2, 0xE8, 0xF0)),
-                BorderThickness = new Thickness(1),
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
-            };
-            mainStack.Children.Add(txtDescription);
-
-            // Config
-            mainStack.Children.Add(CreateLabel("⚙️ Cấu Hình:"));
-
-            var configGrid = new Grid { Margin = new Thickness(0, 0, 0, 14) };
-            for (int i = 0; i < 5; i++)
-            {
-                if (i % 2 == 0)
-                    configGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                else
-                    configGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
-            }
-
-            // Removed cbExamType
-
-            var cbTimeLimit = CreateComboBox(new[] { "15", "30", "45", "60", "90", "120" });
-            cbTimeLimit.SelectedItem = exam.TimeLimitMinutes.ToString();
-            Grid.SetColumn(cbTimeLimit, 2);
-
-            var cbPassingScore = CreateComboBox(new[] { "40%", "50%", "60%", "70%", "80%" });
-            cbPassingScore.SelectedItem = $"{(int)exam.PassingScore}%";
-            Grid.SetColumn(cbPassingScore, 4);
-
-            configGrid.Children.Add(cbTimeLimit);
-            configGrid.Children.Add(cbPassingScore);
-            mainStack.Children.Add(configGrid);
-
-            // Status
-            var chkPublished = new CheckBox
-            {
-                Content = "✅ Công Bố Bài Thi",
-                IsChecked = exam.IsPublished,
-                Margin = new Thickness(0, 0, 0, 14),
-                FontSize = 12
-            };
-            mainStack.Children.Add(chkPublished);
-
-            // Buttons
-            var buttonRow = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                Margin = new Thickness(0, 28, 0, 0)
-            };
-
-            var btnCancel = new Button
-            {
-                Content = "❌ Hủy",
-                Width = 100,
-                Height = 40,
-                Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9)),
-                Foreground = new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69)),
-                BorderThickness = new Thickness(0),
-                Cursor = System.Windows.Input.Cursors.Hand,
-                FontWeight = FontWeights.SemiBold
-            };
-            btnCancel.Click += (s, e) => dialogWindow.Close();
-
-            var btnSave = new Button
-            {
-                Content = "💾 Lưu Thay Đổi",
-                Width = 130,
-                Height = 40,
-                Background = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
-                Foreground = Brushes.White,
-                BorderThickness = new Thickness(0),
-                Margin = new Thickness(12, 0, 0, 0),
-                Cursor = System.Windows.Input.Cursors.Hand,
-                FontWeight = FontWeights.SemiBold
-            };
-
-            btnSave.Click += async (s, e) =>
-            {
-                try
-                {
-                    // UI Feedback
-                    ((Button)s).IsEnabled = false;
-                    ((Button)s).Content = "⏳ Lưu dữ liệu...";
-
-                    // Update exam properties
-                    exam.Title = txtTitle.Text;
-                    exam.Description = txtDescription.Text;
-                    exam.TimeLimitMinutes = int.Parse(cbTimeLimit.SelectedItem?.ToString() ?? "60");
-                    exam.PassingScore = double.Parse(cbPassingScore.SelectedItem?.ToString()?.TrimEnd('%') ?? "50");
-                    exam.IsPublished = chkPublished.IsChecked ?? false;
-                    exam.UpdatedAt = DateTime.Now;
-
-                    // Save to Firebase
-                    bool success = false;
-                    if (_dbManager != null)
-                    {
-                        success = await _dbManager.UpdateExamAsync(exam);
-                    }
-
-                    if (success || _dbManager == null)
-                    {
-                        Refresh();
-                        dialogWindow.Close();
-
-                        CustomDialog.Show("✅ Cập nhật bài thi thành công!", "Thành Công", DialogType.Success);
-                    }
-                    else
-                    {
-                        throw new Exception("Firebase từ chối thao tác lưu.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    CustomDialog.Show($"❌ Lỗi khi lưu:\n{ex.Message}", "Lỗi", DialogType.Error);
-
-                    ((Button)s).IsEnabled = true;
-                    ((Button)s).Content = "💾 Lưu Thay Đổi";
-                }
-            };
-
-            buttonRow.Children.Add(btnCancel);
-            buttonRow.Children.Add(btnSave);
-            mainStack.Children.Add(buttonRow);
-
-            dialogWindow.Content = mainStack;
-            dialogWindow.ShowDialog();
-        }
-
-        // ==================== PUBLIC API ====================
-
-        /// <summary>
-        /// Set class ID cho view này
-        /// </summary>
-        public void SetClassId(string classId)
-        {
-            _currentClassId = classId;
-        }
-
-        /// <summary>
-        /// Refresh dữ liệu từ Firebase
-        /// </summary>
-        public async void RefreshData()
-        {
-            if (_dbManager != null && !string.IsNullOrEmpty(_currentClassId))
-            {
-                await LoadDataFromFirebaseAsync();
-            }
-        }
+        }              
     }
 }

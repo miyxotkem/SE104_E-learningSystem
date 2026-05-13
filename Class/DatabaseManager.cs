@@ -465,11 +465,9 @@ namespace e_learning_app
                     totalScore += answer.PointsEarned;
                 }
 
-                // 3. Cập nhật tổng điểm và trạng thái
-                submission.Score = totalScore;
-                
-                // Tính phần trăm điểm. Giả sử tổng điểm tối đa là tổng điểm của tất cả câu hỏi
+                // 3. Cập nhật tổng điểm và trạng thái (Hệ 10)
                 double maxPossibleScore = questions.Sum(q => q.Points);
+                submission.Score = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 10 : 0;
                 submission.Percentage = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
                 
                 submission.Status = SubmissionStatus.Graded;
@@ -603,6 +601,45 @@ namespace e_learning_app
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"DeleteExamAsync Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Đếm số lượng bài nộp của một bài thi (kiểm tra trước khi cho phép full edit)
+        /// </summary>
+        public async Task<int> GetSubmissionCountByExamAsync(string examId)
+        {
+            try
+            {
+                if (_db == null) return 0;
+                var query = await _db.Collection("exam_submissions")
+                    .WhereEqualTo("ExamId", examId)
+                    .Select("ExamId")
+                    .GetSnapshotAsync();
+                return query.Count;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetSubmissionCountByExamAsync Error: {ex.Message}");
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Xóa 1 câu hỏi khỏi subcollection questions của bài thi
+        /// </summary>
+        public async Task<bool> DeleteExamQuestionAsync(string examId, string questionId)
+        {
+            try
+            {
+                if (_db == null) return false;
+                await _db.Collection("exams").Document(examId).Collection("questions").Document(questionId).DeleteAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeleteExamQuestionAsync Error: {ex.Message}");
                 return false;
             }
         }
