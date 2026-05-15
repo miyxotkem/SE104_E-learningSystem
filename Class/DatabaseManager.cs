@@ -661,5 +661,68 @@ namespace e_learning_app
                 return false;
             }
         }
+
+        // ==================== EXAM DRAFT ====================
+
+        /// <summary>
+        /// Lưu trạng thái bài làm tạm thời. Document ID = "{examId}_{studentId}".
+        /// </summary>
+        public async Task<bool> SaveExamDraftAsync(ExamDraft draft)
+        {
+            try
+            {
+                if (_db == null) return false;
+                // Use deterministic ID so each student has at most one draft per exam
+                string docId = $"{draft.ExamId}_{draft.StudentId}";
+                draft.Id = docId;
+                draft.SavedAt = DateTime.UtcNow;
+                await _db.Collection("exam_drafts").Document(docId).SetAsync(draft, SetOptions.MergeAll);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SaveExamDraftAsync Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Lấy draft đang lưu của học sinh cho bài thi, trả về null nếu không có.
+        /// </summary>
+        public async Task<ExamDraft> GetExamDraftAsync(string examId, string studentId)
+        {
+            try
+            {
+                if (_db == null) return null;
+                string docId = $"{examId}_{studentId}";
+                var snap = await _db.Collection("exam_drafts").Document(docId).GetSnapshotAsync();
+                if (!snap.Exists) return null;
+                var draft = snap.ConvertTo<ExamDraft>();
+                draft.Id = snap.Id;
+                return draft;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetExamDraftAsync Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Xóa draft sau khi học sinh nộp bài.
+        /// </summary>
+        public async Task DeleteExamDraftAsync(string examId, string studentId)
+        {
+            try
+            {
+                if (_db == null) return;
+                string docId = $"{examId}_{studentId}";
+                await _db.Collection("exam_drafts").Document(docId).DeleteAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeleteExamDraftAsync Error: {ex.Message}");
+            }
+        }
     }
 }

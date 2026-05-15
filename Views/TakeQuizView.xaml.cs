@@ -23,7 +23,8 @@ namespace e_learning_app.Views
         private DispatcherTimer _timer;
         private TimeSpan _remainingTime;
         private double _totalSeconds;
-        private DateTime _startTime;
+        private DateTime _startTime;   // Real UTC start time used by timer
+        private ExamDraft _activeDraft; // Non-null when we restored from a saved draft
 
         public TakeQuizView(DatabaseManager dbManager, Exam exam)
         {
@@ -65,6 +66,9 @@ namespace e_learning_app.Views
                             smw.StudentContentArea.Content = new QuizHistoryView(_dbManager, _exam);
                         return;
                     }
+
+                    // Check for a saved draft
+                    _activeDraft = await _dbManager.GetExamDraftAsync(_exam.Id, user.Id);
                 }
 
                 // Load questions from Firestore
@@ -76,23 +80,83 @@ namespace e_learning_app.Views
                     return;
                 }
 
-                if (_exam.RandomizeQuestions)
+                if (_activeDraft != null)
                 {
-                    var rnd = new Random();
-                    _questions = _questions.OrderBy(x => rnd.Next()).ToList();
+                    // --- Restore from draft ---
+                    // Compute how much time has truly elapsed since the student first started
+                    double elapsedSeconds = (DateTime.UtcNow - _activeDraft.StartedAt).TotalSeconds;
+                    double leftSeconds = _totalSeconds - elapsedSeconds;
+
+                    if (leftSeconds <= 0)
+                    {
+                        // Time already expired while they were away - auto-submit
+                        _startTime = _activeDraft.StartedAt.ToLocalTime();
+                        RestoreDraftState(_activeDraft);
+                        CustomDialog.Show("Thời gian làm bài đã hết! Hệ thống sẽ tự động nộp bài.", "Hết giờ", DialogType.Warning);
+                        await SubmitQuiz();
+                        return;
+                    }
+
+                    bool resume = CustomDialog.Confirm(
+                        $"Bạn có bài làm đang dở của bài thi này.\n" +
+                        $"Thời gian còn lại: {TimeSpan.FromSeconds(leftSeconds):mm\\:ss}\n\n" +
+                        "Tiếp tục làm bài?",
+                        "Tiếp tục bài làm", "Tiếp tục", "Bắt đầu lại", DialogType.Question);
+
+                    if (resume)
+                    {
+                        // Keep original startTime so timer reflects real elapsed time
+                        _startTime = _activeDraft.StartedAt.ToLocalTime();
+                        _remainingTime = TimeSpan.FromSeconds(leftSeconds);
+                        RestoreDraftState(_activeDraft);
+                    }
+                    else
+                    {
+                        // Delete old draft, fresh start
+                        var u = _dbManager.GetCurrentUser();
+                        if (u != null) await _dbManager.DeleteExamDraftAsync(_exam.Id, u.Id);
+                        _activeDraft = null;
+                        FreshStart();
+                    }
+                }
+                else
+                {
+                    FreshStart();
                 }
 
                 // Initialize timer
                 StartTimer();
 
-                // Render first question
-                ShowQuestion(0);
+                // Render current question
+                ShowQuestion(_currentIndex);
                 UpdateQuestionMap();
             }
             catch (Exception ex)
             {
                 CustomDialog.Show($"Lỗi tải bài thi: {ex.Message}", "Lỗi", DialogType.Error);
             }
+        }
+
+        private void FreshStart()
+        {
+            if (_exam.RandomizeQuestions)
+            {
+                var rnd = new Random();
+                _questions = _questions.OrderBy(x => rnd.Next()).ToList();
+            }
+            _startTime = DateTime.Now;
+            _remainingTime = TimeSpan.FromSeconds(_totalSeconds);
+            _currentIndex = 0;
+        }
+
+        private void RestoreDraftState(ExamDraft draft)
+        {
+            // Restore answers
+            _studentAnswers = new Dictionary<string, string>(draft.Answers ?? new());
+            // Restore marked-for-review
+            _markedForReview = new HashSet<string>(draft.MarkedForReview ?? new List<string>());
+            // Restore last viewed question index (clamped)
+            _currentIndex = Math.Max(0, Math.Min(draft.LastQuestionIndex, _questions.Count - 1));
         }
 
         private void StartTimer()
@@ -366,6 +430,62 @@ namespace e_learning_app.Views
             UpdateStats();
         }
 
+        private async void BtnSaveExit_Click(object sender, RoutedEventArgs e)
+        {
+            var user = _dbManager.GetCurrentUser();
+            if (user == null)
+            {
+                CustomDialog.Show("Không xác định được học sinh hiện tại.", "Lỗi", DialogType.Error);
+                return;
+            }
+
+            // Stop the UI timer (timer "keeps running" conceptually via startTime saved in draft)
+            _timer?.Stop();
+
+            var draft = new ExamDraft
+            {
+                ExamId        = _exam.Id,
+                StudentId     = user.Id,
+                StudentName   = user.FullName,
+                // Preserve the ORIGINAL start time so elapsed time accumulates correctly
+                StartedAt     = (_activeDraft != null)
+                                    ? _activeDraft.StartedAt          // already UTC
+                                    : _startTime.ToUniversalTime(),
+                Answers       = new Dictionary<string, string>(_studentAnswers),
+                MarkedForReview = new List<string>(_markedForReview),
+                LastQuestionIndex = _currentIndex
+            };
+
+            bool saved = await _dbManager.SaveExamDraftAsync(draft);
+
+            if (saved)
+            {
+                // Show how much time they have left when they return
+                double elapsedSec  = (DateTime.UtcNow - draft.StartedAt).TotalSeconds;
+                double leftSec     = Math.Max(0, _totalSeconds - elapsedSec);
+                string leftDisplay = TimeSpan.FromSeconds(leftSec).ToString(@"mm\:ss");
+
+                CustomDialog.Show(
+                    $"Bài làm đã được lưu lại!\n" +
+                    $"⚠️ Đồng hồ vẫn tiếp tục chạy.\n" +
+                    $"Thời gian còn lại khi quay lại: ~{leftDisplay}",
+                    "Lưu thành công", DialogType.Success);
+            }
+            else
+            {
+                CustomDialog.Show("Không thể lưu bài làm. Kiểm tra kết nối mạng!", "Lỗi lưu", DialogType.Error);
+                // Resume timer if save failed
+                _timer?.Start();
+                return;
+            }
+
+            // Navigate away
+            if (Window.GetWindow(this) is MainWindow mainWin)
+                mainWin.NavDashboard_Click(null, null);
+            else if (Window.GetWindow(this) is StudentMainWindow stuWin)
+                stuWin.StudentContentArea.Content = new StudentDashboardView(_dbManager);
+        }
+
         private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
         {
             var confirmed = CustomDialog.Confirm("Bạn có chắc chắn muốn nộp bài?", "Xác nhận nộp bài", "Nộp bài", "Hủy", DialogType.Question);
@@ -379,11 +499,14 @@ namespace e_learning_app.Views
         {
             _timer?.Stop();
 
-            int timeSpent = (int)(DateTime.Now - _startTime).TotalSeconds;
+            // If we restored from a draft, measure elapsed from the ORIGINAL startTime
+            DateTime effectiveStart = (_activeDraft != null)
+                ? _activeDraft.StartedAt.ToLocalTime()
+                : _startTime;
+
+            int timeSpent = (int)(DateTime.Now - effectiveStart).TotalSeconds;
             if (_totalSeconds > 0 && timeSpent > _totalSeconds)
-            {
                 timeSpent = (int)_totalSeconds;
-            }
 
             var user = _dbManager.GetCurrentUser();
             var submission = new ExamSubmission
@@ -412,15 +535,16 @@ namespace e_learning_app.Views
 
                 if (graded != null)
                 {
+                    // Delete draft (if any) now that we have a real submission
+                    var u = _dbManager.GetCurrentUser();
+                    if (u != null)
+                        await _dbManager.DeleteExamDraftAsync(_exam.Id, u.Id);
+
                     string msg = "Nộp bài thành công!";
                     if (_exam.ShowScore)
-                    {
                         msg += $"\nĐiểm của bạn: {graded.Score:F1} / 10 ({graded.Percentage:F1}%)";
-                    }
                     else
-                    {
                         msg += "\nKết quả của bạn đã được ghi nhận.";
-                    }
 
                     CustomDialog.Show(msg, "Kết quả", DialogType.Success);
 

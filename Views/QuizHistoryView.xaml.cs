@@ -14,6 +14,7 @@ namespace e_learning_app.Views
         private readonly DatabaseManager _dbManager;
         private readonly Exam _exam;
         private List<ExamSubmission> _submissions = new();
+        private ExamDraft _draft; // non-null when student has a saved draft
 
         public QuizHistoryView(DatabaseManager dbManager, Exam exam)
         {
@@ -105,6 +106,35 @@ namespace e_learning_app.Views
                 }).ToList();
 
                 ItemsHistory.ItemsSource = displayList;
+
+                // --- Check for a saved draft ---
+                _draft = await _dbManager.GetExamDraftAsync(_exam.Id, user.Id);
+                if (_draft != null)
+                {
+                    double elapsed = (DateTime.UtcNow - _draft.StartedAt).TotalSeconds;
+                    double leftSec = (_exam.TimeLimitMinutes * 60.0) - elapsed;
+
+                    if (leftSec <= 0)
+                    {
+                        // Time already expired — silently clean up the stale draft
+                        await _dbManager.DeleteExamDraftAsync(_exam.Id, user.Id);
+                        _draft = null;
+                    }
+                    else
+                    {
+                        string timeLeftStr = TimeSpan.FromSeconds(leftSec).ToString(
+                            leftSec >= 3600 ? @"hh\:mm\:ss" : @"mm\:ss");
+
+                        DraftBanner.Visibility      = Visibility.Visible;
+                        TxtDraftTimeLeft.Text       = timeLeftStr;
+                        TxtDraftAnswerCount.Text    = $"Đã trả lời {_draft.Answers?.Count ?? 0} / {_exam.TotalQuestions} câu";
+                        TxtDraftSavedAt.Text        = $"Lưu lúc: {_draft.SavedAt.ToLocalTime():dd/MM/yyyy HH:mm}";
+
+                        // Update start button label so it's clear
+                        if (BtnStartQuiz.IsEnabled)
+                            BtnStartQuiz.Content = "🔄 Bắt đầu làm mới";
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -141,6 +171,34 @@ namespace e_learning_app.Views
                 mw.MainContentArea.Content = new StudentQuizView(_dbManager);
             else if (Window.GetWindow(this) is StudentMainWindow smw)
                 smw.StudentContentArea.Content = new StudentQuizView(_dbManager);
+        }
+
+        private void BtnContinueDraft_Click(object sender, RoutedEventArgs e)
+        {
+            // Navigate to TakeQuizView — it will detect the draft and offer to resume
+            if (Window.GetWindow(this) is MainWindow mw)
+                mw.MainContentArea.Content = new TakeQuizView(_dbManager, _exam);
+            else if (Window.GetWindow(this) is StudentMainWindow smw)
+                smw.StudentContentArea.Content = new TakeQuizView(_dbManager, _exam);
+        }
+
+        private async void BtnDiscardDraft_Click(object sender, RoutedEventArgs e)
+        {
+            bool confirmed = CustomDialog.Confirm(
+                "Bạn có chắc muốn xóa bài làm đang dở?\nHành động này không thể hoàn tác.",
+                "Xóa bài dở", "Xóa", "Hủy", DialogType.Warning);
+            if (!confirmed) return;
+
+            var user = _dbManager.GetCurrentUser();
+            if (user == null) return;
+
+            await _dbManager.DeleteExamDraftAsync(_exam.Id, user.Id);
+            _draft = null;
+            DraftBanner.Visibility = Visibility.Collapsed;
+
+            // Reset start button label
+            if (BtnStartQuiz.IsEnabled)
+                BtnStartQuiz.Content = "🚀 Bắt đầu làm bài";
         }
 
         private void BtnStartQuiz_Click(object sender, RoutedEventArgs e)

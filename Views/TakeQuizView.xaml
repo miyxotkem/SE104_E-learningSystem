@@ -349,7 +349,24 @@
                             <TextBlock x:Name="TxtStatsTodo" Text="-- câu" FontSize="12" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Right"/>
                         </Grid>
 
-                        <Button x:Name="BtnSubmitRight" Margin="0,14,0,0" Background="#DC2626" Foreground="White" FontWeight="Bold"
+                        <!-- Save & Exit (sidebar) -->
+                        <Button Margin="0,14,0,6" Height="40" BorderThickness="1" BorderBrush="#FDE68A"
+                                Background="#FFFBF0" Cursor="Hand" Click="BtnSaveExit_Click">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="💾" FontSize="13" VerticalAlignment="Center"/>
+                                <TextBlock Text="  Lưu &amp; Thoát" FontSize="12" Foreground="#D97706" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Submit -->
+                        <Button x:Name="BtnSubmitRight" Background="#DC2626" Foreground="White" FontWeight="Bold"
                                 FontSize="13" Height="44" BorderThickness="0" Cursor="Hand" Click="BtnSubmit_Click">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">

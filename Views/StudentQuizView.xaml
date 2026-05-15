@@ -32,22 +32,113 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Filter Chip Style -->
+        <Style x:Key="FilterChip" TargetType="ToggleButton">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#64748B"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#3B82F6"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="30">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="30"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
+        <!-- Header -->
         <StackPanel Grid.Row="0">
             <TextBlock Text="📝 Các bài kiểm tra" FontSize="28" FontWeight="Bold" Foreground="#1E293B"/>
             <TextBlock Text="Danh sách các bài thi và trắc nghiệm đang mở" FontSize="14" Foreground="#64748B" Margin="0,8,0,0"/>
         </StackPanel>
-        
-        <ListBox x:Name="ExamsList" Grid.Row="2" Background="Transparent" BorderThickness="0"
-                 ItemContainerStyle="{StaticResource ExamCardStyle}"
+
+        <!-- Filter Bar -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Search Box -->
+            <Border Grid.Column="0" Background="White" CornerRadius="12" BorderBrush="#E2E8F0" BorderThickness="1" Padding="14,0">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.04" Color="Black"/>
+                </Border.Effect>
+                <Grid Height="44">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="🔍" VerticalAlignment="Center" Margin="0,0,10,0" Opacity="0.4" FontSize="14"/>
+                    <TextBox x:Name="TxtSearch" Grid.Column="1" Background="Transparent" BorderThickness="0"
+                             VerticalContentAlignment="Center" FontSize="13" Foreground="#1E293B"
+                             TextChanged="TxtSearch_TextChanged"/>
+                    <TextBlock x:Name="SearchPlaceholder" Grid.Column="1" Text="Tìm kiếm theo tên bài kiểm tra..."
+                               VerticalAlignment="Center" Foreground="#94A3B8" FontSize="13" IsHitTestVisible="False"/>
+                    <Button x:Name="BtnClearSearch" Grid.Column="2" Content="✕" Background="Transparent" BorderThickness="0"
+                            Foreground="#94A3B8" FontSize="14" Cursor="Hand" Visibility="Collapsed"
+                            Click="BtnClearSearch_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- Status Filter Chips -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <ToggleButton x:Name="ChipAll" Content="Tất cả" Style="{StaticResource FilterChip}" IsChecked="True"
+                              Margin="0,0,8,0" Click="FilterChip_Click" Tag="all"/>
+                <ToggleButton x:Name="ChipOpen" Content="🟢 Đang mở" Style="{StaticResource FilterChip}"
+                              Margin="0,0,8,0" Click="FilterChip_Click" Tag="open"/>
+                <ToggleButton x:Name="ChipDone" Content="✔ Đã làm" Style="{StaticResource FilterChip}"
+                              Margin="0,0,8,0" Click="FilterChip_Click" Tag="done"/>
+                <ToggleButton x:Name="ChipClosed" Content="🔒 Đã đóng" Style="{StaticResource FilterChip}"
+                              Click="FilterChip_Click" Tag="closed"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Exam List + Empty State -->
+        <Grid Grid.Row="4">
+            <!-- Empty State -->
+            <StackPanel x:Name="PanelEmpty" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="🔍" FontSize="48" HorizontalAlignment="Center" Opacity="0.3"/>
+                <TextBlock x:Name="TxtEmpty" Text="Không tìm thấy bài kiểm tra nào" FontSize="16"
+                           Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                <TextBlock Text="Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm" FontSize="13"
+                           Foreground="#CBD5E1" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <ListBox x:Name="ExamsList" Background="Transparent" BorderThickness="0"
+                     ItemContainerStyle="{StaticResource ExamCardStyle}"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  SelectionChanged="ExamsList_SelectionChanged">
             <ListBox.ItemsPanel>
@@ -96,6 +187,7 @@
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
-        </ListBox>
+            </ListBox>
+        </Grid>
     </Grid>
 </UserControl>
