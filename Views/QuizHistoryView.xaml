@@ -104,7 +104,8 @@
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <ListBox x:Name="ItemsHistory" Background="Transparent" BorderThickness="0"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     PreviewMouseWheel="ItemsHistory_PreviewMouseWheel">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Padding" Value="0"/>

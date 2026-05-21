@@ -46,7 +46,7 @@ namespace e_learning_app
             if (string.IsNullOrWhiteSpace(Content)) { IsValid = false; ErrorMessage = "Lỗi: Thiếu nội dung"; return; }
             if (string.IsNullOrWhiteSpace(OptA) || string.IsNullOrWhiteSpace(OptB) || string.IsNullOrWhiteSpace(OptC) || string.IsNullOrWhiteSpace(OptD)) { IsValid = false; ErrorMessage = "Lỗi: Thiếu đáp án"; return; }
             var ans = CorrectAns?.Trim().ToUpper();
-            if (ans != "A" && ans != "B" && ans != "C" && ans != "D") { IsValid = false; ErrorMessage = "Lỗi: Đ.án đúng phải là A,B,C,D"; return; }
+            if (ans != "A" && ans != "B" && ans != "C" && ans != "D") { IsValid = false; ErrorMessage = "Lỗi: Đáp án đúng phải là A,B,C,D"; return; }
             
             IsValid = true;
             ErrorMessage = "Hợp lệ";
@@ -88,7 +88,7 @@ namespace e_learning_app
             try
             {
                 BtnSubmit.IsEnabled = false;
-                BtnSubmit.Content = "⏳ Đang lưu dữ liệu...";
+                BtnSubmit.Content = "Đang lưu dữ liệu...";
 
                 _exam.TotalQuestions = _questions.Count;
                 _exam.QuestionIds.Clear();
@@ -97,29 +97,55 @@ namespace e_learning_app
                     _exam.QuestionIds.Add(q.Id);
                 }
 
-                bool success = await _dbManager.SaveExamWithQuestionsAsync(_exam, _questions);
+                var request = new e_learning_app.Class.CreateExamRequest
+                {
+                    CourseId = _exam.ClassId,
+                    Title = _exam.Title,
+                    Description = _exam.Description,
+                    DurationMinutes = _exam.TimeLimitMinutes,
+                    PassingScore = _exam.PassingScore,
+                    IsPublished = _exam.IsPublished,
+                    IsActive = _exam.IsActive,
+                    AllowReview = _exam.AllowReview,
+                    RandomizeQuestions = _exam.RandomizeQuestions,
+                    ShowScore = _exam.ShowScore,
+                    AllowMultipleAttempts = _exam.AllowMultipleAttempts,
+                    MaxAttempts = _exam.MaxAttempts,
+                    Questions = _questions.Select(q => new e_learning_app.Class.QuestionModel
+                    {
+                        QuestionText = q.Content,
+                        Options = q.Options ?? new System.Collections.Generic.List<string>(),
+                        CorrectOptionIndex = q.CorrectAnswerIndex,
+                        Points = q.Points
+                    }).ToList()
+                };
+                var response = await e_learning_app.Class.ApiService.PostAsync<dynamic>("exams", request);
+                bool success = response != null;
 
                 if (success)
                 {
-                    try
+                    if (_exam.IsPublished)
                     {
-                        var currentUser = _dbManager.GetCurrentUser();
-                        await NotificationService.SendToClassAsync(
-                            _dbManager, 
-                            _exam.ClassId, 
-                            "Bài kiểm tra mới", 
-                            $"Giáo viên vừa tạo bài kiểm tra: {_exam.Title}", 
-                            "Exam", 
-                            currentUser?.Id, 
-                            "Giáo viên"
-                        );
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Lỗi gửi thông báo: " + ex.Message);
+                        try
+                        {
+                            var currentUser = _dbManager.GetCurrentUser();
+                            await NotificationService.SendToClassAsync(
+                                _dbManager, 
+                                _exam.ClassId, 
+                                "Bài kiểm tra mới", 
+                                $"Giáo viên vừa tạo bài kiểm tra: {_exam.Title}", 
+                                "Exam", 
+                                currentUser?.Id, 
+                                "Giáo viên"
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Lỗi gửi thông báo: " + ex.Message);
+                        }
                     }
 
-                    CustomDialog.Show($"✅ Tạo bài thi thành công!\nTổng cộng: {_questions.Count} câu hỏi.", "Thành Công", DialogType.Success);
+                    CustomDialog.Show($"Tạo bài thi thành công!\nTổng cộng: {_questions.Count} câu hỏi.", "Thành Công", DialogType.Success);
                     if (Window.GetWindow(this) is MainWindow mw)
                     {
                         mw.NavigateTo(new ExamManagementView(_dbManager));
@@ -132,9 +158,9 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                CustomDialog.Show($"❌ Lỗi khi lưu: {ex.Message}", "Lỗi", DialogType.Error);
+                CustomDialog.Show($"Lỗi khi lưu: {ex.Message}", "Lỗi", DialogType.Error);
                 BtnSubmit.IsEnabled = true;
-                BtnSubmit.Content = "✅ Hoàn Tất Tạo Bài Thi";
+                BtnSubmit.Content = "Hoàn Tất Tạo Bài Thi";
             }
         }
 
@@ -176,8 +202,6 @@ namespace e_learning_app
             TxtPoints.Text = "1";
         }
 
-        // --- NEW EXCEL IMPORT LOGIC ---
-
         private void BtnDownloadTemplate_Click(object sender, RoutedEventArgs e)
         {
             var dlg = new Microsoft.Win32.SaveFileDialog
@@ -193,7 +217,6 @@ namespace e_learning_app
                 {
                     var worksheet = workbook.Worksheets.Add("Questions");
                     
-                    // Header
                     worksheet.Cell(1, 1).Value = "Câu hỏi";
                     worksheet.Cell(1, 2).Value = "Đáp án A";
                     worksheet.Cell(1, 3).Value = "Đáp án B";
@@ -205,7 +228,6 @@ namespace e_learning_app
                     headerRange.Style.Font.Bold = true;
                     headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
                     
-                    // Sample data
                     worksheet.Cell(2, 1).Value = "Thủ đô của Việt Nam là gì?";
                     worksheet.Cell(2, 2).Value = "Hà Nội";
                     worksheet.Cell(2, 3).Value = "Hồ Chí Minh";
@@ -225,7 +247,7 @@ namespace e_learning_app
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                DropZone.Background = new SolidColorBrush(Color.FromRgb(241, 245, 249)); // #F1F5F9
+                DropZone.Background = new SolidColorBrush(Color.FromRgb(241, 245, 249));
             }
         }
 
@@ -295,7 +317,6 @@ namespace e_learning_app
                         foreach (var row in rows)
                         {
                             currentRow++;
-                            // Bỏ qua header
                             if (currentRow == 1) continue;
 
                             var item = new ImportQuestionItem
@@ -310,7 +331,6 @@ namespace e_learning_app
                             item.Validate();
                             newItems.Add(item);
 
-                            // Cập nhật progress bar
                             Dispatcher.Invoke(() =>
                             {
                                 ImportProgress.Value = (double)currentRow / totalRows * 100;
@@ -396,7 +416,7 @@ namespace e_learning_app
 
                 var btnDelete = new Button
                 {
-                    Content = "🗑️ Xóa",
+                    Content = "Xóa",
                     Background = Brushes.Transparent,
                     BorderThickness = new Thickness(0),
                     Foreground = Brushes.Red,

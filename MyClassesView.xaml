@@ -153,7 +153,7 @@
                             <TextBlock Text="Đăng ký lớp học mới" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
                             <Button Content="✕" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" FontSize="20" Foreground="#94A3B8" Cursor="Hand" Click="CloseRegisterOverlay_Click"/>
                         </Grid>
-                        <TextBlock Text="Danh sách các lớp học hiện có trên hệ thống mà bạn chưa tham gia." FontSize="14" Foreground="#64748B" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="Danh sách các lớp học hiện có trên hệ thống mà bạn chua tham gia." FontSize="14" Foreground="#64748B" Margin="0,8,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <ScrollViewer Grid.Row="1" Margin="40,0,40,30" VerticalScrollBarVisibility="Auto">
@@ -185,7 +185,7 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <TextBlock x:Name="TxtNoCoursesAvailable" Text="Hiện không có lớp học mới nào để đăng ký." Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,20,0,0" Visibility="Collapsed"/>
+                            <TextBlock x:Name="TxtNoCoursesAvailable" Text="Hiện không có lớp học mới nào để dang ký." Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,20,0,0" Visibility="Collapsed"/>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

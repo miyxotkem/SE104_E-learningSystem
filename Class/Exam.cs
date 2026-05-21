@@ -1,6 +1,7 @@
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace e_learning_app.Class
 {
@@ -33,6 +34,7 @@ namespace e_learning_app.Class
         public int TotalQuestions { get; set; }
 
         [FirestoreProperty]
+        [JsonPropertyName("DurationMinutes")]
         public int TimeLimitMinutes { get; set; }
 
         [FirestoreProperty]

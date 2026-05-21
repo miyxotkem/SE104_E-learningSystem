@@ -1,4 +1,4 @@
-<UserControl x:Class="e_learning_app.ExamManagementView"
+﻿<UserControl x:Class="e_learning_app.ExamManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -261,7 +261,7 @@
                                      Foreground="#CBD5E1"
                                      TextAlignment="Center"
                                      Margin="0,0,0,24"/>
-                            <TextBlock Text="Chưa có bài thi nào"
+                            <TextBlock Text="Chua có bài thi nào"
                                      FontSize="20"
                                      FontWeight="Bold"
                                      Foreground="#64748B"

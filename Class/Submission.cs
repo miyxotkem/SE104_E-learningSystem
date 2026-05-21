@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 using System;
 
 namespace e_learning_app.Class
@@ -12,5 +12,7 @@ namespace e_learning_app.Class
         [FirestoreProperty] public string FileUrl { get; set; }
         [FirestoreProperty] public DateTime SubmittedAt { get; set; }
         [FirestoreProperty] public bool IsLate { get; set; }
+        [FirestoreProperty] public double? Score { get; set; }
+        [FirestoreProperty] public string Comment { get; set; }
     }
 }

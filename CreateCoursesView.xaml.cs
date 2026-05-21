@@ -1,9 +1,11 @@
+﻿using DocumentFormat.OpenXml.Office2016.Excel;
+using e_learning_app;
+using e_learning_app.Class;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using e_learning_app;
 
 namespace e_learning_app
 {
@@ -86,7 +88,7 @@ namespace e_learning_app
                 string.IsNullOrWhiteSpace(TxtCategory.Text) ||
                 string.IsNullOrWhiteSpace(TxtDescription.Text))
             {
-                CustomDialog.Show("Vui lòng điền đầy đủ tất cả các thông tin (Tên môn, Mô tả, Mã lớp, Chuyên ngành) trước khi tạo lớp!",
+                CustomDialog.Show("Vui lòng diền đầy đủ tất cả các thông tin (Tên môn, Mô tả, Mã lớp, Chuyên ngành) trước khi tạo lớp!",
                                 "Thiếu thông tin", DialogType.Warning);
                 return;
             }
@@ -102,7 +104,7 @@ namespace e_learning_app
                 if (!int.TryParse(TxtStartPeriod.Text, out startP) || !int.TryParse(TxtEndPeriod.Text, out endP) ||
                     startP >= endP || !((startP >= 1 && endP <= 5) || (startP >= 6 && endP <= 10)))
                 {
-                    CustomDialog.Show("Tiết học không hợp lệ!\n- Tiết bắt đầu phải nhỏ hơn tiết kết thúc.\n- Cùng thuộc 1 buổi (Sáng: 1-5, Chiều: 6-10).",
+                    CustomDialog.Show("Tiết học không hợp lệ!\n- Tiết bắt đầu phải nhỏ hon tiết kết thúc.\n- Cùng thuộc 1 buổi (Sáng: 1-5, Chiều: 6-10).",
                                     "Lỗi nhập liệu", DialogType.Warning);
                     BtnSubmit.IsEnabled = true;
                     BtnSubmit.Content = "Hoàn tất và Tạo lớp";
@@ -112,30 +114,10 @@ namespace e_learning_app
 
             try
             {
-                var course = new Course
-                {
-                    Id = Guid.NewGuid().ToString("N"),
-                    Title = TxtTitle.Text.Trim(),
-                    Description = TxtDescription.Text.Trim(),
-                    ClassName = TxtClass.Text.Trim(),
-
-                    CourseType = (CbCourseType.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Đại cương",
-                    Category = TxtCategory.Text.Trim(),
-
-                    DayOfWeek = day,
-                    StartPeriod = startP,
-                    EndPeriod = endP,
-
-                    Semester = $"{(CbSemester.SelectedItem as ComboBoxItem).Content} - {CbYear.SelectedItem}",
-                    Emoji = PreviewEmoji.Text,
-                    AccentColor = _selectedColor,
-                    InstructorId = _dbManager.GetCurrentUser()?.Id ?? "Unknown",
-                    CreatedAt = DateTime.UtcNow,
-                    IsActive = true
-                };
+                var course = GetCourse(day, startP, endP);
 
                 bool success = await _dbManager.CreateCourseAsync(course);
-
+                //var success = await ApiService.PostAsync("courses", course);
                 if (success)
                 {
                     NavigateBack();
@@ -147,10 +129,35 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                CustomDialog.Show($"Lỗi khi lưu vào Firebase: {ex.Message}", "Lỗi", DialogType.Error);
+                CustomDialog.Show($"Lỗi khi luu vào Firebase: {ex.Message}", "Lỗi", DialogType.Error);
                 BtnSubmit.IsEnabled = true;
                 BtnSubmit.Content = "Hoàn tất và Tạo lớp";
             }
+        }
+
+        private Course GetCourse(string day, int startP, int endP)
+        {
+            return new Course
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Title = TxtTitle.Text.Trim(),
+                Description = TxtDescription.Text.Trim(),
+                ClassName = TxtClass.Text.Trim(),
+
+                CourseType = (CbCourseType.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Đại cuong",
+                Category = TxtCategory.Text.Trim(),
+
+                DayOfWeek = day,
+                StartPeriod = startP,
+                EndPeriod = endP,
+
+                Semester = $"{(CbSemester.SelectedItem as ComboBoxItem).Content} - {CbYear.SelectedItem}",
+                Emoji = PreviewEmoji.Text,
+                AccentColor = _selectedColor,
+                InstructorId = _dbManager.GetCurrentUser()?.Id ?? "Unknown",
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true
+            };
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e) => NavigateBack();

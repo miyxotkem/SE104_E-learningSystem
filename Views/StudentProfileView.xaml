@@ -1,4 +1,4 @@
-<UserControl x:Class="e_learning_app.Views.StudentProfileView"
+﻿<UserControl x:Class="e_learning_app.Views.StudentProfileView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F0F2F5">
@@ -168,7 +168,7 @@
                     <StackPanel HorizontalAlignment="Center">
                         <TextBlock Text="📚" FontSize="24" HorizontalAlignment="Center"/>
                         <TextBlock Text="5" FontSize="26" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Center" Margin="0,6,0,2"/>
-                        <TextBlock Text="Khóa đang học" FontSize="12" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Khóa dang học" FontSize="12" Foreground="#64748B" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
@@ -251,7 +251,7 @@
                                                 <TextBlock Text="Huy hiệu vàng" FontSize="10" Foreground="#CA8A04" FontWeight="Bold"/>
                                             </Border>
                                         </StackPanel>
-                                        <TextBlock Text="Đạt điểm A+ trong cả học kỳ. Thành tích đặc biệt xuất sắc!" FontSize="12" Foreground="#78350F" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="Đạt diểm A+ trong cả học kỳ. Thành tích đặc biệt xuất sắc!" FontSize="12" Foreground="#78350F" Margin="0,4,0,0" TextWrapping="Wrap"/>
                                         <TextBlock Text="Đạt được: 15/03/2026" FontSize="11" Foreground="#92400E" Margin="0,6,0,0"/>
                                     </StackPanel>
                                     <TextBlock Grid.Column="3" Text="✨" FontSize="24" VerticalAlignment="Center"/>
@@ -316,7 +316,7 @@
                                         </Border>
                                         <TextBlock Text="Bậc thầy Toán" FontSize="11" Foreground="#CBD5E1"
                                                    HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,2"/>
-                                        <TextBlock Text="Chưa đạt" FontSize="10" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Chua đạt" FontSize="10" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
 
@@ -328,7 +328,7 @@
                                         </Border>
                                         <TextBlock Text="Top 1 lớp" FontSize="11" Foreground="#CBD5E1"
                                                    HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,2"/>
-                                        <TextBlock Text="Chưa đạt" FontSize="10" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Chua đạt" FontSize="10" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
                             </WrapPanel>
@@ -466,7 +466,7 @@
                                 </Border>
                                 <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="Hoàn thành Quiz Vật lý Lab 1" FontSize="12" FontWeight="SemiBold" Foreground="#1E293B"/>
-                                    <TextBlock Text="Hôm qua, 20:15  ·  +250 XP · 9/10 điểm" FontSize="11" Foreground="#64748B"/>
+                                    <TextBlock Text="Hôm qua, 20:15  ·  +250 XP · 9/10 diểm" FontSize="11" Foreground="#64748B"/>
                                 </StackPanel>
                             </StackPanel>
 

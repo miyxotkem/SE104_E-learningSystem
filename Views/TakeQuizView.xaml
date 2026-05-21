@@ -1,4 +1,4 @@
-<UserControl x:Class="e_learning_app.Views.TakeQuizView"
+﻿<UserControl x:Class="e_learning_app.Views.TakeQuizView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F0F2F5">
@@ -122,7 +122,7 @@
                     <!-- Quiz info -->
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <TextBlock x:Name="TxtQuizTitle" Text="📝  Đang tải bài thi..." FontSize="15" FontWeight="Bold" Foreground="#1E293B"/>
-                            <TextBlock x:Name="TxtProgressHeader" Text="Câu -- / --  ·  -- điểm" FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="TxtProgressHeader" Text="Câu -- / --  ·  -- diểm" FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <!-- Timer (Prominent, centered) -->
@@ -260,7 +260,7 @@
                                 <TextBlock Text="🚩 Xem lại" FontSize="11" Foreground="#DC2626" FontWeight="SemiBold"/>
                             </Border>
                             <Border CornerRadius="6" Background="#F1F5F9" Padding="8,4">
-                                <TextBlock Text="○ Chưa làm" FontSize="11" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                                <TextBlock Text="○ Chua làm" FontSize="11" Foreground="#94A3B8" FontWeight="SemiBold"/>
                             </Border>
                         </StackPanel>
                     </StackPanel>
@@ -285,7 +285,7 @@
                             <TextBlock x:Name="TxtStatsReview" Text="0 câu" FontSize="12" FontWeight="Bold" Foreground="#CA8A04" HorizontalAlignment="Right"/>
                         </Grid>
                         <Grid>
-                            <TextBlock Text="Chưa làm" FontSize="12" Foreground="#64748B"/>
+                            <TextBlock Text="Chua làm" FontSize="12" Foreground="#64748B"/>
                             <TextBlock x:Name="TxtStatsTodo" Text="-- câu" FontSize="12" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Right"/>
                         </Grid>
 

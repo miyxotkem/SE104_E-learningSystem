@@ -1,4 +1,4 @@
-using CloudinaryDotNet;
+﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using System;
 using System.IO;
@@ -26,7 +26,7 @@ namespace e_learning_app
         /// Upload một file hình ảnh lên Cloudinary
         /// </summary>
         /// <param name="filePath">Đường dẫn tới file ảnh trên máy tính (ví dụ: C:\Images\avatar.jpg)</param>
-        /// <param name="folderName">Tên thư mục trên Cloudinary (nếu muốn gom nhóm ảnh)</param>
+        /// <param name="folderName">Tên thu mục trên Cloudinary (nếu muốn gom nhóm ảnh)</param>
         /// <returns>URL an toàn (https) của ảnh sau khi upload thành công</returns>
         public async Task<string?> UploadImageAsync(string filePath, string folderName = "e_learning_images")
         {
@@ -56,7 +56,7 @@ namespace e_learning_app
         /// Upload một file video lên Cloudinary
         /// </summary>
         /// <param name="filePath">Đường dẫn tới file video trên máy tính</param>
-        /// <param name="folderName">Tên thư mục trên Cloudinary</param>
+        /// <param name="folderName">Tên thu mục trên Cloudinary</param>
         /// <returns>URL an toàn (https) của video sau khi upload thành công</returns>
         public async Task<string?> UploadVideoAsync(string filePath, string folderName = "e_learning_videos")
         {

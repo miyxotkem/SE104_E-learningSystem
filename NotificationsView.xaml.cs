@@ -7,7 +7,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
-using Google.Cloud.Firestore;
+using System.Windows.Threading;
+using System.Threading.Tasks;
+using e_learning_app.Class;
 
 namespace e_learning_app.Views
 {
@@ -18,8 +20,8 @@ namespace e_learning_app.Views
         private List<Notification> _all = new();
         private string _filterMode = "all";
         
-        private FirestoreChangeListener _userNotifListener;
-        private FirestoreChangeListener _systemNotifListener;
+
+
 
         public ObservableCollection<Notification> Notifications
         {
@@ -27,88 +29,49 @@ namespace e_learning_app.Views
             set { _notifications = value; OnPropertyChanged(); }
         }
 
+        private DispatcherTimer _pollingTimer;
+
         public NotificationsView(DatabaseManager db)
         {
             InitializeComponent();
             _dbManager = db;
             this.DataContext = this;
+            this.Unloaded += NotificationsView_Unloaded;
         }
 
-        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private void NotificationsView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _pollingTimer?.Stop();
+        }
+
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             var currentUser = _dbManager.GetCurrentUser();
             if (currentUser == null) return;
 
-            // 1. Đồng bộ trạng thái đã đọc vào RAM
-            try
-            {
-                var readNotifsSnap = await _dbManager.GetDb.Collection("Users").Document(currentUser.Id)
-                    .Collection("ReadNotifications").GetSnapshotAsync();
+            _pollingTimer = new DispatcherTimer();
+            _pollingTimer.Interval = TimeSpan.FromSeconds(15);
+            _pollingTimer.Tick += async (s, args) => await FetchNotificationsAsync();
+            _pollingTimer.Start();
 
-                NotificationService.ReadNotifKeys.Clear();
-                foreach (var doc in readNotifsSnap.Documents)
-                {
-                    NotificationService.ReadNotifKeys.Add(doc.Id);
-                }
-            }
-            catch { }
-
-            // 2. Lắng nghe thông báo cá nhân (Real-time)
-            _userNotifListener = _dbManager.GetDb.Collection("Notifications")
-                .WhereEqualTo("TargetId", currentUser.Id)
-                .Listen(snapshot =>
-                {
-                    UpdateNotificationsFromSnapshot(snapshot);
-                });
-
-            // 3. Lắng nghe thông báo hệ thống toàn cầu (Real-time)
-            _systemNotifListener = _dbManager.GetDb.Collection("Notifications")
-                .WhereEqualTo("TargetId", "all")
-                .Listen(snapshot =>
-                {
-                    UpdateNotificationsFromSnapshot(snapshot);
-                });
+            _ = FetchNotificationsAsync();
         }
 
-        private void UpdateNotificationsFromSnapshot(QuerySnapshot snapshot)
+        private async Task FetchNotificationsAsync()
         {
-            // Cập nhật hoặc thêm mới vào danh sách gốc (_all)
-            foreach (var change in snapshot.Changes)
+            try
             {
-                var doc = change.Document;
-                var notif = doc.ConvertTo<Notification>();
-                notif.Id = doc.Id;
-                
-                // Cập nhật trạng thái đã đọc từ RAM
-                notif.IsRead = NotificationService.ReadNotifKeys.Contains(notif.Id);
-
-                if (change.ChangeType == DocumentChange.Type.Added)
+                var notifs = await ApiService.GetAsync<List<Notification>>("notifications");
+                if (notifs != null)
                 {
-                    // Nếu chưa có thì thêm vào
-                    if (!_all.Any(n => n.Id == notif.Id))
-                        _all.Add(notif);
-                }
-                else if (change.ChangeType == DocumentChange.Type.Modified)
-                {
-                    var existing = _all.FirstOrDefault(n => n.Id == notif.Id);
-                    if (existing != null)
-                    {
-                        _all.Remove(existing);
-                        _all.Add(notif);
-                    }
-                }
-                else if (change.ChangeType == DocumentChange.Type.Removed)
-                {
-                    var existing = _all.FirstOrDefault(n => n.Id == notif.Id);
-                    if (existing != null) _all.Remove(existing);
+                    _all = notifs;
+                    Refresh();
                 }
             }
-
-            // Sắp xếp lại theo thời gian
-            _all = _all.OrderByDescending(n => n.CreatedAt).ToList();
-            
-            // Cập nhật giao diện
-            Application.Current.Dispatcher.Invoke(() => Refresh());
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error fetching notifications: " + ex.Message);
+            }
         }
 
         private void Refresh()
@@ -130,8 +93,8 @@ namespace e_learning_app.Views
                 var emptyNotif = new Notification
                 {
                     Id = "empty",
-                    Title = "Chưa có thông báo nào",
-                    Content = "Hộp thư của bạn đang trống. Hãy quay lại sau nhé!",
+                    Title = "Chua có thông báo nào",
+                    Content = "Hộp thu của bạn dang trống. Hãy quay lại sau nhé!",
                     Type = "System",
                     CreatedAt = DateTime.UtcNow,
                     IsRead = true
@@ -142,7 +105,7 @@ namespace e_learning_app.Views
             Notifications = new ObservableCollection<Notification>(list);
 
             BtnFilterAll.Content = $"Tất cả ({_all.Count})";
-            BtnFilterUnread.Content = $"Chưa đọc ({_all.Count(n => !n.IsRead)})";
+            BtnFilterUnread.Content = $"Chua đọc ({_all.Count(n => !n.IsRead)})";
         }
 
         private async void BtnViewNotif_Click(object sender, RoutedEventArgs e)
@@ -156,21 +119,19 @@ namespace e_learning_app.Views
                 {
                     n.IsRead = true;
                     NotificationService.ReadNotifKeys.Add(n.Id);
-                    Refresh(); // Cập nhật số lượng chưa đọc
+                    Refresh(); // Cập nhật số lượng chua đọc
 
                     try
                     {
                         var currentUser = _dbManager.GetCurrentUser();
                         if (currentUser != null)
                         {
-                            await _dbManager.GetDb.Collection("Users").Document(currentUser.Id)
-                                .Collection("ReadNotifications").Document(n.Id)
-                                .SetAsync(new { ReadAt = DateTime.UtcNow });
+                            await ApiService.PutAsync("notifications/read", new { NotificationIds = new List<string> { n.Id } });
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Lỗi lưu trạng thái đã đọc: " + ex.Message);
+                        Console.WriteLine("Lỗi luu trạng thái đã đọc: " + ex.Message);
                     }
                 }
 
@@ -179,11 +140,24 @@ namespace e_learning_app.Views
                 {
                     try
                     {
-                        var courseDoc = await _dbManager.GetDb.Collection("Courses").Document(n.CourseId).GetSnapshotAsync();
-                        if (courseDoc.Exists)
+                        var courseResponse = await ApiService.GetAsync<CourseResponse>($"courses/{n.CourseId}");
+                        if (courseResponse != null && courseResponse.Data != null)
                         {
-                            var targetCourse = courseDoc.ConvertTo<Course>();
-                            targetCourse.Id = courseDoc.Id;
+                            var targetCourse = courseResponse.Data;
+                            targetCourse.Id = courseResponse.Id;
+
+                            var currentUser = _dbManager.GetCurrentUser();
+                            if (currentUser != null && targetCourse.InstructorId != currentUser.Id && currentUser.Role != "Admin")
+                            {
+                                var regs = await ApiService.GetAsync<List<RegistrationResponse>>("courses/my-registrations");
+                                bool isAccepted = regs?.Any(r => r.Data.courseId == targetCourse.Id && r.Data.status?.ToLower() == "accepted") ?? false;
+                                
+                                if (!isAccepted)
+                                {
+                                    CustomDialog.Show("Bạn không có quyền truy cập lớp học này (Đã rời lớp hoặc bị từ chối).", "Cảnh báo", DialogType.Warning);
+                                    return;
+                                }
+                            }
 
                             var window = Window.GetWindow(this);
                             if (window == null) return;
@@ -234,13 +208,9 @@ namespace e_learning_app.Views
 
         private void BtnMarkAllRead_Click(object sender, RoutedEventArgs e) 
         {
-            // Tính năng có thể mở rộng sau
+            // Tính nang có thể mở rộng sau
         }
 
-        private void BtnCreateNotif_Click(object sender, RoutedEventArgs e)
-        {
-            CustomDialog.Show("Tính năng tạo thông báo đang được cập nhật.", "Thông báo", DialogType.Info);
-        }
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string name = null)

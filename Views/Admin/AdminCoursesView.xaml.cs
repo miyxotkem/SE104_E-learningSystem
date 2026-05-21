@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using e_learning_app.Class;
 
 namespace e_learning_app.Views.Admin
 {
@@ -30,23 +31,31 @@ namespace e_learning_app.Views.Admin
         {
             try
             {
-                QuerySnapshot snap = await _db.GetDb.Collection("Courses").GetSnapshotAsync();
+                var allCourses = await ApiService.GetAsync<List<CourseResponse>>("courses");
 
-                var rows = snap.Documents.Select(d =>
+                if (allCourses != null)
                 {
-                    var dict = d.ToDictionary();
-                    return new AdminCourseRow
+                    var rows = allCourses.Select(c =>
                     {
-                        CourseId    = d.Id,
-                        CourseName  = dict.ContainsKey("CourseName")  ? dict["CourseName"]?.ToString()  : "—",
-                        TeacherName = dict.ContainsKey("TeacherName") ? dict["TeacherName"]?.ToString() : "—",
-                        StudentCount= dict.ContainsKey("StudentCount") ? Convert.ToInt32(dict["StudentCount"]) : 0,
-                        CreatedAt   = dict.ContainsKey("CreatedAt")   ? dict["CreatedAt"]?.ToString()   : "—"
-                    };
-                }).OrderBy(c => c.CourseName).ToList();
+                        var dict = c.Data;
+                        return new AdminCourseRow
+                        {
+                            CourseId = c.Id,
+                            CourseName = !string.IsNullOrEmpty(dict?.ClassName) ? dict.ClassName : "—",
+                            TeacherName = !string.IsNullOrEmpty(dict?.InstructorId) ? dict.InstructorId : "—",
+                            StudentCount = dict?.StudentCount ?? 0,
+                            CreatedAt = dict != null ? dict.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy") : "—"
+                        };
+                    }).OrderBy(c => c.CourseName).ToList();
 
-                TxtCourseCount.Text = $"{rows.Count} khóa học trong hệ thống";
-                CoursesGrid.ItemsSource = rows;
+                    TxtCourseCount.Text = $"{rows.Count} khóa học trong hệ thống";
+                    CoursesGrid.ItemsSource = rows;
+                }
+                else
+                {
+                    TxtCourseCount.Text = "0 khóa học trong hệ thống";
+                    CoursesGrid.ItemsSource = new List<AdminCourseRow>();
+                }
             }
             catch (Exception ex)
             {

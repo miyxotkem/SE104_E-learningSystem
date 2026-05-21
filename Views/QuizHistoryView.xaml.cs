@@ -1,4 +1,4 @@
-using e_learning_app;
+﻿using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,20 +39,29 @@ namespace e_learning_app.Views
 
             try
             {
-                // Fetch all submissions for this student and exam
-                var snap = await _dbManager.GetDb.Collection("exam_submissions")
-                    .WhereEqualTo("ExamId", _exam.Id)
-                    .WhereEqualTo("StudentId", user.Id)
-                    .GetSnapshotAsync();
+                var historyRes = await e_learning_app.Class.ApiService.GetAsync<System.Collections.Generic.List<e_learning_app.Class.ExamSubmissionResponse>>("exams/my-history");
+                _submissions = historyRes != null ? historyRes.Where(h => h.Data?.ExamId == _exam.Id).Select(h => h.Data).OrderByDescending(s => s.SubmittedAt).ToList() : new System.Collections.Generic.List<e_learning_app.Class.ExamSubmission>();
 
-                _submissions = snap.Documents
-                    .Select(doc => doc.ConvertTo<ExamSubmission>())
-                    .OrderByDescending(s => s.SubmittedAt)
-                    .ToList();
-
-                // Fetch questions to get total possible points
-                var questions = await _dbManager.GetExamQuestionsAsync(_exam.Id);
-                double totalPoints = questions.Sum(q => q.Points);
+                double totalPoints = _exam.TotalQuestions > 0 ? _exam.TotalQuestions : 10;
+                var detailRes = await e_learning_app.Class.ApiService.GetAsync<System.Text.Json.JsonElement?>($"exams/{_exam.Id}");
+                if (detailRes != null && detailRes.HasValue)
+                {
+                    try
+                    {
+                        if (detailRes.Value.TryGetProperty("Data", out var docData))
+                        {
+                            if (docData.TryGetProperty("Questions", out var questionsElem) && questionsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            {
+                                totalPoints = 0;
+                                foreach (var qElem in questionsElem.EnumerateArray())
+                                {
+                                    if (qElem.TryGetProperty("Points", out var ptsElem)) totalPoints += ptsElem.GetDouble();
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
                 if (totalPoints == 0) totalPoints = _exam.TotalQuestions > 0 ? _exam.TotalQuestions : 10;
 
                 // Highest Score Calculation
@@ -103,7 +112,7 @@ namespace e_learning_app.Views
             {
                 if (!_exam.AllowReview)
                 {
-                    CustomDialog.Show("Giảng viên đã tắt tính năng xem lại bài làm cho bài thi này.", "Thông báo", DialogType.Info);
+                    CustomDialog.Show("Giảng viên đã tắt tính nang xem lại bài làm cho bài thi này.", "Thông báo", DialogType.Info);
                     return;
                 }
 
@@ -134,6 +143,20 @@ namespace e_learning_app.Views
                 mw.MainContentArea.Content = new TakeQuizView(_dbManager, _exam);
             else if (Window.GetWindow(this) is StudentMainWindow smw)
                 smw.StudentContentArea.Content = new TakeQuizView(_dbManager, _exam);
+        }
+        private void ItemsHistory_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            if (!e.Handled)
+            {
+                e.Handled = true;
+                var eventArg = new System.Windows.Input.MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
+                {
+                    RoutedEvent = UIElement.MouseWheelEvent,
+                    Source = sender
+                };
+                var parent = ((Control)sender).Parent as UIElement;
+                parent?.RaiseEvent(eventArg);
+            }
         }
     }
 }

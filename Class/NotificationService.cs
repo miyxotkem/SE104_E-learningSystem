@@ -1,4 +1,3 @@
-using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -10,14 +9,35 @@ namespace e_learning_app
         // Vẫn giữ giỏ RAM dùng tạm cho phiên làm việc hiện tại
         public static HashSet<string> ReadNotifKeys = new HashSet<string>();
 
+        private class SendNotifPayload
+        {
+            public string Title { get; set; } = string.Empty;
+            public string Content { get; set; } = string.Empty;
+            public string TargetId { get; set; } = string.Empty;
+            public string CourseId { get; set; } = string.Empty;
+            public string Type { get; set; } = string.Empty;
+            public string SenderId { get; set; } = string.Empty;
+            public string SenderName { get; set; } = string.Empty;
+        }
+
+        private class SendToClassPayload
+        {
+            public string CourseId { get; set; } = string.Empty;
+            public string Title { get; set; } = string.Empty;
+            public string Content { get; set; } = string.Empty;
+            public string Type { get; set; } = string.Empty;
+            public string SenderId { get; set; } = string.Empty;
+            public string SenderName { get; set; } = string.Empty;
+        }
+
         /// <summary>
-        /// Gửi thông báo đến một người dùng cụ thể
+        /// Gửi thông báo đến một người dùng cụ thể (qua Backend API)
         /// </summary>
         public static async Task SendNotificationAsync(DatabaseManager db, string targetUserId, string title, string content, string type, string senderId = "System", string senderName = "Hệ thống", string courseId = "")
         {
             try
             {
-                var notif = new Notification
+                var payload = new SendNotifPayload
                 {
                     Title = title,
                     Content = content,
@@ -25,12 +45,9 @@ namespace e_learning_app
                     CourseId = courseId,
                     Type = type,
                     SenderId = senderId,
-                    SenderName = senderName,
-                    CreatedAt = DateTime.UtcNow,
-                    IsRead = false
+                    SenderName = senderName
                 };
-
-                await db.GetDb.Collection("Notifications").AddAsync(notif);
+                await e_learning_app.Class.ApiService.PostAsync("notifications/send", payload);
             }
             catch (Exception ex)
             {
@@ -39,42 +56,22 @@ namespace e_learning_app
         }
 
         /// <summary>
-        /// Gửi thông báo cho toàn bộ sinh viên trong một lớp (Dùng khi đăng bài tập mới)
+        /// Gửi thông báo cho toàn bộ sinh viên trong một lớp (qua Backend API)
         /// </summary>
         public static async Task SendToClassAsync(DatabaseManager db, string courseId, string title, string content, string type, string senderId = "", string senderName = "")
         {
             try
             {
-                // Lấy danh sách học sinh đã duyệt vào lớp
-                var snapshot = await db.GetDb.Collection("courseRegistrations")
-                    .WhereEqualTo("courseId", courseId)
-                    .WhereEqualTo("status", "accepted")
-                    .GetSnapshotAsync();
-
-                var batch = db.GetDb.StartBatch();
-                var notifRef = db.GetDb.Collection("Notifications");
-
-                foreach (var doc in snapshot.Documents)
+                var payload = new SendToClassPayload
                 {
-                    string studentId = doc.GetValue<string>("userId");
-                    
-                    var notif = new Notification
-                    {
-                        Title = title,
-                        Content = content,
-                        TargetId = studentId, // Gửi đích danh cho từng học sinh
-                        CourseId = courseId,
-                        Type = type,
-                        SenderId = senderId,
-                        SenderName = senderName,
-                        CreatedAt = DateTime.UtcNow,
-                        IsRead = false
-                    };
-
-                    batch.Create(notifRef.Document(), notif);
-                }
-
-                await batch.CommitAsync();
+                    CourseId = courseId,
+                    Title = title,
+                    Content = content,
+                    Type = type,
+                    SenderId = senderId,
+                    SenderName = senderName
+                };
+                await e_learning_app.Class.ApiService.PostAsync("notifications/send-to-class", payload);
             }
             catch (Exception ex)
             {

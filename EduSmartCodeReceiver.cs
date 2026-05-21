@@ -1,4 +1,4 @@
-using Google.Apis.Auth.OAuth2;
+﻿using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Requests;
 using Google.Apis.Auth.OAuth2.Responses;
 using System.Threading;
@@ -95,7 +95,7 @@ namespace e_learning_app
         </div>
         <div class='status'>Xác thực thành công</div>
         <h1>EduSmart xin chào!</h1>
-        <p>Bạn đã đăng nhập thành công vào hệ thống. Thông tin của bạn đã được bảo mật và đồng bộ.</p>
+        <p>Bạn đã dang nhập thành công vào hệ thống. Thông tin của bạn đã được bảo mật và đồng bộ.</p>
         <p>Bây giờ bạn có thể đóng cửa sổ trình duyệt này và quay lại ứng dụng để bắt đầu học tập.</p>
         <div class='footer'>
             Hệ thống quản lý học tập EduSmart &copy; 2026

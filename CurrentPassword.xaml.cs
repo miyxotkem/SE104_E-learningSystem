@@ -1,4 +1,4 @@
-using e_learning_app;
+﻿using e_learning_app;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -17,7 +17,7 @@ namespace e_learning_app
 
         private void btnNext_Click(object sender, RoutedEventArgs e)
         {
-            // Cho phép đi tiếp (Vì Firestore không còn lưu Password để so sánh)
+            // Cho phép di tiếp (Vì Firestore không còn luu Password để so sánh)
             _mainProfile.ShowNewPasswordView();
         }
     }

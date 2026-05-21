@@ -18,7 +18,9 @@ namespace e_learning_app.Views
         private readonly DatabaseManager _dbManager;
         private readonly string _currentUserId;
         private List<Course> _allClasses = new();
-        private Dictionary<string, string> _myRegistrations = new(); // Dùng để lưu trạng thái [CourseId] -> [Status]
+        private Dictionary<string, string> _myRegistrations = new(); // Dùng để luu trạng thái [CourseId] -> [Status]
+
+
 
         private string _filterMode = "all";
         private string _searchText = "";
@@ -28,6 +30,7 @@ namespace e_learning_app.Views
         {
             _dbManager = dbManager;
             InitializeComponent();
+            this.Unloaded += (s, e) => {   };
         }
 
         public MyClassesView(DatabaseManager dbManager, string currentUserId)
@@ -35,26 +38,20 @@ namespace e_learning_app.Views
             _dbManager = dbManager;
             _currentUserId = currentUserId;
             InitializeComponent();
+            this.Unloaded += (s, e) => {   };
         }
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            // Kiểm tra kết nối trước khi load
-            if (_dbManager?.GetDb == null)
-            {
-                CustomDialog.Show("Chưa kết nối được Firestore. Vui lòng khởi động lại ứng dụng.", "Lỗi kết nối", DialogType.Error);
-                return;
-            }
 
             if (_dbManager.GetCurrentUser() == null)
             {
-                CustomDialog.Show("Không xác định được người dùng. Vui lòng đăng nhập lại.", "Lỗi", DialogType.Error);
+                CustomDialog.Show("Không xác định được người dùng. Vui lòng dang nhập lại.", "Lỗi", DialogType.Error);
                 return;
             }
 
             ApplyRolePermissions();
-            await LoadDataAsync();
-            ApplyFilter();
+            LoadDataAsync();
         }
 
         private void ApplyRolePermissions()
@@ -74,53 +71,55 @@ namespace e_learning_app.Views
             }
         }
 
-        // ─── Data Loading ─────────────────────────────────────────────
-        private async Task LoadDataAsync()
+        // --- Data Loading ---------------------------------------------
+        private async void LoadDataAsync()
         {
-            if (_dbManager == null || _dbManager.GetDb == null) return;
+            var currentUser = _dbManager.GetCurrentUser();
+            if (currentUser == null) return;
 
             try
             {
-                // 1. Tải toàn bộ khóa học
-                var snapshot = await _dbManager.GetDb.Collection("Courses").GetSnapshotAsync();
+                // 1. Fetch toàn bộ khóa học qua API
+                var coursesResponse = await ApiService.GetAsync<List<CourseResponse>>("courses");
                 _allClasses.Clear();
-
-                foreach (var doc in snapshot.Documents)
+                foreach (var item in coursesResponse)
                 {
-                    if (doc.Exists)
-                    {
-                        var course = doc.ConvertTo<Course>();
-                        course.Id = doc.Id;
-                        _allClasses.Add(course);
-                    }
+                    var course = item.Data;
+                    course.Id = item.Id;
+                    _allClasses.Add(course);
                 }
 
-                // 2. Nếu là Sinh viên, tải toàn bộ dữ liệu đăng ký của người này
+                // 2. Fetch registrations qua API nếu là Student
                 if (!_isInstructor)
                 {
-                    var currentUser = _dbManager.GetCurrentUser();
-                    if (currentUser == null) return;
-
-                    var regSnap = await _dbManager.GetDb.Collection("courseRegistrations")
-                        .WhereEqualTo("userId", currentUser.Id)
-                        .GetSnapshotAsync();
-
+                    var registrations = await ApiService.GetAsync<List<System.Text.Json.JsonElement>>("courses/my-registrations");
                     _myRegistrations.Clear();
-                    foreach (var doc in regSnap.Documents)
+                    foreach (var reg in registrations)
                     {
-                        string courseId = doc.GetValue<string>("courseId");
-                        string status = doc.GetValue<string>("status");
-                        _myRegistrations[courseId] = status;
+                        if (reg.TryGetProperty("data", out var dataProp) || reg.TryGetProperty("Data", out dataProp))
+                        {
+                            if (dataProp.TryGetProperty("CourseId", out var courseIdProp) || dataProp.TryGetProperty("courseId", out courseIdProp))
+                            {
+                                string courseId = courseIdProp.GetString();
+                                if (dataProp.TryGetProperty("Status", out var statusProp) || dataProp.TryGetProperty("status", out statusProp))
+                                {
+                                    string status = statusProp.GetString();
+                                    _myRegistrations[courseId] = status?.ToLower();
+                                }
+                            }
+                        }
                     }
                 }
+
+                ApplyFilter();
             }
             catch (Exception ex)
             {
-                CustomDialog.Show($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi Tải Dữ Liệu", DialogType.Error);
+                CustomDialog.Show($"Lỗi khi tải dữ liệu từ API: {ex.Message}", "Lỗi", DialogType.Error);
             }
         }
 
-        // ─── Filtering & Rendering ────────────────────────────────────
+        // --- Filtering & Rendering ------------------------------------
         private void ApplyFilter()
         {
             var filtered = _allClasses.Where(c =>
@@ -145,7 +144,7 @@ namespace e_learning_app.Views
                 }
                 else
                 {
-                    // Sinh viên chỉ nhìn thấy lớp đã đăng ký (Pending hoặc Accepted)
+                    // Sinh viên chỉ nhìn thấy lớp đã dang ký (Pending hoặc Accepted)
                     roleMatch = _myRegistrations.TryGetValue(c.Id, out string status) && status != "rejected";
                 }
 
@@ -162,8 +161,8 @@ namespace e_learning_app.Views
             // Cập nhật Subtitle cho chuẩn
             int activeCount = courses.Count(c => c.IsActive);
             TxtSubtitle.Text = _isInstructor
-                ? $"Bạn đang phụ trách {activeCount} lớp học đang hoạt động."
-                : $"Bạn đang tham gia {activeCount} lớp học.";
+                ? $"Bạn dang phụ trách {activeCount} lớp học dang hoạt động."
+                : $"Bạn dang tham gia {activeCount} lớp học.";
 
             foreach (var course in courses)
                 ClassesPanel.Children.Add(CreateCourseCard(course));
@@ -172,7 +171,7 @@ namespace e_learning_app.Views
             ClassesPanel.Visibility = courses.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        // ─── Search & UI Handlers ─────────────────────────────────────
+        // --- Search & UI Handlers -------------------------------------
         private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
         {
             _searchText = TxtSearch.Text;
@@ -279,7 +278,7 @@ namespace e_learning_app.Views
             var currentUser = _dbManager.GetCurrentUser();
             if (currentUser == null) return;
 
-            // Lấy danh sách các lớp học MÀ Sinh viên KHÔNG là Giảng viên, VÀ chưa đăng ký (hoặc đã bị từ chối)
+            // Lấy danh sách các lớp học MÀ Sinh viên KHÔNG là Giảng viên, VÀ chua dang ký (hoặc đã bị từ chối)
             var unregistered = _allClasses.Where(c =>
                 c.InstructorId != currentUser.Id &&
                 (!_myRegistrations.ContainsKey(c.Id) || _myRegistrations[c.Id] == "rejected")
@@ -301,20 +300,7 @@ namespace e_learning_app.Views
 
                 try
                 {
-                    string registrationId = $"{currentUser.Id}_{courseId}";
-                    var registrationRef = _dbManager.GetDb.Collection("courseRegistrations").Document(registrationId);
-
-                    var registrationData = new
-                    {
-                        userId = currentUser.Id,
-                        courseId = courseId,
-                        status = "pending",
-                        requestDate = Google.Cloud.Firestore.FieldValue.ServerTimestamp,
-                        approvedDate = (DateTime?)null,
-                        progressPercentage = 0.0
-                    };
-
-                    await registrationRef.SetAsync(registrationData);
+                    await ApiService.PostAsync($"courses/{courseId}/register", new { });
 
                     var course = _allClasses.FirstOrDefault(c => c.Id == courseId);
                     if (course != null)
@@ -322,12 +308,12 @@ namespace e_learning_app.Views
                         await NotificationService.SendNotificationAsync(_dbManager, course.InstructorId, "Yêu cầu tham gia lớp", $"Học sinh {currentUser.FullName} đã yêu cầu tham gia lớp {course.ClassName}.", "System", currentUser.Id, currentUser.FullName, courseId: course.Id);
                     }
 
-                    CustomDialog.Show("Đã gửi yêu cầu đăng ký thành công! Vui lòng chờ giảng viên duyệt.", "Thành công", DialogType.Success);
+                    CustomDialog.Show("Đã gửi yêu cầu dang ký thành công! Vui lòng chờ giảng viên duyệt.", "Thành công", DialogType.Success);
 
                     // 1. Cập nhật lại danh sách cache cục bộ
                     _myRegistrations[courseId] = "pending";
 
-                    // 2. Làm mới danh sách trong Popup chưa đăng ký
+                    // 2. Làm mới danh sách trong Popup chua dang ký
                     PopulateUnregisteredList();
 
                     // 3. Render lại danh sách ở màn hình chính
@@ -335,7 +321,7 @@ namespace e_learning_app.Views
                 }
                 catch (Exception ex)
                 {
-                    CustomDialog.Show("Lỗi khi đăng ký: " + ex.Message, "Lỗi", DialogType.Error);
+                    CustomDialog.Show("Lỗi khi dang ký: " + ex.Message, "Lỗi", DialogType.Error);
                     btn.IsEnabled = true;
                     btn.Content = "Gửi yêu cầu";
                 }
@@ -350,7 +336,7 @@ namespace e_learning_app.Views
                 string courseName = course != null ? course.Title : "khóa học này";
 
                 // 1. Hiện thông báo xác nhận
-                var confirmed = CustomDialog.Confirm($"Bạn có chắc chắn muốn hủy yêu cầu đăng ký lớp \"{courseName}\" không?",
+                var confirmed = CustomDialog.Confirm($"Bạn có chắc chắn muốn hủy yêu cầu dang ký lớp \"{courseName}\" không?",
                     "Xác nhận hủy", "Hủy yêu cầu", "Quay lại", DialogType.Question);
 
                 if (confirmed)
@@ -360,15 +346,15 @@ namespace e_learning_app.Views
                         btn.IsEnabled = false;
                         btn.Content = "Đang hủy...";
 
-                        // 2. Tìm ID và xóa document trên Firebase
+                        // 2. Tìm ID và xóa qua API
                         var currentUser = _dbManager.GetCurrentUser();
                         if (currentUser == null) return;
-                        string regId = $"{currentUser.Id}_{courseId}";
-                        await _dbManager.GetDb.Collection("courseRegistrations").Document(regId).DeleteAsync();
+                        
+                        await ApiService.DeleteAsync($"courses/{courseId}/register");
 
                         // 3. Cập nhật giao diện
                         _myRegistrations.Remove(courseId);
-                        CustomDialog.Show("Đã hủy yêu cầu đăng ký thành công.", "Thông báo", DialogType.Success);
+                        CustomDialog.Show("Đã hủy yêu cầu dang ký thành công.", "Thông báo", DialogType.Success);
 
                         ApplyFilter(); // Cập nhật lại màn hình chính
                     }
@@ -383,7 +369,7 @@ namespace e_learning_app.Views
         }
 
 
-        // ─── UI Factory ───────────────────────────────────────────────
+        // --- UI Factory -----------------------------------------------
         private Border CreateCourseCard(Course c)
         {
             var accent = (SolidColorBrush)new BrushConverter().ConvertFromString(c.AccentColor) ?? Brushes.SlateBlue;
@@ -441,7 +427,7 @@ namespace e_learning_app.Views
             }
             else if (_myRegistrations.TryGetValue(c.Id, out string statusPen) && statusPen == "pending")
             {
-                // Nút Hủy đăng ký với màu vàng nhạt và chữ cam
+                // Nút Hủy dang ký với màu vàng nhạt và chữ cam
                 var btnCancel = CreateBtn("Đang chờ duyệt - Nhấn để hủy",
                     new SolidColorBrush(Color.FromRgb(254, 243, 199)),
                     new SolidColorBrush(Color.FromRgb(217, 119, 6)),

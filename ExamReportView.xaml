@@ -1,4 +1,4 @@
-<UserControl x:Class="e_learning_app.ExamReportView"
+﻿<UserControl x:Class="e_learning_app.ExamReportView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -185,7 +185,7 @@
                         <!-- Distribution -->
                         <Border Style="{StaticResource ReportCard}" Margin="0,0,0,24">
                             <StackPanel>
-                                <TextBlock Text="Phân bố phổ điểm" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextMain}" Margin="0,0,0,24"/>
+                                <TextBlock Text="Phân bố phổ diểm" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextMain}" Margin="0,0,0,24"/>
                                 <StackPanel x:Name="DistributionPanel">
                                     <!-- Bars injected here -->
                                 </StackPanel>

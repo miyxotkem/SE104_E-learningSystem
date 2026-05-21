@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 using System;
 
 namespace e_learning_app.Class
@@ -23,5 +23,11 @@ namespace e_learning_app.Class
 
         [FirestoreProperty]
         public DateTime? approvedDate { get; set; }
+
+        [FirestoreProperty]
+        public string fullName { get; set; }
+
+        [FirestoreProperty]
+        public string email { get; set; }
     }
 }

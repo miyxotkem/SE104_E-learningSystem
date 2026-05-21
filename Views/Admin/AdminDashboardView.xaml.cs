@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Controls;
+using e_learning_app.Class;
 
 namespace e_learning_app.Views.Admin
 {
@@ -20,11 +21,14 @@ namespace e_learning_app.Views.Admin
         {
             try
             {
-                // Load all users from Firestore
-                QuerySnapshot snapshot = await _db.GetDb.Collection("Users").GetSnapshotAsync();
-                var users = snapshot.Documents
-                    .Select(d => d.ConvertTo<User>())
-                    .ToList();
+                // Load all users from API
+                var response = await ApiService.GetAsync<List<UserResponse>>("users");
+                var users = response != null ? response.Select(r => 
+                {
+                    var u = r.Data;
+                    u.Id = r.Id;
+                    return u;
+                }).ToList() : new List<User>();
 
                 int totalUsers    = users.Count;
                 int totalStudents = users.Count(u => u.Role?.ToLower() == "student");

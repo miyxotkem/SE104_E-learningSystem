@@ -1,4 +1,4 @@
-using e_learning_app;
+﻿using e_learning_app;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -10,10 +10,10 @@ namespace e_learning_app.Views
 {
     public partial class SemesterSettingsView : UserControl
     {
-        // ── Model ────────────────────────────────────────────────────
+        // -- Model ----------------------------------------------------
         public class SemesterConfig
         {
-            public string SemesterName { get; set; } = "Học kỳ 2 – Năm học 2024-2025";
+            public string SemesterName { get; set; } = "Học kỳ 2 – Nam học 2024-2025";
             public string SchoolName { get; set; } = "THPT Nguyễn Thị Minh Khai – TP.HCM";
             public string AcademicYear { get; set; } = "2024 – 2025";
             public string StartDate { get; set; } = "01/01/2025";
@@ -39,13 +39,13 @@ namespace e_learning_app.Views
             public string Language { get; set; } = "🇻🇳  Tiếng Việt";
         }
 
-        // ── State ────────────────────────────────────────────────────
+        // -- State ----------------------------------------------------
         private SemesterConfig _cfg = new();
         private SemesterConfig _saved = new();
         private bool _dirty = false;
         private bool _loading = false;   // suppress TextChanged during init
 
-        // ── Constructor ──────────────────────────────────────────────
+        // -- Constructor ----------------------------------------------
         public SemesterSettingsView()
         {
             InitializeComponent();
@@ -54,7 +54,7 @@ namespace e_learning_app.Views
             PushToUI();
         }
 
-        // ── Init comboboxes ──────────────────────────────────────────
+        // -- Init comboboxes ------------------------------------------
         private void InitComboBoxes()
         {
             CbGradeScale.ItemsSource = new[] { "Thang 10 (0 – 10)", "Thang 4 (GPA)", "Thang 100" };
@@ -68,7 +68,7 @@ namespace e_learning_app.Views
             CbLanguage.ItemsSource = new[] { "🇻🇳  Tiếng Việt", "🇬🇧  English", "🇨🇳  中文" };
         }
 
-        // ── Load / Save ──────────────────────────────────────────────
+        // -- Load / Save ----------------------------------------------
         private void LoadConfig()
         {
             const string path = "semester_config.json";
@@ -103,7 +103,7 @@ namespace e_learning_app.Views
             dst.MobilePush = src.MobilePush; dst.Language = src.Language;
         }
 
-        // ── Push model → UI ──────────────────────────────────────────
+        // -- Push model → UI ------------------------------------------
         private void PushToUI()
         {
             _loading = true;
@@ -136,7 +136,7 @@ namespace e_learning_app.Views
             _dirty = false;
         }
 
-        // ── Collect UI → model ───────────────────────────────────────
+        // -- Collect UI → model ---------------------------------------
         private void CollectFromUI()
         {
             _cfg.SemesterName = TxtSemesterName.Text.Trim();
@@ -151,7 +151,7 @@ namespace e_learning_app.Views
             if (int.TryParse(TxtMaxAbsences.Text, out int ma)) _cfg.MaxAbsences = ma;
         }
 
-        // ── Weight sum display ────────────────────────────────────────
+        // -- Weight sum display ----------------------------------------
         private void UpdateWeightSum()
         {
             int sum = _cfg.WeightOral + _cfg.Weight15Min + _cfg.WeightMidterm + _cfg.WeightFinal;
@@ -164,20 +164,20 @@ namespace e_learning_app.Views
                                            : new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2));
         }
 
-        // ── Validation ───────────────────────────────────────────────
+        // -- Validation -----------------------------------------------
         private (bool ok, string err) Validate()
         {
             if (string.IsNullOrWhiteSpace(_cfg.SemesterName))
                 return (false, "Tên học kỳ không được để trống.");
             int sum = _cfg.WeightOral + _cfg.Weight15Min + _cfg.WeightMidterm + _cfg.WeightFinal;
             if (sum != 100)
-                return (false, $"Tổng trọng số điểm phải bằng 100% (hiện tại {sum}%).");
+                return (false, $"Tổng trọng số diểm phải bằng 100% (hiện tại {sum}%).");
             if (_cfg.MinPassScore < 0 || _cfg.MinPassScore > 10)
                 return (false, "Điểm đạt tối thiểu phải trong khoảng 0 – 10.");
             return (true, "");
         }
 
-        // ── Event handlers ───────────────────────────────────────────
+        // -- Event handlers -------------------------------------------
         private void Field_Changed(object sender, EventArgs e)
         {
             if (_loading) return;
@@ -240,13 +240,13 @@ namespace e_learning_app.Views
             if (!ok) { CustomDialog.Show(err, "Lỗi dữ liệu", DialogType.Warning); return; }
             SaveConfig();
             _dirty = false;
-            CustomDialog.Show("Đã lưu cài đặt học kỳ thành công! ✅", "Thành công", DialogType.Success);
+            CustomDialog.Show("Đã luu cài đặt học kỳ thành công! ✅", "Thành công", DialogType.Success);
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
             if (!_dirty) return;
-            var confirmed = CustomDialog.Confirm("Hủy tất cả thay đổi chưa lưu?", "Xác nhận", "Hủy thay đổi", "Quay lại", DialogType.Question);
+            var confirmed = CustomDialog.Confirm("Hủy tất cả thay đổi chua luu?", "Xác nhận", "Hủy thay đổi", "Quay lại", DialogType.Question);
             if (confirmed)
             {
                 Clone(_saved, _cfg);
@@ -263,11 +263,11 @@ namespace e_learning_app.Views
             _dirty = true;
         }
 
-        // ── Public API ───────────────────────────────────────────────
+        // -- Public API -----------------------------------------------
         public bool CanLeave()
         {
             if (!_dirty) return true;
-            return CustomDialog.Confirm("Có thay đổi chưa lưu. Rời đi?", "Cảnh báo", "Rời đi", "Ở lại", DialogType.Warning);
+            return CustomDialog.Confirm("Có thay đổi chua luu. Rời di?", "Cảnh báo", "Rời di", "Ở lại", DialogType.Warning);
         }
 
         public SemesterConfig CurrentConfig => _cfg;

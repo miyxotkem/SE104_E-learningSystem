@@ -1,4 +1,4 @@
-using e_learning_app;
+﻿using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace e_learning_app.Views
 {
     public partial class QuestionBankView : UserControl
     {
-        // ── Model ────────────────────────────────────────────────────
+        // -- Model ----------------------------------------------------
         public class Question
         {
             public int Id { get; set; }
@@ -22,26 +22,26 @@ namespace e_learning_app.Views
             public DateTime AddedDate { get; set; }
         }
 
-        // ── State ────────────────────────────────────────────────────
+        // -- State ----------------------------------------------------
         private List<Question> _all = new();
         private string _subject = "Tất cả";
         private HashSet<string> _levels = new() { "Dễ", "Trung bình", "Khó" };
         private HashSet<string> _types = new() { "Trắc nghiệm", "Tự luận", "Điền vào chỗ trống" };
         private string _search = "";
 
-        // ── Color maps ───────────────────────────────────────────────
+        // -- Color maps -----------------------------------------------
         static readonly Dictionary<string, (string bg, string fg)> _subjectClr = new()
         {
             {"Toán học",("#EFF6FF","#3B82F6")}, {"Vật lý",("#EDE9FE","#7C3AED")},
             {"Hóa học",("#ECFDF5","#059669")},  {"Sinh học",("#F0FDF4","#16A34A")},
-            {"Ngữ văn",("#FFF7ED","#D97706")},
+            {"Ngữ van",("#FFF7ED","#D97706")},
         };
         static readonly Dictionary<string, (string bg, string fg)> _levelClr = new()
         {
             {"Dễ",("#DCFCE7","#16A34A")}, {"Trung bình",("#FEF3C7","#D97706")}, {"Khó",("#FEE2E2","#DC2626")},
         };
 
-        // ── Constructor ──────────────────────────────────────────────
+        // -- Constructor ----------------------------------------------
         public QuestionBankView() { InitializeComponent(); LoadSampleData(); }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -55,7 +55,7 @@ namespace e_learning_app.Views
             Refresh();
         }
 
-        // ── Data ─────────────────────────────────────────────────────
+        // -- Data -----------------------------------------------------
         private void LoadSampleData()
         {
             _all = new List<Question>
@@ -67,21 +67,21 @@ namespace e_learning_app.Views
                         Content="Một vật khối lượng 2kg chuyển động đều trên mặt phẳng nghiêng góc 30°. Tính lực ma sát. Cho g = 10 m/s².",
                         UsedInExams=5, AddedDate=new DateTime(2025,2,2) },
                 new() { Id=3, Subject="Hóa học",  Level="Dễ",         Type="Trắc nghiệm",
-                        Content="Phản ứng nào sau đây là oxi hóa – khử? A. NaOH + HCl  B. Fe + CuSO₄ → FeSO₄ + Cu",
+                        Content="Phản ứng nào sau đây là oxi hóa – khử? A. NaOH + HCl  B. Fe + CuSO4 → FeSO4 + Cu",
                         UsedInExams=7, AddedDate=new DateTime(2025,1,10) },
                 new() { Id=4, Subject="Toán học", Level="Khó",        Type="Tự luận",
                         Content="Chứng minh với mọi số nguyên n, biểu thức n³ - n luôn chia hết cho 6.",
                         UsedInExams=2, AddedDate=new DateTime(2025,3,20) },
                 new() { Id=5, Subject="Sinh học", Level="Trung bình", Type="Trắc nghiệm",
-                        Content="Quá trình nào xảy ra trong pha sáng của quang hợp? A. ATP  B. Cố định CO₂  C. Glucose  D. Protein",
+                        Content="Quá trình nào xảy ra trong pha sáng của quang hợp? A. ATP  B. Cố định CO2  C. Glucose  D. Protein",
                         UsedInExams=4, AddedDate=new DateTime(2025,2,28) },
-                new() { Id=6, Subject="Ngữ văn",  Level="Dễ",         Type="Điền vào chỗ trống",
-                        Content="Điền từ: \"Văn học là ______ của cuộc sống.\" (gương / bức tranh / tiếng vang)",
+                new() { Id=6, Subject="Ngữ van",  Level="Dễ",         Type="Điền vào chỗ trống",
+                        Content="Điền từ: \"Van học là ______ của cuộc sống.\" (guong / bức tranh / tiếng vang)",
                         UsedInExams=1, AddedDate=new DateTime(2025,3,5) },
             };
         }
 
-        // ── Filter / Render ──────────────────────────────────────────
+        // -- Filter / Render ------------------------------------------
         private IEnumerable<Question> Filtered()
         {
             var q = _all.AsEnumerable();
@@ -192,7 +192,7 @@ namespace e_learning_app.Views
             return btn;
         }
 
-        // ── Event handlers ───────────────────────────────────────────
+        // -- Event handlers -------------------------------------------
         private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
         {
             _search = TxtSearch.Text;
@@ -257,7 +257,7 @@ namespace e_learning_app.Views
                 CustomDialog.Show($"Import: {dlg.FileName}\n(Đang phát triển)", "Import", DialogType.Info);
         }
 
-        // ── Add/Edit dialog ──────────────────────────────────────────
+        // -- Add/Edit dialog ------------------------------------------
         private void ShowDialog(Question? existing)
         {
             bool isEdit = existing != null;
@@ -294,7 +294,7 @@ namespace e_learning_app.Views
                 var c = new ComboBox { ItemsSource = items, SelectedItem = sel, Height = 36, FontSize = 13 };
                 Grid.SetColumn(c, col); return c;
             }
-            var cbSub = Cb(0, new[] { "Toán học", "Vật lý", "Hóa học", "Sinh học", "Ngữ văn" }, existing?.Subject);
+            var cbSub = Cb(0, new[] { "Toán học", "Vật lý", "Hóa học", "Sinh học", "Ngữ van" }, existing?.Subject);
             var cbLvl = Cb(2, new[] { "Dễ", "Trung bình", "Khó" }, existing?.Level);
             var cbTyp = Cb(4, new[] { "Trắc nghiệm", "Tự luận", "Điền vào chỗ trống" }, existing?.Type);
             row.Children.Add(cbSub); row.Children.Add(cbLvl); row.Children.Add(cbTyp);
@@ -314,7 +314,7 @@ namespace e_learning_app.Views
             cancel.Click += (_, _) => w.Close();
             var save = new Button
             {
-                Content = isEdit ? "Lưu" : "Thêm",
+                Content = isEdit ? "Luu" : "Thêm",
                 Width = 120,
                 Height = 38,
                 Background = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),

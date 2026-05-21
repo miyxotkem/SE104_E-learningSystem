@@ -9,6 +9,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using e_learning_app.Views;
+using e_learning_app.Class;
 
 namespace e_learning_app
 {
@@ -57,16 +58,15 @@ namespace e_learning_app
                     TxtSubtitle.Text = "Lịch giảng dạy các lớp học trong tuần";
                     BtnPrint.Content = "🖨️ In lịch dạy";
 
-                    var coursesSnap = await _dbManager.GetDb.Collection("Courses")
-                        .WhereEqualTo("InstructorId", currentUser.Id)
-                        .WhereEqualTo("IsActive", true)
-                        .GetSnapshotAsync();
-
-                    foreach (var doc in coursesSnap.Documents)
+                    var allCourses = await ApiService.GetAsync<List<CourseResponse>>("courses");
+                    if (allCourses != null)
                     {
-                        var c = doc.ConvertTo<Course>();
-                        c.Id = doc.Id;
-                        enrolledCourses.Add(c);
+                        var instructorCourses = allCourses
+                            .Where(c => c.Data != null && c.Data.InstructorId == currentUser.Id && c.Data.IsActive)
+                            .Select(c => { var course = c.Data; course.Id = c.Id; return course; })
+                            .ToList();
+                        
+                        enrolledCourses.AddRange(instructorCourses);
                     }
                 }
                 else // Student
@@ -75,21 +75,23 @@ namespace e_learning_app
                     TxtSubtitle.Text = "Lịch học tập các lớp học trong tuần";
                     BtnPrint.Content = "🖨️ In thời khóa biểu";
 
-                    var registrationsSnap = await _dbManager.GetDb.Collection("courseRegistrations")
-                        .WhereEqualTo("userId", currentUser.Id)
-                        .WhereEqualTo("status", "accepted")
-                        .GetSnapshotAsync();
-
-                    foreach (var reg in registrationsSnap.Documents)
+                    var registrations = await ApiService.GetAsync<List<RegistrationResponse>>("courses/my-registrations");
+                    if (registrations != null)
                     {
-                        string courseId = reg.GetValue<string>("courseId");
-                        var courseSnap = await _dbManager.GetDb.Collection("Courses").Document(courseId).GetSnapshotAsync();
-
-                        if (courseSnap.Exists)
+                        var allCourses = await ApiService.GetAsync<List<CourseResponse>>("courses");
+                        if (allCourses != null)
                         {
-                            var c = courseSnap.ConvertTo<Course>();
-                            c.Id = courseSnap.Id;
-                            if (c.IsActive) enrolledCourses.Add(c);
+                            var acceptedRegs = registrations
+                                .Where(r => r.Data != null && r.Data.status == "accepted")
+                                .Select(r => r.Data.courseId)
+                                .ToList();
+
+                            var studentCourses = allCourses
+                                .Where(c => c.Data != null && acceptedRegs.Contains(c.Id) && c.Data.IsActive)
+                                .Select(c => { var course = c.Data; course.Id = c.Id; return course; })
+                                .ToList();
+
+                            enrolledCourses.AddRange(studentCourses);
                         }
                     }
                 }
@@ -371,12 +373,12 @@ namespace e_learning_app
 
         private void BtnPrevWeek_Click(object sender, RoutedEventArgs e)
         {
-            CustomDialog.Show("Chức năng đang được phát triển...", "Thông báo", DialogType.Info);
+            CustomDialog.Show("Chức nang dang được phát triển...", "Thông báo", DialogType.Info);
         }
 
         private void BtnNextWeek_Click(object sender, RoutedEventArgs e)
         {
-            CustomDialog.Show("Chức năng đang được phát triển...", "Thông báo", DialogType.Info);
+            CustomDialog.Show("Chức nang dang được phát triển...", "Thông báo", DialogType.Info);
         }
 
         private void BtnPrint_Click(object sender, RoutedEventArgs e)

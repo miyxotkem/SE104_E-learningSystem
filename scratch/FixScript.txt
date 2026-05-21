@@ -1,0 +1,51 @@
+using System;
+using System.IO;
+using System.Text;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+public class Program
+{
+    public static void Main()
+    {
+        var win1252 = Encoding.GetEncoding(1252);
+        var utf8 = Encoding.UTF8;
+
+        string[] files = Directory.GetFiles(".", "*.cs", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(".", "*.xaml", SearchOption.AllDirectories))
+            .ToArray();
+
+        int count = 0;
+        foreach (var file in files)
+        {
+            if (file.Contains("scratch") || file.Contains("obj") || file.Contains("bin") || file.Contains(".vs") || file.Contains(".git")) continue;
+            
+            string original = File.ReadAllText(file, utf8);
+            
+            // Tìm tất cả các cụm ký tự bị lỗi (chứa các ký tự ngoài bảng mã ASCII)
+            string fixedText = Regex.Replace(original, @"[^\x00-\x7F]+", match => {
+                string m = match.Value;
+                // Chuyển cụm ký tự bị lỗi từ UTF-8 đang đọc sai về dạng byte của Windows-1252
+                byte[] bytes = win1252.GetBytes(m);
+                // Sau đó giải mã lại các byte này bằng UTF-8
+                string decoded = utf8.GetString(bytes);
+                
+                // Nếu quá trình giải mã sinh ra dấu '?' (mất dữ liệu) thì giữ nguyên
+                if (decoded.Contains("?") && !m.Contains("?")) return m;
+                // Nếu sinh ra ký tự không hợp lệ của UTF-8 thì giữ nguyên
+                if (decoded.Contains("\uFFFD")) return m;
+                
+                return decoded;
+            });
+            
+            // Nếu file có sự thay đổi, ghi đè lại file
+            if (original != fixedText)
+            {
+                File.WriteAllText(file, fixedText, utf8);
+                Console.WriteLine("Fixed: " + file);
+                count++;
+            }
+        }
+        Console.WriteLine("Total fixed: " + count);
+    }
+}

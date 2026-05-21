@@ -1,4 +1,3 @@
-using Grpc.Net.Client.Balancer;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using e_learning_app.Class;
 
 namespace e_learning_app.Views
 {
@@ -26,6 +26,8 @@ namespace e_learning_app.Views
         private TimeSpan _savedPosition;
         private bool _wasPlaying;
         private bool _isTransitioningFullscreen = false;
+
+
 
         public StudentCourseView()
         {
@@ -47,8 +49,15 @@ namespace e_learning_app.Views
 
             SetupVideoPlayer();
 
-            LoadPlaylistAsync();
-            LoadCommentsAsync();
+            SetupLessonsListener();
+            SetupCommentsListener();
+
+            this.Unloaded += (s, e) =>
+            {
+                
+                
+                if (_timer != null) _timer.Stop();
+            };
         }
         private void SetupVideoPlayer()
         {
@@ -109,70 +118,86 @@ namespace e_learning_app.Views
             }
         }
 
-        private async void LoadPlaylistAsync()
+        private async void SetupLessonsListener()
         {
-            var lessons = await _dbManager.GetLessonsByCourseAsync(_course.Id);
-            PlaylistItems.Items.Clear();
-
-            int index = 1;
-            foreach (var lesson in lessons)
+            if (_course == null) return;
+            try
             {
-                var border = new Border
+                var response = await ApiService.GetAsync<List<LessonResponse>>($"courses/{_course.Id}/lessons");
+                if (response != null)
                 {
-                    Background = (lesson.Id == _currentLesson?.Id) ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E7FF")) : Brushes.Transparent,
-                    CornerRadius = new CornerRadius(8),
-                    Padding = new Thickness(10),
-                    Margin = new Thickness(0, 0, 0, 5),
-                    Cursor = System.Windows.Input.Cursors.Hand
-                };
-
-                border.MouseLeftButtonDown += (s, e) =>
-                {
-                    var mainWin = Window.GetWindow(this) as MainWindow;
-                    if (mainWin != null)
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        mainWin.MainContentArea.Content = new StudentCourseView(_dbManager, _course, lesson);
-                        return;
-                    }
+                        var lessons = response.Select(r => {
+                            var l = r.Data;
+                            if (l != null) l.Id = r.Id;
+                            return l;
+                        }).Where(l => l != null).OrderBy(l => l.CreatedAt).ToList();
 
-                    var studentWin = Window.GetWindow(this) as StudentMainWindow;
-                    if (studentWin != null)
-                    {
-                        studentWin.StudentContentArea.Content = new StudentCourseView(_dbManager, _course, lesson);
-                    }
-                };
+                        PlaylistItems.Items.Clear();
+                        int index = 1;
+                        foreach (var lesson in lessons)
+                        {
+                            var border = new Border
+                            {
+                                Background = (lesson.Id == _currentLesson?.Id) ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E7FF")) : Brushes.Transparent,
+                                CornerRadius = new CornerRadius(8),
+                                Padding = new Thickness(10),
+                                Margin = new Thickness(0, 0, 0, 5),
+                                Cursor = System.Windows.Input.Cursors.Hand
+                            };
 
-                var grid = new Grid();
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                            border.MouseLeftButtonDown += (s, e) =>
+                            {
+                                var mainWin = Window.GetWindow(this) as MainWindow;
+                                if (mainWin != null)
+                                {
+                                    mainWin.MainContentArea.Content = new StudentCourseView(_dbManager, _course, lesson);
+                                    return;
+                                }
 
-                var txtIndex = new TextBlock
-                {
-                    Text = index.ToString(),
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8")),
-                    FontWeight = FontWeights.Bold,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Center
-                };
-                Grid.SetColumn(txtIndex, 0);
+                                var studentWin = Window.GetWindow(this) as StudentMainWindow;
+                                if (studentWin != null)
+                                {
+                                    studentWin.StudentContentArea.Content = new StudentCourseView(_dbManager, _course, lesson);
+                                }
+                            };
 
-                var txtTitle = new TextBlock
-                {
-                    Text = lesson.Title,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
-                    FontWeight = FontWeights.SemiBold,
-                    TextWrapping = TextWrapping.Wrap,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                Grid.SetColumn(txtTitle, 1);
+                            var grid = new Grid();
+                            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+                            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-                grid.Children.Add(txtIndex);
-                grid.Children.Add(txtTitle);
+                            var txtIndex = new TextBlock
+                            {
+                                Text = index.ToString(),
+                                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8")),
+                                FontWeight = FontWeights.Bold,
+                                VerticalAlignment = VerticalAlignment.Center,
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            };
+                            Grid.SetColumn(txtIndex, 0);
 
-                border.Child = grid;
-                PlaylistItems.Items.Add(border);
-                index++;
+                            var txtTitle = new TextBlock
+                            {
+                                Text = lesson.Title,
+                                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B")),
+                                FontWeight = FontWeights.SemiBold,
+                                TextWrapping = TextWrapping.Wrap,
+                                VerticalAlignment = VerticalAlignment.Center
+                            };
+                            Grid.SetColumn(txtTitle, 1);
+
+                            grid.Children.Add(txtIndex);
+                            grid.Children.Add(txtTitle);
+
+                            border.Child = grid;
+                            PlaylistItems.Items.Add(border);
+                            index++;
+                        }
+                    });
+                }
             }
+            catch (Exception ex) { }
         }
 
         private void BtnBack_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -334,11 +359,45 @@ namespace e_learning_app.Views
 
         // --- COMMENTS LOGIC ---
 
-        private async void LoadCommentsAsync()
+        private async void SetupCommentsListener()
         {
             if (_currentLesson == null) return;
-            var comments = await _dbManager.GetCommentsByLessonAsync(_currentLesson.Id);
-            CommentsList.ItemsSource = comments;
+            try
+            {
+                var response = await ApiService.GetAsync<List<CommentResponse>>($"comments/lesson/{_currentLesson.Id}");
+                if (response != null)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        var allComments = response.Select(r => {
+                            var c = r.Data;
+                            if (c != null) 
+                            {
+                                c.Id = r.Id;
+                                // CanDelete is true if current user is Instructor or Author
+                                var currentUser = _dbManager.GetCurrentUser();
+                                bool isInstructor = _course != null && currentUser != null && _course.InstructorId == currentUser.Id;
+                                bool isAuthor = currentUser != null && currentUser.Id == c.UserId;
+                                c.CanDelete = isInstructor || isAuthor;
+                            }
+                            return c;
+                        }).Where(c => c != null).ToList();
+                        
+                        // Group into Tree
+                        var rootComments = allComments.Where(c => string.IsNullOrEmpty(c.ParentId)).ToList();
+                        var replies = allComments.Where(c => !string.IsNullOrEmpty(c.ParentId)).ToList();
+
+                        foreach(var root in rootComments)
+                        {
+                            var children = replies.Where(r => r.ParentId == root.Id).OrderBy(r => r.CreatedAt).ToList();
+                            root.Replies = new System.Collections.ObjectModel.ObservableCollection<Comment>(children);
+                        }
+                        
+                        CommentsList.ItemsSource = rootComments;
+                    });
+                }
+            }
+            catch (Exception ex) { }
         }
 
         private void InputComment_GotFocus(object sender, RoutedEventArgs e)
@@ -367,25 +426,93 @@ namespace e_learning_app.Views
             var currentUser = _dbManager.GetCurrentUser();
             if (currentUser == null) return;
 
-            string userId = currentUser.Id;
             string userName = !string.IsNullOrEmpty(currentUser.FullName) ? currentUser.FullName : "Học viên ẩn danh";
-            string role = _course.InstructorId == currentUser.Id ? "Teacher" : "Student";
+            string role = _course.InstructorId == currentUser.Id ? "Instructor" : "Student";
 
-            var newComment = new Comment
+            var newComment = new
             {
                 LessonId = _currentLesson.Id,
+                ParentId = "",
                 Content = content,
-                UserId = userId,
                 UserName = userName,
-                UserRole = role,
-                CreatedAt = DateTime.UtcNow
+                UserRole = role
             };
 
-            await _dbManager.AddCommentAsync(newComment);
+            await ApiService.PostAsync("comments", newComment);
+            SetupCommentsListener(); // Refresh list after posting
+            
             BtnSendComment.IsEnabled = true;
+        }
 
-            // Reload
-            LoadCommentsAsync();
+        private void BtnShowReply_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is TextBlock tb && tb.Tag is string commentId)
+            {
+                var rootComments = CommentsList.ItemsSource as List<Comment>;
+                if (rootComments == null) return;
+
+                var comment = rootComments.FirstOrDefault(c => c.Id == commentId);
+                if (comment != null)
+                {
+                    comment.IsReplying = !comment.IsReplying;
+                }
+            }
+        }
+
+        private async void BtnSubmitReply_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border b && b.Tag is string parentId)
+            {
+                var rootComments = CommentsList.ItemsSource as List<Comment>;
+                var parentComment = rootComments?.FirstOrDefault(c => c.Id == parentId);
+                
+                if (parentComment == null || string.IsNullOrWhiteSpace(parentComment.ReplyText)) return;
+
+                string content = parentComment.ReplyText.Trim();
+                parentComment.ReplyText = string.Empty;
+                parentComment.IsReplying = false;
+
+                var currentUser = _dbManager.GetCurrentUser();
+                if (currentUser == null) return;
+
+                string userName = !string.IsNullOrEmpty(currentUser.FullName) ? currentUser.FullName : "Học viên ẩn danh";
+                string role = _course.InstructorId == currentUser.Id ? "Instructor" : "Student";
+
+                var newComment = new
+                {
+                    LessonId = _currentLesson.Id,
+                    ParentId = parentId,
+                    Content = content,
+                    UserName = userName,
+                    UserRole = role
+                };
+
+                await ApiService.PostAsync("comments", newComment);
+                SetupCommentsListener();
+            }
+        }
+
+        private async void BtnDeleteComment_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is TextBlock tb && tb.Tag is string commentId)
+            {
+                var confirm = CustomDialog.Confirm("Bạn có chắc chắn muốn xóa bình luận này không?", "Xác nhận xóa", "Xóa", "Hủy", DialogType.Warning);
+                if (confirm)
+                {
+                    try
+                    {
+                        var response = await ApiService.DeleteAsync($"comments/{commentId}");
+                        if (response)
+                        {
+                            SetupCommentsListener();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        CustomDialog.Show($"Lỗi khi xóa bình luận:\n{ex.Message}", "Lỗi", DialogType.Error);
+                    }
+                }
+            }
         }
     }
 }

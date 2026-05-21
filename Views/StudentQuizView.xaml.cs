@@ -17,63 +17,55 @@ namespace e_learning_app.Views
         private readonly DatabaseManager _dbManager;
         private List<Exam> _allExams = new();
         private List<ExamSubmission> _studentSubmissions = new();
+        private System.Windows.Threading.DispatcherTimer _pollingTimer;
 
         public StudentQuizView(DatabaseManager dbManager)
         {
             InitializeComponent();
             _dbManager = dbManager;
+
+            this.Unloaded += (s, e) =>
+            {
+                _pollingTimer?.Stop();
+            };
         }
 
-        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            await LoadDataAsync();
-            RenderExams();
+            _pollingTimer = new System.Windows.Threading.DispatcherTimer();
+            _pollingTimer.Interval = TimeSpan.FromSeconds(15);
+            _pollingTimer.Tick += async (s, args) => await FetchDataAsync();
+            _pollingTimer.Start();
+
+            FetchDataAsync();
         }
 
-        private async Task LoadDataAsync()
+        private async Task FetchDataAsync()
         {
-            if (_dbManager == null || _dbManager.GetDb == null) return;
-            var currentUser = _dbManager.GetCurrentUser();
-            if (currentUser == null) return;
-
             try
             {
-                // 1. Get enrolled courses
-                var registrationsSnap = await _dbManager.GetDb.Collection("courseRegistrations")
-                    .WhereEqualTo("userId", currentUser.Id)
-                    .WhereEqualTo("status", "accepted")
-                    .GetSnapshotAsync();
-
-                var enrolledCourseIds = registrationsSnap.Documents.Select(d => d.GetValue<string>("courseId")).ToList();
-                if (enrolledCourseIds.Count == 0)
+                var examsResponse = await ApiService.GetAsync<List<ExamResponse>>("exams/my-exams");
+                if (examsResponse != null)
                 {
-                    _allExams.Clear();
-                    return;
+                    _allExams = examsResponse.Select(r => {
+                        var ex = r.Data;
+                        ex.Id = r.Id;
+                        return ex;
+                    }).ToList();
                 }
 
-                // 2. Get exams for these courses (chunking if > 10)
-                _allExams.Clear();
-                for (int i = 0; i < enrolledCourseIds.Count; i += 10)
+                var subsResponse = await ApiService.GetAsync<List<ExamSubmissionResponse>>("exams/my-history");
+                if (subsResponse != null)
                 {
-                    var chunk = enrolledCourseIds.Skip(i).Take(10).ToList();
-                    var snapshot = await _dbManager.GetDb.Collection("exams")
-                        .WhereEqualTo("IsPublished", true)
-                        .WhereIn("ClassId", chunk)
-                        .GetSnapshotAsync();
-
-                    _allExams.AddRange(snapshot.Documents.Select(doc => doc.ConvertTo<Exam>()));
+                    _studentSubmissions = subsResponse.Select(r => r.Data).ToList();
                 }
 
-                // 3. Get student's submissions to show status
-                var submissionsSnap = await _dbManager.GetDb.Collection("exam_submissions")
-                    .WhereEqualTo("StudentId", currentUser.Id)
-                    .GetSnapshotAsync();
-                
-                _studentSubmissions = submissionsSnap.Documents.Select(doc => doc.ConvertTo<ExamSubmission>()).ToList();
+                RenderExams();
             }
             catch (Exception ex)
             {
-                CustomDialog.Show($"Lỗi tải bài kiểm tra: {ex.Message}", "Lỗi", DialogType.Error);
+                System.Windows.MessageBox.Show($"Không thể tải danh sách bài thi.\nLý do: {ex.Message}", "Lỗi tải dữ liệu", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                Console.WriteLine("Lỗi fetch exams: " + ex.Message);
             }
         }
 

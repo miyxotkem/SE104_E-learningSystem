@@ -1,4 +1,4 @@
-using e_learning_app;
+﻿using e_learning_app;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,7 +13,7 @@ namespace e_learning_app.Views
     public partial class ReportsView : UserControl
     {
         private readonly DatabaseManager _dbManager;
-        // ── Models ───────────────────────────────────────────────────
+        // -- Models ---------------------------------------------------
         public class ClassReport
         {
             public string Subject { get; set; }
@@ -29,25 +29,25 @@ namespace e_learning_app.Views
 
         public class ScoreBand { public string Range, Color; public int Count; public double Pct; }
 
-        // ── Data ─────────────────────────────────────────────────────
+        // -- Data -----------------------------------------------------
         private List<ClassReport> _reports = new();
         private List<TopStudent> _top = new();
         private List<ScoreBand> _distribution = new();
         private string _semester = "Học kỳ 2 – 2024";
 
-        // ── Constructor ──────────────────────────────────────────────
+        // -- Constructor ----------------------------------------------
         public ReportsView(DatabaseManager dbManager) { InitializeComponent(); LoadData(); _dbManager = dbManager; }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e) => Refresh();
 
-        // ── Data ─────────────────────────────────────────────────────
+        // -- Data -----------------------------------------------------
         private void LoadData()
         {
             _reports = new()
             {
                 new() { Subject="Toán Giải Tích",   ClassName="12A1", AccentColor="#3B82F6", StudentCount=38, AvgScore=7.9, PassRate=89, ExcelRate=24 },
-                new() { Subject="Vật Lý Đại Cương", ClassName="11B3", AccentColor="#8B5CF6", StudentCount=42, AvgScore=7.4, PassRate=83, ExcelRate=19 },
-                new() { Subject="Hóa Hữu Cơ",       ClassName="12C2", AccentColor="#F59E0B", StudentCount=35, AvgScore=8.1, PassRate=91, ExcelRate=28 },
+                new() { Subject="Vật Lý Đại Cuong", ClassName="11B3", AccentColor="#8B5CF6", StudentCount=42, AvgScore=7.4, PassRate=83, ExcelRate=19 },
+                new() { Subject="Hóa Hữu Co",       ClassName="12C2", AccentColor="#F59E0B", StudentCount=35, AvgScore=8.1, PassRate=91, ExcelRate=28 },
                 new() { Subject="Sinh Học Phân Tử",  ClassName="11A2", AccentColor="#10B981", StudentCount=40, AvgScore=7.6, PassRate=85, ExcelRate=20 },
             };
             _top = new()
@@ -66,7 +66,7 @@ namespace e_learning_app.Views
             };
         }
 
-        // ── Refresh ──────────────────────────────────────────────────
+        // -- Refresh --------------------------------------------------
         private void Refresh()
         {
             int total = _reports.Sum(r => r.StudentCount);
@@ -89,7 +89,7 @@ namespace e_learning_app.Views
             TxtPassNote.Text = $"{passing} / {total} học sinh đạt";
 
             TxtExcelRate.Text = $"{excel:0.0}%";
-            TxtExcelNote.Text = $"{_distribution.FirstOrDefault(d => d.Range == "9–10")?.Count ?? 0} học sinh điểm ≥ 9.0";
+            TxtExcelNote.Text = $"{_distribution.FirstOrDefault(d => d.Range == "9–10")?.Count ?? 0} học sinh diểm = 9.0";
 
             double weakPct = _distribution.Where(d => d.Range is "3–4.9" or "0–2.9").Sum(d => d.Pct);
             TxtWeakRate.Text = $"{weakPct:0.0}%";
@@ -116,7 +116,7 @@ namespace e_learning_app.Views
                 TopStudentsPanel.Children.Add(BuildTopStudentRow(s));
         }
 
-        // ── Row builders ─────────────────────────────────────────────
+        // -- Row builders ---------------------------------------------
         private UIElement BuildTableRow(ClassReport r)
         {
             var grid = new Grid { Height = 46 };
@@ -218,7 +218,7 @@ namespace e_learning_app.Views
             return sp;
         }
 
-        // ── Event handlers ───────────────────────────────────────────
+        // -- Event handlers -------------------------------------------
         private void BtnSemester_Click(object sender, RoutedEventArgs e)
         {
             var menu = new ContextMenu();
@@ -243,7 +243,7 @@ namespace e_learning_app.Views
             if (dlg.ShowDialog() != true) return;
             try
             {
-                var sb = new StringBuilder("Môn học,Lớp,Sĩ số,Điểm TB,Đạt,Xuất sắc\n");
+                var sb = new StringBuilder("Môn học,Lớp,Si số,Điểm TB,Đạt,Xuất sắc\n");
                 foreach (var r in _reports)
                     sb.AppendLine($"{r.Subject},{r.ClassName},{r.StudentCount},{r.AvgScore:0.0},{r.PassRate:0}%,{r.ExcelRate:0}%");
                 File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
@@ -265,7 +265,7 @@ namespace e_learning_app.Views
             var r = _reports.FirstOrDefault(x => x.ClassName == cls);
             if (r == null) return;
             CustomDialog.Show(
-                $"Lớp: {r.Subject} – {r.ClassName}\nSĩ số: {r.StudentCount}  |  Điểm TB: {r.AvgScore:0.0}\n" +
+                $"Lớp: {r.Subject} – {r.ClassName}\nSi số: {r.StudentCount}  |  Điểm TB: {r.AvgScore:0.0}\n" +
                 $"Tỷ lệ đạt: {r.PassRate:0}%  |  Xuất sắc: {r.ExcelRate:0}%",
                 "Chi tiết lớp", DialogType.Info);
         }

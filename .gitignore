@@ -1,3 +1,4 @@
 .vs/
 bin/
 obj/
+firebase/firebase_json.json

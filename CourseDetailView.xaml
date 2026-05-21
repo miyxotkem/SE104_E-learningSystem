@@ -1,4 +1,4 @@
-<UserControl x:Class="e_learning_app.Views.CourseDetailView"
+﻿<UserControl x:Class="e_learning_app.Views.CourseDetailView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:e_learning_app.Views"
@@ -282,7 +282,7 @@
                                 <TextBlock Text="Duyệt yêu cầu tham gia lớp" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </Button>
 
-                            <!-- Badge thông báo duyệt được thiết kế lại đẹp hơn -->
+                            <!-- Badge thông báo duyệt được thiết kế lại đẹp hon -->
                             <Border x:Name="BadgeBorder" Background="#EF4444" CornerRadius="11" MinWidth="22" Height="22" 
                                     HorizontalAlignment="Right" VerticalAlignment="Top" BorderBrush="White" BorderThickness="1.5"
                                     Margin="0,-8,-8,0" Visibility="Collapsed" IsHitTestVisible="False">
@@ -601,7 +601,7 @@
                         <TextBlock Text="🗑️" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock Text="Xác nhận xóa lớp học?" FontSize="20" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                    <TextBlock Text="Hành động này không thể hoàn tác. Toàn bộ dữ liệu của lớp học này sẽ bị xóa vĩnh viễn." FontSize="14" Foreground="#64748B" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,30" LineHeight="22"/>
+                    <TextBlock Text="Hành động này không thể hoàn tác. Toàn bộ dữ liệu của lớp học này sẽ bị xóa vinh viễn." FontSize="14" Foreground="#64748B" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,30" LineHeight="22"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -617,7 +617,7 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-                        <Button x:Name="BtnConfirmDelete" Grid.Column="0" Content="Xóa vĩnh viễn" Height="45" Background="#EF4444" Foreground="White" FontWeight="SemiBold" Click="ConfirmDelete_Click" Cursor="Hand">
+                        <Button x:Name="BtnConfirmDelete" Grid.Column="0" Content="Xóa vinh viễn" Height="45" Background="#EF4444" Foreground="White" FontWeight="SemiBold" Click="ConfirmDelete_Click" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}" CornerRadius="12">
@@ -658,7 +658,7 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-                        <Button Grid.Column="0" Content="Xóa vĩnh viễn" Height="45" Background="#EF4444" Foreground="White" FontWeight="SemiBold" Click="ConfirmDeleteContent_Click" Cursor="Hand">
+                        <Button Grid.Column="0" Content="Xóa vinh viễn" Height="45" Background="#EF4444" Foreground="White" FontWeight="SemiBold" Click="ConfirmDeleteContent_Click" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}" CornerRadius="12">
@@ -683,7 +683,7 @@
                         <TextBlock Text="🗑️" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock Text="Xóa bài tập này?" FontSize="20" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                    <TextBlock Text="Dữ liệu bài tập sẽ bị xóa vĩnh viễn khỏi hệ thống." FontSize="14" Foreground="#64748B" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,30" LineHeight="22"/>
+                    <TextBlock Text="Dữ liệu bài tập sẽ bị xóa vinh viễn khỏi hệ thống." FontSize="14" Foreground="#64748B" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,30" LineHeight="22"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -699,7 +699,7 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-                        <Button Grid.Column="0" Content="Xóa vĩnh viễn" Height="45" Background="#EF4444" Foreground="White" FontWeight="SemiBold" Click="ConfirmDeleteAssignment_Click" Cursor="Hand">
+                        <Button Grid.Column="0" Content="Xóa vinh viễn" Height="45" Background="#EF4444" Foreground="White" FontWeight="SemiBold" Click="ConfirmDeleteAssignment_Click" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}" CornerRadius="12">
@@ -740,8 +740,8 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Loại môn học" Foreground="#64748B" Margin="0,0,0,5"/>
                                 <ComboBox x:Name="EditTypeInput" Tag="Chọn loại môn" Style="{StaticResource ModernComboBox}" SelectedIndex="0">
-                                    <ComboBoxItem Content="Đại cương"/>
-                                    <ComboBoxItem Content="Cơ sở ngành"/>
+                                    <ComboBoxItem Content="Đại cuong"/>
+                                    <ComboBoxItem Content="Co sở ngành"/>
                                     <ComboBoxItem Content="Chuyên ngành"/>
                                     <ComboBoxItem Content="Đồ án"/>
                                 </ComboBox>
@@ -789,8 +789,8 @@
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Năm học" Foreground="#64748B" Margin="0,0,0,5"/>
-                                <ComboBox x:Name="EditYearInput" Tag="Chọn năm học" Style="{StaticResource ModernComboBox}"/>
+                                <TextBlock Text="Nam học" Foreground="#64748B" Margin="0,0,0,5"/>
+                                <ComboBox x:Name="EditYearInput" Tag="Chọn nam học" Style="{StaticResource ModernComboBox}"/>
                             </StackPanel>
                         </Grid>
 
@@ -808,7 +808,7 @@
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="Lưu thay đổi" Width="140" Height="42" Background="{Binding CourseAccentBrush, ElementName=Root}" Foreground="White" Click="ConfirmEdit_Click">
+                            <Button Content="Luu thay đổi" Width="140" Height="42" Background="{Binding CourseAccentBrush, ElementName=Root}" Foreground="White" Click="ConfirmEdit_Click">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
                                         <Border Background="{TemplateBinding Background}" CornerRadius="10">
@@ -1028,7 +1028,7 @@
 
                             <StackPanel x:Name="InstructorManageArea" Visibility="Collapsed">
                                 <Separator Margin="0,0,0,20" Background="#F1F5F9"/>
-                                <TextBlock Text="Quản lý &amp; Chấm điểm" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,15"/>
+                                <TextBlock Text="Quản lý &amp; Chấm diểm" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,15"/>
                                 <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20">
                                     <StackPanel>
                                         <!-- Chip Notification cho Grading Status -->
@@ -1062,7 +1062,7 @@
                                                     </ControlTemplate>
                                                 </Button.Template>
                                             </Button>
-                                            <Button x:Name="BtnPublishGrades" Grid.Column="2" Content="Công khai điểm" Height="45" Background="White" Foreground="#F43F5E" BorderBrush="#F43F5E" BorderThickness="1.5" FontSize="15" FontWeight="SemiBold" Cursor="Hand" Click="BtnPublishGrades_Click">
+                                            <Button x:Name="BtnPublishGrades" Grid.Column="2" Content="Công khai diểm" Height="45" Background="White" Foreground="#F43F5E" BorderBrush="#F43F5E" BorderThickness="1.5" FontSize="15" FontWeight="SemiBold" Cursor="Hand" Click="BtnPublishGrades_Click">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
@@ -1083,14 +1083,14 @@
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <!-- Cải thiện hiển thị trạng thái bằng Border Chip -->
                                         <Border x:Name="DetailSubmissionStatusBorder" Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6" Padding="8,4">
-                                            <TextBlock x:Name="DetailSubmissionStatus" Text="Chưa nộp" FontSize="12" FontWeight="SemiBold" Foreground="#EF4444"/>
+                                            <TextBlock x:Name="DetailSubmissionStatus" Text="Chua nộp" FontSize="12" FontWeight="SemiBold" Foreground="#EF4444"/>
                                         </Border>
                                     </StackPanel>
                                 </Grid>
 
                                 <Border x:Name="StudentGradePanel" Background="#ECFDF5" BorderBrush="#10B981" BorderThickness="1" CornerRadius="10" Padding="15,10" Margin="0,0,0,15" Visibility="Collapsed">
                                     <StackPanel>
-                                        <TextBlock Text="Kết quả chấm điểm" FontSize="16" FontWeight="Bold" Foreground="#10B981" Margin="0,0,0,10"/>
+                                        <TextBlock Text="Kết quả chấm diểm" FontSize="16" FontWeight="Bold" Foreground="#10B981" Margin="0,0,0,10"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                             <TextBlock Text="Điểm số: " FontSize="14" FontWeight="SemiBold" Foreground="#1E293B"/>
                                             <TextBlock x:Name="TxtStudentScore" Text="10/10" FontSize="14" FontWeight="Bold" Foreground="#10B981"/>
@@ -1172,7 +1172,7 @@
 
                     <ScrollViewer Grid.Row="1" Margin="30,0,30,30" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <!-- Empty State hiển thị thông minh hơn -->
+                            <!-- Empty State hiển thị thông minh hon -->
                             <Border x:Name="TxtNoPendingRequests" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="30,40" Margin="0,20,0,0" Visibility="Collapsed">
                                 <StackPanel>
                                     <TextBlock Text="📭" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,10"/>
@@ -1254,12 +1254,12 @@
 
                     <ScrollViewer Grid.Row="1" Margin="30,0,30,30" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <!-- Empty State hiển thị thông minh hơn -->
+                            <!-- Empty State hiển thị thông minh hon -->
                             <Border x:Name="TxtNoEnrolledStudents" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="30,40" Margin="0,20,0,0" Visibility="Collapsed">
                                 <StackPanel>
                                     <TextBlock Text="📭" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                                     <TextBlock Text="Lớp học trống" Foreground="#475569" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Chưa có sinh viên nào tham gia." Foreground="#94A3B8" FontSize="14" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                                    <TextBlock Text="Chua có sinh viên nào tham gia." Foreground="#94A3B8" FontSize="14" HorizontalAlignment="Center" Margin="0,5,0,0"/>
                                 </StackPanel>
                             </Border>
 
@@ -1382,7 +1382,7 @@
                                 <TextBlock Text="Nhận xét" Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                 <TextBox x:Name="InputComment" Style="{StaticResource ModernTextBox}" TextWrapping="Wrap" AcceptsReturn="True" Height="150" Padding="15" VerticalContentAlignment="Top"/>
 
-                                <Button x:Name="BtnSaveAndNext" Content="Lưu &amp; Tiếp tục" Height="45" Background="#3B82F6" Foreground="White" FontSize="15" FontWeight="Bold" Margin="0,30,0,0" Cursor="Hand" Click="BtnSaveAndNext_Click">
+                                <Button x:Name="BtnSaveAndNext" Content="Luu &amp; Tiếp tục" Height="45" Background="#3B82F6" Foreground="White" FontSize="15" FontWeight="Bold" Margin="0,30,0,0" Cursor="Hand" Click="BtnSaveAndNext_Click">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
                                             <Border Background="{TemplateBinding Background}" CornerRadius="10">

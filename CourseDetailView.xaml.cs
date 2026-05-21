@@ -1,4 +1,4 @@
-using e_learning_app;
+﻿using e_learning_app;
 using e_learning_app.Class;
 using Microsoft.Win32;
 using System;
@@ -91,6 +91,10 @@ namespace e_learning_app.Views
     public partial class CourseDetailView : UserControl
     {
         private readonly DatabaseManager _dbManager;
+
+
+
+
         private readonly Course _course;
         private string CurrentUserId => _dbManager.GetCurrentUser()?.Id;
         private ObservableCollection<CourseContent> _courseContents;
@@ -140,9 +144,17 @@ namespace e_learning_app.Views
             InitializeYearComboBox();
             ApplyRolePermissions();
             LoadCourseContent();
-            LoadAssignments();
+            LoadAssignmentsAsync();
             LoadLessonsAsync();
             UpdateUI();
+
+            this.Unloaded += (s, e) =>
+            {
+                
+                
+                
+                
+            };
         }
 
         private void InitializeYearComboBox()
@@ -176,12 +188,9 @@ namespace e_learning_app.Views
         {
             try
             {
-                var snap = await _dbManager.GetDb.Collection("courseRegistrations")
-                    .WhereEqualTo("courseId", _course.Id)
-                    .WhereEqualTo("status", "pending")
-                    .GetSnapshotAsync();
-
-                int count = snap.Count;
+                var regs = await ApiService.GetAsync<List<RegistrationResponse>>($"courses/{_course.Id}/students");
+                int count = regs?.Count(r => r.Data.status?.ToLower() == "pending") ?? 0;
+                
                 if (count > 0)
                 {
                     BadgeBorder.Visibility = Visibility.Visible;
@@ -199,9 +208,19 @@ namespace e_learning_app.Views
         {
             try
             {
-                var contents = await _dbManager.GetCourseContentsAsync(_course.Id);
-                if (contents != null)
+                var response = await ApiService.GetAsync<List<ContentResponse>>($"courses/{_course.Id}/contents");
+                if (response != null)
                 {
+                    var contents = new List<CourseContent>();
+                    foreach (var resp in response)
+                    {
+                        if (resp.Data != null)
+                        {
+                            var content = resp.Data;
+                            content.Id = resp.Id;
+                            contents.Add(content);
+                        }
+                    }
                     _courseContents = new ObservableCollection<CourseContent>(contents.OrderBy(c => c.OrderIndex));
                     DocumentsList.ItemsSource = _courseContents;
                 }
@@ -216,10 +235,21 @@ namespace e_learning_app.Views
         {
             try
             {
-                var lessons = await _dbManager.GetLessonsByCourseAsync(_course.Id);
-                if (lessons != null)
+                var response = await ApiService.GetAsync<List<LessonResponse>>($"courses/{_course.Id}/lessons");
+                if (response != null)
                 {
-                    _lessons = new ObservableCollection<Lesson>(lessons);
+                    var lessons = new List<Lesson>();
+                    foreach (var resp in response)
+                    {
+                        if (resp.Data != null)
+                        {
+                            var lesson = resp.Data;
+                            lesson.Id = resp.Id;
+                            lesson.CreatedAt = lesson.CreatedAt.ToLocalTime();
+                            lessons.Add(lesson);
+                        }
+                    }
+                    _lessons = new ObservableCollection<Lesson>(lessons.OrderBy(l => l.CreatedAt));
                     LessonsList.ItemsSource = _lessons;
                 }
             }
@@ -314,8 +344,14 @@ namespace e_learning_app.Views
                     _editingLesson.Description = InputVideoDesc.Text;
                     _editingLesson.VideoUrl = videoUrl;
 
-                    bool success = await _dbManager.UpdateLessonAsync(_editingLesson);
-                    if (success)
+                    var req = new
+                    {
+                        Title = _editingLesson.Title,
+                        Description = _editingLesson.Description,
+                        VideoUrl = _editingLesson.VideoUrl
+                    };
+                    var response = await ApiService.PutAsync($"courses/{_course.Id}/lessons/{_editingLesson.Id}", req);
+                    if (response != null)
                     {
                         int index = _lessons.IndexOf(_editingLesson);
                         _lessons.RemoveAt(index);
@@ -325,19 +361,19 @@ namespace e_learning_app.Views
                 }
                 else
                 {
-                    var newLesson = new Lesson
+                    var req = new
                     {
-                        CourseId = _course.Id,
                         Title = InputVideoTitle.Text,
                         Description = InputVideoDesc.Text,
-                        VideoUrl = videoUrl,
-                        CreatedAt = DateTime.UtcNow
+                        VideoUrl = videoUrl
                     };
 
-                    string newId = await _dbManager.AddLessonAsync(newLesson);
-                    if (!string.IsNullOrEmpty(newId))
+                    var response = await ApiService.PostAsync<object, LessonResponse>($"courses/{_course.Id}/lessons", req);
+                    if (response != null && response.Data != null)
                     {
-                        newLesson.Id = newId;
+                        var newLesson = response.Data;
+                        newLesson.Id = response.Id;
+                        
                         if (_lessons == null) _lessons = new ObservableCollection<Lesson>();
                         _lessons.Add(newLesson);
                         await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Video bài giảng mới", $"Giáo viên vừa tải lên video: {newLesson.Title}", "Course", CurrentUserId, "Giáo viên");
@@ -402,12 +438,13 @@ namespace e_learning_app.Views
         {
             try
             {
-                var doc = await _dbManager.GetDb.Collection("Users").Document(_course.InstructorId).GetSnapshotAsync();
-                if (doc.Exists)
+                var response = await ApiService.GetAsync<UserResponse>($"users/{_course.InstructorId}");
+                if (response != null && response.Data != null)
                 {
-                    TxtInstructorName.Text = doc.ContainsField("FullName") ? doc.GetValue<string>("FullName") : "Không xác định";
-                    TxtInstructorEmail.Text = doc.ContainsField("Email") ? doc.GetValue<string>("Email") : "N/A";
-                    TxtInstructorPhone.Text = doc.ContainsField("PhoneNumber") ? doc.GetValue<string>("PhoneNumber") : "N/A";
+                    var user = response.Data;
+                    TxtInstructorName.Text = !string.IsNullOrEmpty(user.FullName) ? user.FullName : "Không xác định";
+                    TxtInstructorEmail.Text = !string.IsNullOrEmpty(user.Email) ? user.Email : "N/A";
+                    TxtInstructorPhone.Text = !string.IsNullOrEmpty(user.PhoneNumber) ? user.PhoneNumber : "N/A";
                 }
                 else
                 {
@@ -499,8 +536,27 @@ namespace e_learning_app.Views
                 _courseContents.Insert(newIndex, droppedData);
                 for (int i = 0; i < _courseContents.Count; i++) _courseContents[i].OrderIndex = i;
 
-                try { await _dbManager.UpdateCourseContentOrderAsync(_course.Id, _courseContents.ToList()); }
-                catch (Exception ex) { CustomDialog.Show("Lỗi khi lưu thứ tự mới: " + ex.Message, "Lỗi", DialogType.Error); LoadCourseContent(); }
+                try
+                {
+                    var tasks = new List<Task>();
+                    foreach (var content in _courseContents)
+                    {
+                        var req = new
+                        {
+                            Title = content.Title,
+                            Type = content.Type,
+                            Data = content.Data,
+                            OrderIndex = content.OrderIndex
+                        };
+                        tasks.Add(ApiService.PutAsync($"courses/{_course.Id}/contents/{content.Id}", req));
+                    }
+                    await Task.WhenAll(tasks);
+                }
+                catch (Exception ex)
+                {
+                    CustomDialog.Show("Lỗi khi lưu thứ tự mới: " + ex.Message, "Lỗi", DialogType.Error);
+                    LoadCourseContent();
+                }
             }
         }
 
@@ -556,7 +612,8 @@ namespace e_learning_app.Views
         {
             if (_contentToDelete != null)
             {
-                if (await _dbManager.DeleteCourseContentAsync(_course.Id, _contentToDelete.Id))
+                var response = await ApiService.DeleteAsync($"courses/{_course.Id}/contents/{_contentToDelete.Id}");
+                if (response)
                 {
                     _courseContents.Remove(_contentToDelete);
                     _contentToDelete = null;
@@ -564,8 +621,8 @@ namespace e_learning_app.Views
             }
             else if (_lessonToDelete != null)
             {
-                bool success = await _dbManager.DeleteLessonAsync(_lessonToDelete.Id);
-                if (success)
+                var response = await ApiService.DeleteAsync($"courses/{_course.Id}/lessons/{_lessonToDelete.Id}");
+                if (response)
                 {
                     try
                     {
@@ -754,7 +811,15 @@ namespace e_learning_app.Views
                 _editingContent.Type = type;
                 _editingContent.Data = data;
 
-                if (await _dbManager.UpdateCourseContentAsync(_course.Id, _editingContent))
+                var req = new
+                {
+                    Title = _editingContent.Title,
+                    Type = _editingContent.Type,
+                    Data = _editingContent.Data,
+                    OrderIndex = _editingContent.OrderIndex
+                };
+                var response = await ApiService.PutAsync($"courses/{_course.Id}/contents/{_editingContent.Id}", req);
+                if (response != null)
                 {
                     int index = _courseContents.IndexOf(_editingContent);
                     _courseContents.RemoveAt(index);
@@ -765,43 +830,51 @@ namespace e_learning_app.Views
             else
             {
                 int nextOrderIndex = _courseContents != null && _courseContents.Any() ? _courseContents.Max(c => c.OrderIndex) + 1 : 0;
-                var newContent = new CourseContent
+                
+                var req = new
                 {
-                    CourseId = _course.Id,
                     Title = AddTitleInput.Text,
                     Type = type,
                     Data = data,
                     OrderIndex = nextOrderIndex
                 };
-                var collectionRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id).Collection("Contents");
-                var docRef = await collectionRef.AddAsync(newContent);
-                newContent.Id = docRef.Id;
-                if (_courseContents == null) _courseContents = new ObservableCollection<CourseContent>();
-                _courseContents.Add(newContent);
-                await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Tài liệu mới", $"Giáo viên vừa thêm tài liệu: {newContent.Title}", "Course", CurrentUserId, "Giáo viên");
+                
+                var response = await ApiService.PostAsync<object, ContentResponse>($"courses/{_course.Id}/contents", req);
+                if (response != null && response.Data != null)
+                {
+                    var newContent = response.Data;
+                    newContent.Id = response.Id;
+                    
+                    if (_courseContents == null) _courseContents = new ObservableCollection<CourseContent>();
+                    _courseContents.Add(newContent);
+                    await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Tài liệu mới", $"Giáo viên vừa thêm tài liệu: {newContent.Title}", "Course", CurrentUserId, "Giáo viên");
+                }
             }
             CloseAddDrawer_Click(null, null);
         }
 
-        private async void LoadAssignments()
+        private async void LoadAssignmentsAsync()
         {
             try
             {
-                var query = _dbManager.GetDb.Collection("Courses").Document(_course.Id).Collection("Assignments");
-                var snapshot = await query.GetSnapshotAsync();
-
-                var list = new List<Assignment>();
-                foreach (var doc in snapshot.Documents)
+                var response = await ApiService.GetAsync<List<AssignmentResponse>>($"courses/{_course.Id}/assignments");
+                if (response != null)
                 {
-                    var assign = doc.ConvertTo<Assignment>();
-                    assign.Id = doc.Id;
-                    assign.Deadline = assign.Deadline.ToLocalTime();
-                    list.Add(assign);
+                    var list = new List<Assignment>();
+                    foreach (var resp in response)
+                    {
+                        if (resp.Data != null)
+                        {
+                            var assign = resp.Data;
+                            assign.Id = resp.Id;
+                            assign.Deadline = assign.Deadline.ToLocalTime();
+                            list.Add(assign);
+                        }
+                    }
+                    _assignments = new ObservableCollection<Assignment>(list.OrderBy(a => a.Deadline));
+                    AssignmentsList.ItemsSource = _assignments;
+                    TxtAssignmentCount.Text = _assignments.Count.ToString();
                 }
-
-                _assignments = new ObservableCollection<Assignment>(list.OrderBy(a => a.Deadline));
-                AssignmentsList.ItemsSource = _assignments;
-                TxtAssignmentCount.Text = _assignments.Count.ToString();
             }
             catch (Exception ex) { Debug.WriteLine("Lỗi tải bài tập: " + ex.Message); }
         }
@@ -889,12 +962,13 @@ namespace e_learning_app.Views
                         }
                     }
 
-                    await _dbManager.GetDb.Collection("Courses").Document(_course.Id).Collection("Assignments").Document(_assignmentToDelete.Id).DeleteAsync();
+                    await ApiService.DeleteAsync($"courses/{_course.Id}/assignments/{_assignmentToDelete.Id}");
 
                     if (_course.AssignmentCount > 0)
                     {
                         _course.AssignmentCount--;
-                        await _dbManager.GetDb.Collection("Courses").Document(_course.Id).UpdateAsync("AssignmentCount", _course.AssignmentCount);
+                        var updateCourseReq = new { AssignmentCount = _course.AssignmentCount };
+                        await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
                     }
 
                     _assignments.Remove(_assignmentToDelete);
@@ -988,8 +1062,6 @@ namespace e_learning_app.Views
 
             try
             {
-                var collectionRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id).Collection("Assignments");
-
                 if (_editingAssignment != null)
                 {
                     if (!string.IsNullOrEmpty(_editingAssignment.AttachedFileUrl) && _editingAssignment.AttachedFileUrl != fileUrl)
@@ -999,34 +1071,36 @@ namespace e_learning_app.Views
                             await _cloudinary.DestroyAsync(new DeletionParams($"assignments/{_course.Id}/{oldPublicId}") { ResourceType = ResourceType.Raw });
                     }
 
-                    _editingAssignment.Title = AssignTitleInput.Text;
-                    _editingAssignment.Description = AssignDescInput.Text;
-                    _editingAssignment.Deadline = finalDeadline;
-                    _editingAssignment.AttachedFileUrl = fileUrl;
-
-                    await collectionRef.Document(_editingAssignment.Id).SetAsync(_editingAssignment, Google.Cloud.Firestore.SetOptions.MergeAll);
-                }
-                else
-                {
-                    var newAssignment = new Assignment
+                    var updateReq = new
                     {
-                        CourseId = _course.Id,
                         Title = AssignTitleInput.Text,
                         Description = AssignDescInput.Text,
                         Deadline = finalDeadline,
-                        AttachedFileUrl = fileUrl,
-                        CreatedAt = DateTime.UtcNow
+                        AttachedFileUrl = fileUrl
                     };
-                    await collectionRef.AddAsync(newAssignment);
+
+                    await ApiService.PutAsync($"courses/{_course.Id}/assignments/{_editingAssignment.Id}", updateReq);
+                }
+                else
+                {
+                    var newAssignmentReq = new
+                    {
+                        Title = AssignTitleInput.Text,
+                        Description = AssignDescInput.Text,
+                        DueDate = finalDeadline,
+                        AttachedFileUrl = fileUrl
+                    };
+                    await ApiService.PostAsync($"courses/{_course.Id}/assignments", newAssignmentReq);
 
                     _course.AssignmentCount++;
-                    await _dbManager.GetDb.Collection("Courses").Document(_course.Id).UpdateAsync("AssignmentCount", _course.AssignmentCount);
-                    await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Bài tập mới", $"Giáo viên vừa tạo bài tập: {newAssignment.Title}", "Homework");
+                    var updateCourseReq = new { AssignmentCount = _course.AssignmentCount };
+                    await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq); // Note: Assuming the Web API allows partial update or we can just ignore it as we use API
+                    await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Bài tập mới", $"Giáo viên vừa tạo bài tập: {newAssignmentReq.Title}", "Homework");
                 }
 
                 TxtAssignmentCount.Text = _course.AssignmentCount.ToString();
 
-                LoadAssignments();
+                LoadAssignmentsAsync();
                 CloseAddAssignmentDrawer_Click(null, null);
             }
             catch (Exception ex) { CustomDialog.Show("Lỗi lưu Database: " + ex.Message, "Lỗi", DialogType.Error); }
@@ -1094,19 +1168,16 @@ namespace e_learning_app.Views
                     TxtInstructorGradingStatus.Text = "Trạng thái: Đang tải...";
                     try
                     {
-                        var assignDoc = await _dbManager.GetDb.Collection("Courses").Document(_course.Id)
-                                                 .Collection("Assignments").Document(_currentViewedAssignment.Id).GetSnapshotAsync();
-                        bool isPublished = assignDoc.ContainsField("IsGradesPublished") && assignDoc.GetValue<bool>("IsGradesPublished");
+                        var assignDoc = await ApiService.GetAsync<AssignmentResponse>($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}");
+                        bool isPublished = assignDoc != null && assignDoc.Data != null && assignDoc.Data.IsGradesPublished;
 
-                        var subsRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id)
-                                             .Collection("Assignments").Document(_currentViewedAssignment.Id)
-                                             .Collection("Submissions");
-                        var snap = await subsRef.GetSnapshotAsync();
-                        int count = snap.Count;
+                        var submissions = await ApiService.GetAsync<List<SubmissionResponse>>($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}/submissions");
+                        
+                        int count = submissions?.Count ?? 0;
                         TxtSubmissionCount.Text = $"Đã có {count} sinh viên nộp bài.";
                         BtnDownloadAll.IsEnabled = count > 0;
 
-                        int gradedCount = snap.Documents.Count(d => d.ContainsField("Score") && d.GetValue<double?>("Score") != null);
+                        int gradedCount = submissions?.Count(d => d.Data != null && d.Data.Score.HasValue) ?? 0;
 
                         if (isPublished)
                         {
@@ -1137,18 +1208,16 @@ namespace e_learning_app.Views
 
                     try
                     {
-                        var assignDoc = await _dbManager.GetDb.Collection("Courses").Document(_course.Id)
-                                                 .Collection("Assignments").Document(_currentViewedAssignment.Id).GetSnapshotAsync();
-                        bool isPublished = assignDoc.ContainsField("IsGradesPublished") && assignDoc.GetValue<bool>("IsGradesPublished");
+                        var assignDoc = await ApiService.GetAsync<AssignmentResponse>($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}");
+                        bool isPublished = assignDoc != null && assignDoc.Data != null && assignDoc.Data.IsGradesPublished;
 
-                        var subRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id)
-                                             .Collection("Assignments").Document(_currentViewedAssignment.Id)
-                                             .Collection("Submissions").Document(CurrentUserId);
-                        var snapshot = await subRef.GetSnapshotAsync();
+                        // Because the API doesn't have an endpoint for a single submission, we'll fetch all submissions and find the student's submission
+                        var submissions = await ApiService.GetAsync<List<SubmissionResponse>>($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}/submissions");
+                        var mySubmissionResp = submissions?.FirstOrDefault(s => s.Id == CurrentUserId);
 
-                        if (snapshot.Exists)
+                        if (mySubmissionResp != null && mySubmissionResp.Data != null)
                         {
-                            var sub = snapshot.ConvertTo<Submission>();
+                            var sub = mySubmissionResp.Data;
 
                             DetailSubmissionStatus.Text = "Đã nộp bài";
                             DetailSubmissionStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
@@ -1161,12 +1230,12 @@ namespace e_learning_app.Views
 
                             SubmittedFileDetailsPanel.Visibility = Visibility.Visible;
 
-                            if (isPublished && snapshot.ContainsField("Score") && snapshot.GetValue<double?>("Score") != null)
+                            if (isPublished && sub.Score.HasValue)
                             {
                                 StudentGradePanel.Visibility = Visibility.Visible;
-                                TxtStudentScore.Text = $"{snapshot.GetValue<double>("Score")}/10";
+                                TxtStudentScore.Text = $"{sub.Score.Value}/10";
 
-                                string comment = snapshot.ContainsField("Comment") ? snapshot.GetValue<string>("Comment") : "";
+                                string comment = sub.Comment ?? "";
                                 TxtStudentComment.Text = string.IsNullOrWhiteSpace(comment) ? "Không có" : comment;
 
                                 DropZoneGrid.Visibility = Visibility.Collapsed;
@@ -1224,12 +1293,9 @@ namespace e_learning_app.Views
 
                 try
                 {
-                    var subsRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id)
-                                         .Collection("Assignments").Document(_currentViewedAssignment.Id)
-                                         .Collection("Submissions");
-                    var snapshot = await subsRef.GetSnapshotAsync();
+                    var submissions = await ApiService.GetAsync<List<SubmissionResponse>>($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}/submissions");
 
-                    if (snapshot.Count == 0)
+                    if (submissions == null || submissions.Count == 0)
                     {
                         CustomDialog.Show("Chưa có sinh viên nào nộp bài.", "Thông báo", DialogType.Info);
                         return;
@@ -1240,12 +1306,14 @@ namespace e_learning_app.Views
                     using (HttpClient client = new HttpClient())
                     {
                         int currentIndex = 0;
-                        foreach (var doc in snapshot.Documents)
+                        foreach (var resp in submissions)
                         {
+                            if (resp.Data == null || string.IsNullOrEmpty(resp.Data.FileUrl)) continue;
+                            
                             currentIndex++;
-                            BtnDownloadAll.Content = $"Đang tải ({currentIndex}/{snapshot.Count})...";
+                            BtnDownloadAll.Content = $"Đang tải ({currentIndex}/{submissions.Count})...";
 
-                            var sub = doc.ConvertTo<Submission>();
+                            var sub = resp.Data;
                             string displayFileName = GetDisplayNameFromUrl(sub.FileUrl, "submission");
                             string finalZipName = sub.IsLate ? $"late_{sub.StudentId}_{displayFileName}" : $"{sub.StudentId}_{displayFileName}";
 
@@ -1273,7 +1341,7 @@ namespace e_learning_app.Views
             }
         }
 
-        private async void BtnGradeAssignment_Click(object sender, RoutedEventArgs e)
+        private void BtnGradeAssignment_Click(object sender, RoutedEventArgs e)
         {
             if (_currentViewedAssignment == null) return;
 
@@ -1282,47 +1350,51 @@ namespace e_learning_app.Views
             GradingRightPanel.Visibility = Visibility.Collapsed;
             TxtGradingLoading.Visibility = Visibility.Visible;
 
-            await LoadGradingListAsync();
+            LoadGradingListAsync();
         }
 
-        private async Task LoadGradingListAsync()
+        private async void LoadGradingListAsync()
         {
+            if (_currentViewedAssignment == null) return;
             try
             {
-                var subsRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id)
-                                     .Collection("Assignments").Document(_currentViewedAssignment.Id)
-                                     .Collection("Submissions");
-                var snap = await subsRef.GetSnapshotAsync();
+                TxtGradingLoading.Visibility = Visibility.Visible;
+                var submissions = await ApiService.GetAsync<List<SubmissionResponse>>($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}/submissions");
+                
+                var list = new List<GradingItem>();
+                if (submissions != null)
+                {
+                    foreach (var subResp in submissions)
+                    {
+                        var sub = subResp.Data;
+                        string sId = sub.StudentId;
+                        
+                        var userResp = await ApiService.GetAsync<User>($"users/{sId}");
+                        string name = userResp != null ? userResp.FullName : "Học viên ẩn danh";
+
+                        list.Add(new GradingItem
+                        {
+                            SubmissionId = subResp.Id,
+                            StudentId = sId,
+                            FullName = name,
+                            FileUrl = sub.FileUrl,
+                            DisplayFileName = GetDisplayNameFromUrl(sub.FileUrl, "submission"),
+                            SubmittedAt = sub.SubmittedAt.ToLocalTime(),
+                            IsLate = sub.IsLate,
+                            Score = sub.Score,
+                            Comment = sub.Comment ?? ""
+                        });
+                    }
+                }
 
                 _gradingList.Clear();
-
-                foreach (var doc in snap.Documents)
-                {
-                    var sub = doc.ConvertTo<Submission>();
-                    string sId = sub.StudentId;
-
-                    var userDoc = await _dbManager.GetDb.Collection("Users").Document(sId).GetSnapshotAsync();
-                    string name = userDoc.Exists ? userDoc.GetValue<string>("FullName") : "Học viên ẩn danh";
-
-                    _gradingList.Add(new GradingItem
-                    {
-                        SubmissionId = doc.Id,
-                        StudentId = sId,
-                        FullName = name,
-                        FileUrl = sub.FileUrl,
-                        DisplayFileName = GetDisplayNameFromUrl(sub.FileUrl, "submission"),
-                        SubmittedAt = sub.SubmittedAt.ToLocalTime(),
-                        IsLate = sub.IsLate,
-                        Score = doc.ContainsField("Score") ? doc.GetValue<double?>("Score") : null,
-                        Comment = doc.ContainsField("Comment") ? doc.GetValue<string>("Comment") : ""
-                    });
-                }
+                foreach (var item in list) _gradingList.Add(item);
 
                 GradingItemsList.ItemsSource = null;
                 GradingItemsList.ItemsSource = _gradingList;
                 TxtGradingLoading.Visibility = Visibility.Collapsed;
 
-                if (_gradingList.Count > 0)
+                if (_gradingList.Count > 0 && GradingItemsList.SelectedIndex == -1)
                 {
                     GradingItemsList.SelectedIndex = 0;
                 }
@@ -1330,6 +1402,7 @@ namespace e_learning_app.Views
             catch (Exception ex)
             {
                 CustomDialog.Show("Lỗi tải danh sách chấm bài: " + ex.Message, "Lỗi", DialogType.Error);
+                TxtGradingLoading.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -1379,18 +1452,14 @@ namespace e_learning_app.Views
                 BtnSaveAndNext.IsEnabled = false;
                 BtnSaveAndNext.Content = "Đang lưu...";
 
-                var subRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id)
-                                     .Collection("Assignments").Document(_currentViewedAssignment.Id)
-                                     .Collection("Submissions").Document(_currentGradingItem.SubmissionId);
-
-                var updates = new Dictionary<string, object>
+                var req = new
                 {
-                    { "Score", score },
-                    { "Comment", comment }
+                    Score = score,
+                    Comment = comment
                 };
 
-                await subRef.UpdateAsync(updates);
-                await NotificationService.SendNotificationAsync(_dbManager, _currentGradingItem.StudentId, "Đã có điểm", $"Bài tập '{_currentViewedAssignment.Title}' của bạn đã có điểm: {score}/10", "Homework", courseId: _course.Id);
+                await ApiService.PutAsync($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}/submissions/{_currentGradingItem.StudentId}/grade", req);
+                await NotificationService.SendNotificationAsync(_dbManager, _currentGradingItem.StudentId, "Ä ã có điểm", $"Bài tập '{_currentViewedAssignment.Title}' của bạn đã có điểm: {score}/10", "Homework", courseId: _course.Id);
 
                 _currentGradingItem.Score = score;
                 _currentGradingItem.Comment = comment;
@@ -1420,7 +1489,9 @@ namespace e_learning_app.Views
         private void CloseGradingDrawer_Click(object sender, RoutedEventArgs e)
         {
             GradingDrawer.Visibility = Visibility.Collapsed;
+            MainScrollViewer.Effect = null;
             _currentGradingItem = null;
+            
         }
 
         private void BtnDownloadCurrentGradeFile_Click(object sender, RoutedEventArgs e)
@@ -1443,10 +1514,7 @@ namespace e_learning_app.Views
                     var btn = sender as Button;
                     if (btn != null) { btn.Content = "Đang xử lý..."; btn.IsEnabled = false; }
 
-                    var assignRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id)
-                                         .Collection("Assignments").Document(_currentViewedAssignment.Id);
-
-                    await assignRef.UpdateAsync("IsGradesPublished", true);
+                    await ApiService.PutAsync($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}/publish-grades", new { });
 
                     TxtInstructorGradingStatus.Text = "Trạng thái: Đã công khai";
                     TxtInstructorGradingStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
@@ -1512,14 +1580,12 @@ namespace e_learning_app.Views
 
             try
             {
-                var subRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id)
-                                     .Collection("Assignments").Document(_currentViewedAssignment.Id)
-                                     .Collection("Submissions").Document(CurrentUserId);
+                var submissions = await ApiService.GetAsync<List<SubmissionResponse>>($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}/submissions");
+                var mySubmissionResp = submissions?.FirstOrDefault(s => s.Id == CurrentUserId);
 
-                var snapshot = await subRef.GetSnapshotAsync();
-                if (snapshot.Exists)
+                if (mySubmissionResp != null && mySubmissionResp.Data != null)
                 {
-                    var oldSubmission = snapshot.ConvertTo<Submission>();
+                    var oldSubmission = mySubmissionResp.Data;
                     if (!string.IsNullOrEmpty(oldSubmission.FileUrl))
                     {
                         try
@@ -1554,16 +1620,9 @@ namespace e_learning_app.Views
                 var uploadResult = await _cloudinary.UploadAsync(uploadParams);
                 if (uploadResult.Error != null) throw new Exception(uploadResult.Error.Message);
 
-                var submission = new Submission
-                {
-                    AssignmentId = _currentViewedAssignment.Id,
-                    StudentId = CurrentUserId,
-                    FileUrl = uploadResult.SecureUrl.ToString(),
-                    SubmittedAt = DateTime.UtcNow,
-                    IsLate = isLate
-                };
+                var req = new { FileUrl = uploadResult.SecureUrl.ToString(), Content = "" };
+                await ApiService.PostAsync($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}/submit", req);
 
-                await subRef.SetAsync(submission);
                 await NotificationService.SendNotificationAsync(_dbManager, _course.InstructorId, "Học sinh nộp bài", $"Có học sinh vừa nộp bài tập '{_currentViewedAssignment.Title}'.", "System", CurrentUserId, "Học sinh", courseId: _course.Id);
 
                 DetailSubmissionStatus.Text = "Đã nộp bài";
@@ -1775,7 +1834,7 @@ namespace e_learning_app.Views
         {
             MainScrollViewer.Effect = new BlurEffect { Radius = 10 };
             ApprovalDrawer.Visibility = Visibility.Visible;
-            await LoadPendingRequestsAsync();
+            SetupPendingRequestsListener();
         }
 
         private void CloseApprovalDrawer_Click(object sender, RoutedEventArgs e)
@@ -1784,58 +1843,38 @@ namespace e_learning_app.Views
             MainScrollViewer.Effect = null;
         }
 
-        private async Task LoadPendingRequestsAsync()
+        private async void SetupPendingRequestsListener()
         {
             try
             {
-                var snap = await _dbManager.GetDb.Collection("courseRegistrations")
-                    .WhereEqualTo("courseId", _course.Id)
-                    .WhereEqualTo("status", "pending")
-                    .GetSnapshotAsync();
+                var regs = await ApiService.GetAsync<List<RegistrationResponse>>($"courses/{_course.Id}/students");
+                var list = new List<PendingRequest>();
+
+                if (regs != null)
+                {
+                    foreach (var regResp in regs)
+                    {
+                        var reg = regResp.Data;
+                        if (reg.status?.ToLower() == "pending")
+                        {
+                            // Use joined info from backend response
+                            string name = reg.fullName ?? "Học viên ẩn danh";
+                            string email = reg.email ?? "";
+
+                            list.Add(new PendingRequest
+                            {
+                                RegistrationId = regResp.Id,
+                                UserId = reg.userId,
+                                FullName = name,
+                                Email = email,
+                                RequestedAt = (reg.requestDate ?? DateTime.UtcNow).ToLocalTime()
+                            });
+                        }
+                    }
+                }
 
                 _pendingRequests.Clear();
-
-                var tasks = snap.Documents.Select(async doc =>
-                {
-                    string uId = doc.GetValue<object>("userId")?.ToString() ?? "";
-                    var userDoc = await _dbManager.GetDb.Collection("Users").Document(uId).GetSnapshotAsync();
-                    
-                    string name = "Học viên ẩn danh";
-                    string email = "";
-
-                    if (userDoc.Exists)
-                    {
-                        // Lấy dữ liệu an toàn, tránh lỗi ép kiểu trực tiếp
-                        name = userDoc.ContainsField("FullName") ? userDoc.GetValue<object>("FullName")?.ToString() : "";
-                        email = userDoc.ContainsField("Email") ? userDoc.GetValue<object>("Email")?.ToString() : "";
-
-                        if (string.IsNullOrWhiteSpace(name)) name = "Học viên ẩn danh";
-                    }
-
-                    DateTime requestedAt = DateTime.Now;
-                    if (doc.ContainsField("createdAt"))
-                    {
-                        var ts = doc.GetValue<Google.Cloud.Firestore.Timestamp?>("createdAt");
-                        if (ts.HasValue) requestedAt = ts.Value.ToDateTime().ToLocalTime();
-                    }
-                    else if (doc.ContainsField("requestDate"))
-                    {
-                        var ts = doc.GetValue<Google.Cloud.Firestore.Timestamp?>("requestDate");
-                        if (ts.HasValue) requestedAt = ts.Value.ToDateTime().ToLocalTime();
-                    }
-
-                    return new PendingRequest
-                    {
-                        RegistrationId = doc.Id,
-                        UserId = uId,
-                        FullName = name,
-                        Email = email,
-                        RequestedAt = requestedAt
-                    };
-                });
-
-                var results = await Task.WhenAll(tasks);
-                foreach (var req in results) _pendingRequests.Add(req);
+                foreach (var req in list) _pendingRequests.Add(req);
 
                 PendingRequestsList.ItemsSource = _pendingRequests;
 
@@ -1843,7 +1882,6 @@ namespace e_learning_app.Views
                 {
                     TxtNoPendingRequests.Visibility = Visibility.Collapsed;
                     BtnAcceptAll.Visibility = Visibility.Visible;
-
                     BadgeBorder.Visibility = Visibility.Visible;
                     TxtPendingCount.Text = _pendingRequests.Count > 99 ? "99+" : _pendingRequests.Count.ToString();
                 }
@@ -1860,27 +1898,26 @@ namespace e_learning_app.Views
             }
         }
 
+
+
         private async void BtnAcceptStudent_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is string regId)
             {
                 try
                 {
-                    var regRef = _dbManager.GetDb.Collection("courseRegistrations").Document(regId);
-
-                    await regRef.UpdateAsync(new Dictionary<string, object> {
-                        { "status", "accepted" },
-                        { "approvedDate", Google.Cloud.Firestore.FieldValue.ServerTimestamp }
-                    });
-                    
                     var req = _pendingRequests.FirstOrDefault(r => r.RegistrationId == regId);
+                    
+                    await ApiService.PutAsync($"courses/{_course.Id}/registrations/{regId}/approve", new { });
+                    
                     if (req != null) await NotificationService.SendNotificationAsync(_dbManager, req.UserId, "Vào lớp thành công", $"Yêu cầu tham gia lớp '{_course.ClassName}' của bạn đã được chấp nhận.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
 
                     _course.StudentCount++;
-                    await _dbManager.GetDb.Collection("Courses").Document(_course.Id).UpdateAsync("StudentCount", _course.StudentCount);
+                    var updateCourseReq = new { StudentCount = _course.StudentCount };
+                    await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
 
                     TxtStudentCount.Text = _course.StudentCount.ToString();
-                    await LoadPendingRequestsAsync();
+                    SetupPendingRequestsListener();
                 }
                 catch (Exception ex) { CustomDialog.Show("Lỗi duyệt: " + ex.Message, "Lỗi", DialogType.Error); }
             }
@@ -1892,13 +1929,13 @@ namespace e_learning_app.Views
             {
                 try
                 {
-                    var regRef = _dbManager.GetDb.Collection("courseRegistrations").Document(regId);
-                    await regRef.UpdateAsync("status", "rejected");
-                    
                     var req = _pendingRequests.FirstOrDefault(r => r.RegistrationId == regId);
+                    
+                    await ApiService.PutAsync($"courses/{_course.Id}/registrations/{regId}/reject", new { });
+                    
                     if (req != null) await NotificationService.SendNotificationAsync(_dbManager, req.UserId, "Từ chối vào lớp", $"Yêu cầu tham gia lớp '{_course.ClassName}' của bạn đã bị từ chối.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
 
-                    await LoadPendingRequestsAsync();
+                    SetupPendingRequestsListener();
                 }
                 catch (Exception ex) { CustomDialog.Show("Lỗi từ chối: " + ex.Message, "Lỗi", DialogType.Error); }
             }
@@ -1913,24 +1950,18 @@ namespace e_learning_app.Views
 
             try
             {
-                Google.Cloud.Firestore.WriteBatch batch = _dbManager.GetDb.StartBatch();
-
                 foreach (var req in _pendingRequests)
                 {
-                    var regRef = _dbManager.GetDb.Collection("courseRegistrations").Document(req.RegistrationId);
-                    batch.Update(regRef, "status", "accepted");
-                    batch.Update(regRef, "approvedDate", Google.Cloud.Firestore.FieldValue.ServerTimestamp);
+                    await ApiService.PutAsync($"courses/{_course.Id}/registrations/{req.RegistrationId}/approve", new { });
                     await NotificationService.SendNotificationAsync(_dbManager, req.UserId, "Vào lớp thành công", $"Yêu cầu tham gia lớp '{_course.ClassName}' của bạn đã được chấp nhận.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
                 }
 
                 _course.StudentCount += _pendingRequests.Count;
-                var courseRef = _dbManager.GetDb.Collection("Courses").Document(_course.Id);
-                batch.Update(courseRef, "StudentCount", _course.StudentCount);
-
-                await batch.CommitAsync();
+                var updateCourseReq = new { StudentCount = _course.StudentCount };
+                await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
 
                 TxtStudentCount.Text = _course.StudentCount.ToString();
-                await LoadPendingRequestsAsync();
+                SetupPendingRequestsListener();
 
                 CustomDialog.Show("Đã duyệt tất cả yêu cầu thành công!", "Thành công", DialogType.Success);
             }
@@ -1951,7 +1982,7 @@ namespace e_learning_app.Views
         {
             MainScrollViewer.Effect = new BlurEffect { Radius = 10 };
             ManageStudentsDrawer.Visibility = Visibility.Visible;
-            await LoadEnrolledStudentsAsync();
+            SetupEnrolledStudentsListener();
         }
 
         private void CloseManageStudentsDrawer_Click(object sender, RoutedEventArgs e)
@@ -1960,52 +1991,38 @@ namespace e_learning_app.Views
             MainScrollViewer.Effect = null;
         }
 
-        private async Task LoadEnrolledStudentsAsync()
+        private async void SetupEnrolledStudentsListener()
         {
             try
             {
-                var snap = await _dbManager.GetDb.Collection("courseRegistrations")
-                    .WhereEqualTo("courseId", _course.Id)
-                    .WhereEqualTo("status", "accepted")
-                    .GetSnapshotAsync();
+                var regs = await ApiService.GetAsync<List<RegistrationResponse>>($"courses/{_course.Id}/students");
+                var list = new List<EnrolledStudent>();
+
+                if (regs != null)
+                {
+                    foreach (var regResp in regs)
+                    {
+                        var reg = regResp.Data;
+                        if (reg.status?.ToLower() == "active" || reg.status?.ToLower() == "accepted")
+                        {
+                            var userResp = await ApiService.GetAsync<User>($"users/{reg.userId}");
+                            string name = userResp != null && !string.IsNullOrWhiteSpace(userResp.FullName) ? userResp.FullName : "Học viên ẩn danh";
+                            string email = userResp != null ? userResp.Email : "";
+
+                            list.Add(new EnrolledStudent
+                            {
+                                RegistrationId = regResp.Id,
+                                UserId = reg.userId,
+                                FullName = name,
+                                Email = email,
+                                ApprovedDate = (reg.requestDate ?? DateTime.UtcNow).ToLocalTime()
+                            });
+                        }
+                    }
+                }
 
                 _enrolledStudents.Clear();
-
-                var tasks = snap.Documents.Select(async doc =>
-                {
-                    string uId = doc.GetValue<object>("userId")?.ToString() ?? "";
-                    var userDoc = await _dbManager.GetDb.Collection("Users").Document(uId).GetSnapshotAsync();
-                    
-                    string name = "Học viên ẩn danh";
-                    string email = "";
-
-                    if (userDoc.Exists)
-                    {
-                        name = userDoc.ContainsField("FullName") ? userDoc.GetValue<object>("FullName")?.ToString() : "";
-                        email = userDoc.ContainsField("Email") ? userDoc.GetValue<object>("Email")?.ToString() : "";
-
-                        if (string.IsNullOrWhiteSpace(name)) name = "Học viên ẩn danh";
-                    }
-
-                    DateTime approvedDate = DateTime.Now;
-                    if (doc.ContainsField("approvedDate"))
-                    {
-                        var ts = doc.GetValue<Google.Cloud.Firestore.Timestamp?>("approvedDate");
-                        if (ts.HasValue) approvedDate = ts.Value.ToDateTime().ToLocalTime();
-                    }
-
-                    return new EnrolledStudent
-                    {
-                        RegistrationId = doc.Id,
-                        UserId = uId,
-                        FullName = name,
-                        Email = email,
-                        ApprovedDate = approvedDate
-                    };
-                });
-
-                var results = await Task.WhenAll(tasks);
-                foreach (var student in results) _enrolledStudents.Add(student);
+                foreach (var s in list) _enrolledStudents.Add(s);
 
                 EnrolledStudentsList.ItemsSource = _enrolledStudents;
                 TxtNoEnrolledStudents.Visibility = _enrolledStudents.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
@@ -2015,7 +2032,7 @@ namespace e_learning_app.Views
             }
             catch (Exception ex)
             {
-                CustomDialog.Show("Lỗi tải danh sách sinh viên: " + ex.Message, "Lỗi", DialogType.Error);
+                CustomDialog.Show("Lỗi tải danh sách học viên: " + ex.Message, "Lỗi", DialogType.Error);
             }
         }
 
@@ -2030,20 +2047,18 @@ namespace e_learning_app.Views
 
                     try
                     {
-                        var regRef = _dbManager.GetDb.Collection("courseRegistrations").Document(regId);
-                        await regRef.UpdateAsync(new Dictionary<string, object> {
-                    { "status", "rejected" },
-                    { "removedDate", Google.Cloud.Firestore.FieldValue.ServerTimestamp }
-                });
+                        var removedStudent = _enrolledStudents.FirstOrDefault(s => s.RegistrationId == regId);
+
+                        await ApiService.PutAsync($"courses/{_course.Id}/registrations/{regId}/reject", new { });
 
                         if (_course.StudentCount > 0)
                         {
                             _course.StudentCount--;
                         }
 
-                        await _dbManager.GetDb.Collection("Courses").Document(_course.Id).UpdateAsync("StudentCount", _course.StudentCount);
+                        var updateCourseReq = new { StudentCount = _course.StudentCount };
+                        await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
 
-                        var removedStudent = _enrolledStudents.FirstOrDefault(s => s.RegistrationId == regId);
                         if (removedStudent != null)
                         {
                             await NotificationService.SendNotificationAsync(_dbManager, removedStudent.UserId, "Rời khỏi lớp", $"Bạn đã bị giáo viên loại khỏi lớp '{_course.ClassName}'.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
@@ -2051,7 +2066,7 @@ namespace e_learning_app.Views
 
                         TxtStudentCount.Text = _course.StudentCount.ToString();
 
-                        await LoadEnrolledStudentsAsync();
+                        SetupEnrolledStudentsListener();
 
                         CustomDialog.Show("Đã loại bỏ sinh viên và chặn quyền truy cập thành công!", "Thông báo", DialogType.Success);
                     }

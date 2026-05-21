@@ -70,7 +70,7 @@
                             </Border>
                             <TextBlock x:Name="TxtTotalCourses" FontSize="32" FontWeight="Bold" Foreground="#0F172A" Text="0"/>
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <TextBlock Text="Khóa đang học" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <TextBlock Text="Khóa dang học" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
                                 <Border Style="{StaticResource PillLabel}" Background="#DCFCE7" Margin="10,0,0,0">
                                     <TextBlock Text="Đã duyệt" FontSize="11" Foreground="#16A34A" FontWeight="Bold"/>
                                 </Border>
@@ -98,11 +98,11 @@
                             <Border Width="48" Height="48" CornerRadius="14" Background="#F0FDF4" HorizontalAlignment="Left" Margin="0,0,0,16">
                                 <TextBlock Text="📈" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock x:Name="TxtAvgScore" FontSize="32" FontWeight="Bold" Foreground="#0F172A" Text="Tốt"/>
+                            <TextBlock x:Name="TxtAvgScore" FontSize="32" FontWeight="Bold" Foreground="#0F172A" Text="0"/>
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <TextBlock Text="Tình hình chung" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
-                                <Border Style="{StaticResource PillLabel}" Background="#F1F5F9" Margin="10,0,0,0">
-                                    <TextBlock Text="Tích cực" FontSize="11" Foreground="#475569" FontWeight="Bold"/>
+                                <TextBlock Text="Bài kiểm tra" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <Border Style="{StaticResource PillLabel}" Background="#FFF7ED" Margin="10,0,0,0">
+                                    <TextBlock Text="Chưa làm" FontSize="11" Foreground="#C2410C" FontWeight="Bold"/>
                                 </Border>
                             </StackPanel>
                         </StackPanel>

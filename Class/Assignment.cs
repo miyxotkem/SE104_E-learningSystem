@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 using System;
 
 namespace e_learning_app.Class
@@ -13,5 +13,6 @@ namespace e_learning_app.Class
         [FirestoreProperty] public DateTime Deadline { get; set; }
         [FirestoreProperty] public string AttachedFileUrl { get; set; }
         [FirestoreProperty] public DateTime CreatedAt { get; set; }
+        [FirestoreProperty] public bool IsGradesPublished { get; set; }
     }
 }

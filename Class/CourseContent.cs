@@ -1,25 +1,12 @@
-﻿using Google.Cloud.Firestore;
-
 namespace e_learning_app
 {
-    [FirestoreData]
     public class CourseContent
     {
-        public string Id { get; set; }
-
-        [FirestoreProperty]
-        public string CourseId { get; set; }
-
-        [FirestoreProperty]
-        public string Title { get; set; }
-
-        [FirestoreProperty]
-        public string Type { get; set; }
-
-        [FirestoreProperty]
-        public string Data { get; set; }
-
-        [FirestoreProperty]
+        public string Id { get; set; } = string.Empty;
+        public string CourseId { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Data { get; set; } = string.Empty;
         public int OrderIndex { get; set; }
 
         public string Icon => Type == "Document" ? "📄" : Type == "Link" ? "🔗" : "📝";

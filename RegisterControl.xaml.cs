@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -58,8 +58,8 @@ namespace e_learning_app
 
                 if (newUserId != null)
                 {
-                    await FirebaseService.CreateUserInFirestore(newUserId, email, fullName); // Lưu vào Firestore với Email và FullName
-                    CustomDialog.Show("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.", "Thành công", DialogType.Success);
+                    await FirebaseService.CreateUserInFirestore(newUserId, email, fullName); // Luu vào Firestore với Email và FullName
+                    CustomDialog.Show("Đăng ký thành công! Bạn có thể dang nhập ngay bây giờ.", "Thành công", DialogType.Success);
                     var parent_window=Window.GetWindow(this) as LoginWindow;
                     if (parent_window != null)
                     {
@@ -68,7 +68,7 @@ namespace e_learning_app
                 }
             }
             catch (Exception ex) {
-                CustomDialog.Show("Lỗi đăng ký: " + ex.Message, "Lỗi", DialogType.Error);
+                CustomDialog.Show("Lỗi dang ký: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {

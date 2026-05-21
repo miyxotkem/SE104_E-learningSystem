@@ -1,4 +1,4 @@
-<UserControl x:Class="e_learning_app.Views.StudentQuizView"
+﻿<UserControl x:Class="e_learning_app.Views.StudentQuizView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F0F2F5"
@@ -43,7 +43,7 @@
         
         <StackPanel Grid.Row="0">
             <TextBlock Text="📝 Các bài kiểm tra" FontSize="28" FontWeight="Bold" Foreground="#1E293B"/>
-            <TextBlock Text="Danh sách các bài thi và trắc nghiệm đang mở" FontSize="14" Foreground="#64748B" Margin="0,8,0,0"/>
+            <TextBlock Text="Danh sách các bài thi và trắc nghiệm dang mở" FontSize="14" Foreground="#64748B" Margin="0,8,0,0"/>
         </StackPanel>
         
         <ListBox x:Name="ExamsList" Grid.Row="2" Background="Transparent" BorderThickness="0"

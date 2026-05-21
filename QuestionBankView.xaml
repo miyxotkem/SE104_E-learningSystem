@@ -156,7 +156,7 @@
                                  Checked="SubjectRadio_Changed"/>
                     <RadioButton Content="Sinh học"  Margin="0,0,0,6" FontSize="13" Foreground="#475569" Tag="Sinh học"
                                  Checked="SubjectRadio_Changed"/>
-                    <RadioButton Content="Ngữ văn"   Margin="0,0,0,16" FontSize="13" Foreground="#475569" Tag="Ngữ văn"
+                    <RadioButton Content="Ngữ van"   Margin="0,0,0,16" FontSize="13" Foreground="#475569" Tag="Ngữ van"
                                  Checked="SubjectRadio_Changed"/>
 
                     <TextBlock Text="MỨC ĐỘ" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,8"/>

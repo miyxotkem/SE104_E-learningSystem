@@ -37,7 +37,33 @@ namespace e_learning_app.Views
 
             try
             {
-                _allQuestions = await _dbManager.GetExamQuestionsAsync(_exam.Id);
+                var detailRes = await e_learning_app.Class.ApiService.GetAsync<System.Text.Json.JsonElement?>($"exams/{_exam.Id}");
+                _allQuestions = new System.Collections.Generic.List<e_learning_app.Class.ExamQuestion>();
+                if (detailRes != null && detailRes.HasValue) { try { if (detailRes.Value.TryGetProperty("Data", out var docData))
+                        if (docData.TryGetProperty("Questions", out var questionsElem) && questionsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            int qIndex = 0;
+                            foreach (var qElem in questionsElem.EnumerateArray())
+                            {
+                                var q = new e_learning_app.Class.ExamQuestion { Id = qIndex.ToString(), QuestionOrder = qIndex + 1 };
+                                if (qElem.TryGetProperty("QuestionText", out var textElem)) q.Content = textElem.GetString();
+                                if (qElem.TryGetProperty("CorrectOptionIndex", out var correctIdxElem)) q.CorrectAnswerIndex = correctIdxElem.GetInt32();
+                                if (qElem.TryGetProperty("Points", out var pointsElem)) q.Points = pointsElem.GetDouble();
+                                
+                                if (qElem.TryGetProperty("Options", out var optsElem) && optsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                {
+                                    var opts = optsElem.EnumerateArray().Select(o => o.GetString()).ToList();
+                                    q.Options = opts;
+                                    
+                                    
+                                    
+                                }
+                                _allQuestions.Add(q);
+                                qIndex++;
+                            }
+                        }
+                    } catch { }
+                }
                 
                 double maxScore = _allQuestions.Sum(q => q.Points);
                 TxtScoreLarge.Text = $"{_submission.Score:F1} / {maxScore:F1}";
@@ -90,7 +116,7 @@ namespace e_learning_app.Views
                             bg = new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2)); // Red bg
                             border = new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26));
                             text = new SolidColorBrush(Color.FromRgb(0x99, 0x1B, 0x1B));
-                            icon = "✕";
+                            icon = "✗";
                         }
                         else if (!isStudentChoice && isCorrectChoice)
                         {
@@ -155,3 +181,4 @@ namespace e_learning_app.Views
         }
     }
 }
+

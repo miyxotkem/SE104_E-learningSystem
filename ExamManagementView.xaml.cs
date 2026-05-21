@@ -1,10 +1,10 @@
 using System;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Threading.Tasks;
 using e_learning_app.Class;
 
 namespace e_learning_app
@@ -59,7 +59,6 @@ namespace e_learning_app
         // ==================== DATA LOADING ====================
         private void LoadSampleData()
         {
-            // TODO: Load từ Firebase sau khi integrate
             _allExams = new List<Exam>
             {
                 new()
@@ -160,11 +159,11 @@ namespace e_learning_app
                 // Lấy bài thi từ Firebase
                 if (!string.IsNullOrEmpty(_currentClassId))
                 {
-                    _allExams = await _dbManager.GetExamsByClassAsync(_currentClassId);
+                    _allExams = (await e_learning_app.Class.ApiService.GetAsync<List<e_learning_app.Class.ExamResponse>>($"exams/course/{_currentClassId}"))?.Select(x => { x.Data.Id = x.Id; return x.Data; }).ToList();
                 }
                 else
                 {
-                    _allExams = await _dbManager.GetAllExamsForInstructorAsync();
+                    _allExams = (await e_learning_app.Class.ApiService.GetAsync<List<e_learning_app.Class.ExamResponse>>("exams"))?.Select(x => { x.Data.Id = x.Id; return x.Data; }).ToList();
                 }
 
                 if (_allExams == null) _allExams = new List<Exam>();
@@ -185,7 +184,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                CustomDialog.Show($"❌ Lỗi tải dữ liệu:\n{ex.Message}", "Lỗi", DialogType.Error);
+                CustomDialog.Show($"Lỗi tải dữ liệu:\n{ex.Message}", "Lỗi", DialogType.Error);
             }
         }
 
@@ -419,14 +418,14 @@ namespace e_learning_app
                     bool success = false;
                     if (_dbManager != null)
                     {
-                        success = await _dbManager.DeleteExamAsync(exam.Id);
+                        success = (await e_learning_app.Class.ApiService.DeleteAsync($"exams/{exam.Id}")) != null;
                     }
 
                     if (success || _dbManager == null)
                     {
                         _allExams.Remove(exam);
                         Refresh();
-                        CustomDialog.Show("✅ Xóa bài thi thành công!", "Thành Công", DialogType.Success);
+                        CustomDialog.Show("Xóa bài thi thành công!", "Thành Công", DialogType.Success);
                     }
                     else
                     {
@@ -435,7 +434,7 @@ namespace e_learning_app
                 }
                 catch (Exception ex)
                 {
-                    CustomDialog.Show($"❌ Lỗi khi xóa:\n{ex.Message}", "Lỗi", DialogType.Error);
+                    CustomDialog.Show($"Lỗi khi xóa:\n{ex.Message}", "Lỗi", DialogType.Error);
                 }
             }
         }       
@@ -447,7 +446,7 @@ namespace e_learning_app
         {
             var dialogWindow = new Window
             {
-                Title = "✏️ Chỉnh Sửa Bài Thi",
+                Title = "Chỉnh Sửa Bài Thi",
                 Width = 600,
                 Height = 550,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -459,12 +458,12 @@ namespace e_learning_app
             var mainStack = new StackPanel { Margin = new Thickness(28) };
 
             // Title
-            mainStack.Children.Add(CreateLabel("📝 Tên Bài Thi:"));
+            mainStack.Children.Add(CreateLabel("Tên Bài Thi:"));
             var txtTitle = CreateTextBox(exam.Title);
             mainStack.Children.Add(txtTitle);
 
             // Description
-            mainStack.Children.Add(CreateLabel("📄 Mô Tả Chi Tiết:"));
+            mainStack.Children.Add(CreateLabel("Mô Tả Chi Tiết:"));
             var txtDescription = new TextBox
             {
                 Height = 80,
@@ -481,7 +480,7 @@ namespace e_learning_app
             mainStack.Children.Add(txtDescription);
 
             // Config
-            mainStack.Children.Add(CreateLabel("⚙️ Cấu Hình:"));
+            mainStack.Children.Add(CreateLabel("Cấu Hình:"));
 
             var configGrid = new Grid { Margin = new Thickness(0, 0, 0, 14) };
             for (int i = 0; i < 5; i++)
@@ -509,7 +508,7 @@ namespace e_learning_app
             // Status
             var chkPublished = new CheckBox
             {
-                Content = "✅ Công Bố Bài Thi",
+                Content = "Công Bố Bài Thi",
                 IsChecked = exam.IsPublished,
                 Margin = new Thickness(0, 0, 0, 14),
                 FontSize = 12
@@ -526,7 +525,7 @@ namespace e_learning_app
 
             var btnCancel = new Button
             {
-                Content = "❌ Hủy",
+                Content = "Hủy",
                 Width = 100,
                 Height = 40,
                 Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9)),
@@ -539,7 +538,7 @@ namespace e_learning_app
 
             var btnSave = new Button
             {
-                Content = "💾 Lưu Thay Đổi",
+                Content = "Lưu Thay Đổi",
                 Width = 130,
                 Height = 40,
                 Background = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
@@ -556,7 +555,9 @@ namespace e_learning_app
                 {
                     // UI Feedback
                     ((Button)s).IsEnabled = false;
-                    ((Button)s).Content = "⏳ Lưu dữ liệu...";
+                    ((Button)s).Content = "Lưu dữ liệu...";
+
+                    bool wasPublishedBefore = exam.IsPublished;
 
                     // Update exam properties
                     exam.Title = txtTitle.Text;
@@ -570,7 +571,7 @@ namespace e_learning_app
                     bool success = false;
                     if (_dbManager != null)
                     {
-                        success = await _dbManager.UpdateExamAsync(exam);
+                        success = (await e_learning_app.Class.ApiService.PutAsync($"exams/{exam.Id}", exam)) != null;
                     }
 
                     if (success || _dbManager == null)
@@ -578,7 +579,28 @@ namespace e_learning_app
                         Refresh();
                         dialogWindow.Close();
 
-                        CustomDialog.Show("✅ Cập nhật bài thi thành công!", "Thành Công", DialogType.Success);
+                        CustomDialog.Show("Cập nhật bài thi thành công!", "Thành Công", DialogType.Success);
+
+                        if (!wasPublishedBefore && exam.IsPublished)
+                        {
+                            try
+                            {
+                                var currentUser = _dbManager?.GetCurrentUser();
+                                await NotificationService.SendToClassAsync(
+                                    _dbManager,
+                                    exam.ClassId,
+                                    "Bài kiểm tra mới",
+                                    $"Giáo viên vừa công bố bài kiểm tra: {exam.Title}",
+                                    "Exam",
+                                    currentUser?.Id,
+                                    "Giáo viên"
+                                );
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Lỗi gửi thông báo khi công bố bài thi: " + ex.Message);
+                            }
+                        }
                     }
                     else
                     {
@@ -587,10 +609,10 @@ namespace e_learning_app
                 }
                 catch (Exception ex)
                 {
-                    CustomDialog.Show($"❌ Lỗi khi lưu:\n{ex.Message}", "Lỗi", DialogType.Error);
+                    CustomDialog.Show($"Lỗi khi lưu:\n{ex.Message}", "Lỗi", DialogType.Error);
 
                     ((Button)s).IsEnabled = true;
-                    ((Button)s).Content = "💾 Lưu Thay Đổi";
+                    ((Button)s).Content = "Lưu Thay Đổi";
                 }
             };
 

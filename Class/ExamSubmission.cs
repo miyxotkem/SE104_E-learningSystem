@@ -1,4 +1,4 @@
-using Google.Cloud.Firestore;
+﻿using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
 
@@ -37,7 +37,7 @@ namespace e_learning_app.Class
         public double Score { get; set; }                  // Điểm số
 
         [FirestoreProperty]
-        public double Percentage { get; set; }             // Phần trăm (%)
+        public double Percentage { get; set; }             // Phần tram (%)
 
         [FirestoreProperty(ConverterType = typeof(FirestoreEnumNameConverter<SubmissionStatus>))]
         public SubmissionStatus Status { get; set; }       // Trạng thái
@@ -47,7 +47,7 @@ namespace e_learning_app.Class
         public string FeedbackFromTeacher { get; set; }    // Nhận xét giáo viên
 
         [FirestoreProperty]
-        public DateTime? GradedAt { get; set; }            // Lúc chấm điểm
+        public DateTime? GradedAt { get; set; }            // Lúc chấm diểm
 
         public ExamSubmission()
         {
@@ -74,7 +74,7 @@ namespace e_learning_app.Class
         public string StudentAnswer { get; set; }         // Câu trả lời (text hoặc index)
 
         [FirestoreProperty]
-        public bool? IsCorrect { get; set; }              // Đúng/Sai (null nếu chưa chấm)
+        public bool? IsCorrect { get; set; }              // Đúng/Sai (null nếu chua chấm)
 
         [FirestoreProperty]
         public double PointsEarned { get; set; }          // Điểm đạt được

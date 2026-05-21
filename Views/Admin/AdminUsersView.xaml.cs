@@ -48,22 +48,25 @@ namespace e_learning_app.Views.Admin
         {
             try
             {
-                // Xóa list cũ trước khi load lại
+                // Xóa list cu trước khi load lại
                 _allUsers.Clear();
-                QuerySnapshot snap = await _db.GetDb.Collection("Users").GetSnapshotAsync();
-                _allUsers = snap.Documents.Select(d =>
+                var usersResponse = await e_learning_app.Class.ApiService.GetAsync<List<e_learning_app.Class.UserResponse>>("users");
+                if (usersResponse != null)
                 {
-                    var u = d.ConvertTo<User>();
-                    return new AdminUserRow
+                    _allUsers = usersResponse.Select(r =>
                     {
-                        Uid       = d.Id,
-                        FullName  = u.FullName ?? u.Email,
-                        Email     = u.Email,
-                        Role      = u.Role ?? "Student",
-                        IsBlocked = u.IsBlocked,
-                        CreatedAt = u.CreatedAt == default ? "N/A" : u.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
-                    };
-                }).OrderBy(u => u.FullName).ToList();
+                        var u = r.Data;
+                        return new AdminUserRow
+                        {
+                            Uid       = r.Id,
+                            FullName  = u.FullName ?? u.Email,
+                            Email     = u.Email,
+                            Role      = u.Role ?? "Student",
+                            IsBlocked = u.IsBlocked,
+                            CreatedAt = u.CreatedAt == default ? "N/A" : u.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
+                        };
+                    }).OrderBy(u => u.FullName).ToList();
+                }
 
                 TxtUserCount.Text = $"{_allUsers.Count} người dùng trong hệ thống";
                 ApplyFilter();
@@ -75,7 +78,7 @@ namespace e_learning_app.Views.Admin
             }
         }
 
-        // ─── Filtering ──────────────────────────────────────────────────
+        // --- Filtering --------------------------------------------------
         private void ApplyFilter()
         {
             var search = TxtSearch.Text?.ToLower() ?? "";
@@ -135,7 +138,7 @@ namespace e_learning_app.Views.Admin
                 {
                     try
                     {
-                        await _db.GetDb.Collection("Users").Document(row.Uid).UpdateAsync("Role", newRole);
+                        await e_learning_app.Class.ApiService.PutAsync($"users/{row.Uid}/role", new { Role = newRole });
                         CustomDialog.Show("Cập nhật vai trò thành công!", "Thông báo", DialogType.Success);
                         
                         // Load lại dữ liệu
@@ -161,7 +164,7 @@ namespace e_learning_app.Views.Admin
                 {
                     try
                     {
-                        await _db.GetDb.Collection("Users").Document(row.Uid).UpdateAsync("IsBlocked", newBlockStatus);
+                        await e_learning_app.Class.ApiService.PutAsync($"users/{row.Uid}/block", new { IsBlocked = newBlockStatus });
                         CustomDialog.Show($"Đã {action} tài khoản thành công!", "Thông báo", DialogType.Success);
                         UserControl_Loaded(null, null);
                     }
@@ -177,12 +180,12 @@ namespace e_learning_app.Views.Admin
         {
             if (sender is Button btn && btn.DataContext is AdminUserRow row)
             {
-                var confirmed = CustomDialog.Confirm($"CẢNH BÁO: Bạn có chắc muốn XÓA VĨNH VIỄN tài khoản {row.FullName}? \n\nHành động này không thể hoàn tác!", "Xác nhận xóa", "Xóa vĩnh viễn", "Hủy", DialogType.Error);
+                var confirmed = CustomDialog.Confirm($"CẢNH BÁO: Bạn có chắc muốn XÓA VINH VIỄN tài khoản {row.FullName}? \n\nHành động này không thể hoàn tác!", "Xác nhận xóa", "Xóa vinh viễn", "Hủy", DialogType.Error);
                 if (confirmed)
                 {
                     try
                     {
-                        await _db.GetDb.Collection("Users").Document(row.Uid).DeleteAsync();
+                        await e_learning_app.Class.ApiService.DeleteAsync($"users/{row.Uid}");
                         CustomDialog.Show("Đã xóa tài khoản thành công!", "Thông báo", DialogType.Success);
                         UserControl_Loaded(null, null);
                     }

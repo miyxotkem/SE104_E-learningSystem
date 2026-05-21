@@ -1,4 +1,4 @@
-<UserControl x:Class="e_learning_app.Views.TeacherDashboardView"
+﻿<UserControl x:Class="e_learning_app.Views.TeacherDashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F8FAFC"
@@ -107,7 +107,7 @@
                             </Border>
                             <TextBlock x:Name="TxtTotalClasses" FontSize="32" FontWeight="Bold" Foreground="#0F172A"/>
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <TextBlock Text="Lớp đang dạy" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <TextBlock Text="Lớp dang dạy" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
                                 <Border Style="{StaticResource PillLabel}" Background="#FEF9C3" Margin="10,0,0,0">
                                     <TextBlock x:Name="TxtSemesterBadge" Text="Học kỳ" FontSize="11" Foreground="#CA8A04" FontWeight="Bold"/>
                                 </Border>

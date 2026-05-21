@@ -11,8 +11,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using System.Threading;
-using Google.Rpc;
 
 namespace e_learning_app
 {
@@ -47,17 +45,27 @@ namespace e_learning_app
 
                 var currentUser = FirebaseService.Auth?.User;
 
-                if (currentUser != null && FirebaseService.Db != null)
+                if (currentUser != null)
                 {
-                    var doc = await FirebaseService.Db
-                        .Collection("Users")
-                        .Document(currentUser.Uid)
-                        .GetSnapshotAsync();
-
-                    if (doc.Exists)
+                    string savedJwt = e_learning_app.Class.SecureTokenManager.GetToken();
+                    if (!string.IsNullOrEmpty(savedJwt))
                     {
-                        var user = doc.ConvertTo<User>();
-                        user.Id = doc.Id;
+                        e_learning_app.Class.ApiService.SetJwtToken(savedJwt);
+                    }
+                    else
+                    {
+                        MainContentHolder.Content = new LoginControl();
+                        MainContentHolder.Visibility = Visibility.Visible;
+                        return;
+                    }
+
+                    // Lấy profile user qua Backend API (không còn dùng Firestore trực tiếp)
+                    var userResp = await e_learning_app.Class.ApiService.GetAsync<e_learning_app.Class.UserResponse>($"users/{currentUser.Uid}");
+
+                    if (userResp?.Data != null)
+                    {
+                        var user = userResp.Data;
+                        user.Id = currentUser.Uid;
 
                         if (!user.IsBlocked)
                         {
@@ -74,7 +82,6 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                // ✅ Log ra để dễ debug thay vì bỏ trống
                 System.Diagnostics.Debug.WriteLine("AutoLogin error: " + ex.Message);
             }
 

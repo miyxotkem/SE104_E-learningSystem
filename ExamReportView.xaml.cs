@@ -39,7 +39,8 @@ namespace e_learning_app
             
             if (_dbManager != null && _exam != null)
             {
-                _submissions = await _dbManager.GetSubmissionsByExamAsync(_exam.Id);
+                var historyRes = await e_learning_app.Class.ApiService.GetAsync<System.Collections.Generic.List<e_learning_app.Class.ExamSubmissionResponse>>($"exams/{_exam.Id}/submissions");
+                _submissions = historyRes != null ? historyRes.Select(h => h.Data).ToList() : new System.Collections.Generic.List<e_learning_app.Class.ExamSubmission>();
             }
 
             ProcessStatistics();

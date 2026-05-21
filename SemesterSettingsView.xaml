@@ -85,7 +85,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel>
                     <TextBlock Text="⚙️  Thiết lập học kỳ" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
-                    <TextBlock Text="Cấu hình các thông số cho học kỳ hiện tại và quy tắc tính điểm." FontSize="13" Foreground="#64748B" Margin="0,6,0,0"/>
+                    <TextBlock Text="Cấu hình các thông số cho học kỳ hiện tại và quy tắc tính diểm." FontSize="13" Foreground="#64748B" Margin="0,6,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnResetDefaults" Content="↺ Mặc định"
@@ -96,7 +96,7 @@
                             Background="#F1F5F9" Foreground="#475569"
                             Style="{StaticResource RoundBtn}" Padding="16,10" FontSize="13"
                             Margin="0,0,10,0" Click="BtnCancel_Click"/>
-                    <Button x:Name="BtnSave" Content="💾  Lưu cài đặt"
+                    <Button x:Name="BtnSave" Content="💾  Luu cài đặt"
                             Background="#3B82F6" Foreground="White"
                             Style="{StaticResource RoundBtn}" Padding="16,10" FontSize="13" FontWeight="SemiBold"
                             Click="BtnSave_Click"/>
@@ -145,7 +145,7 @@
                             <TextBox x:Name="TxtSchoolName" Style="{StaticResource FieldBox}"
                                      Margin="0,0,0,14" TextChanged="Field_Changed"/>
 
-                            <TextBlock Text="Năm học" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="Nam học" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtAcademicYear" Style="{StaticResource FieldBox}"
                                      TextChanged="Field_Changed"/>
                         </StackPanel>
@@ -154,9 +154,9 @@
                     <!-- Điểm danh -->
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
-                            <TextBlock Text="✅  Cấu hình điểm danh" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="✅  Cấu hình diểm danh" Style="{StaticResource SectionTitle}"/>
 
-                            <TextBlock Text="Số buổi vắng tối đa (không phép)" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="Số buổi vắng tối da (không phép)" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtMaxAbsences" Style="{StaticResource FieldBox}"
                                      Margin="0,0,0,14" TextChanged="Field_Changed"/>
 
@@ -185,14 +185,14 @@
                     <!-- Điểm số -->
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
-                            <TextBlock Text="📊  Cấu hình tính điểm" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="📊  Cấu hình tính diểm" Style="{StaticResource SectionTitle}"/>
 
-                            <TextBlock Text="Thang điểm" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="Thang diểm" Style="{StaticResource FieldLabel}"/>
                             <ComboBox x:Name="CbGradeScale" Height="42" FontSize="13" Margin="0,0,0,14"
                                       SelectionChanged="Field_Changed"/>
 
                             <!-- Trọng số -->
-                            <TextBlock Text="Trọng số điểm thành phần" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="Trọng số diểm thành phần" Style="{StaticResource FieldLabel}"/>
                             <Border x:Name="TxtWeightSum" Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,0">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,10">
@@ -243,13 +243,13 @@
                             <TextBox x:Name="TxtMinPass" Style="{StaticResource FieldBox}" Margin="0,0,0,14"
                                      TextChanged="Field_Changed"/>
 
-                            <CheckBox x:Name="ChkRoundHalf" Content="Làm tròn điểm tới 0.5"
+                            <CheckBox x:Name="ChkRoundHalf" Content="Làm tròn diểm tới 0.5"
                                       Margin="0,0,0,10" FontSize="13" Foreground="#1E293B" Tag="roundHalf"
                                       Checked="Toggle_Changed" Unchecked="Toggle_Changed"/>
                             <CheckBox x:Name="ChkGradeLabel" Content="Hiển thị xếp loại (Giỏi / Khá / TB / Yếu)"
                                       Margin="0,0,0,10" FontSize="13" Foreground="#1E293B" Tag="gradeLabel"
                                       Checked="Toggle_Changed" Unchecked="Toggle_Changed"/>
-                            <CheckBox x:Name="ChkStudentView" Content="Cho phép học sinh xem điểm online"
+                            <CheckBox x:Name="ChkStudentView" Content="Cho phép học sinh xem diểm online"
                                       FontSize="13" Foreground="#1E293B" Tag="studentView"
                                       Checked="Toggle_Changed" Unchecked="Toggle_Changed"/>
                         </StackPanel>
@@ -259,7 +259,7 @@
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
                             <TextBlock Text="🔗  Tích hợp &amp; Thông báo" Style="{StaticResource SectionTitle}"/>
-                            <CheckBox x:Name="ChkWeeklyEmail" Content="Gửi tổng kết điểm qua Email hàng tuần"
+                            <CheckBox x:Name="ChkWeeklyEmail" Content="Gửi tổng kết diểm qua Email hàng tuần"
                                       Margin="0,0,0,12" FontSize="13" Foreground="#1E293B" Tag="weeklyEmail"
                                       Checked="Toggle_Changed" Unchecked="Toggle_Changed"/>
                             <CheckBox x:Name="ChkGoogleClass" Content="Kết nối Google Classroom"
@@ -268,7 +268,7 @@
                             <CheckBox x:Name="ChkGoogleCal" Content="Đồng bộ lịch với Google Calendar"
                                       Margin="0,0,0,12" FontSize="13" Foreground="#1E293B" Tag="googleCalendar"
                                       Checked="Toggle_Changed" Unchecked="Toggle_Changed"/>
-                            <CheckBox x:Name="ChkMobilePush" Content="Nhận thông báo push trên điện thoại"
+                            <CheckBox x:Name="ChkMobilePush" Content="Nhận thông báo push trên diện thoại"
                                       Margin="0,0,0,16" FontSize="13" Foreground="#1E293B" Tag="mobilePush"
                                       Checked="Toggle_Changed" Unchecked="Toggle_Changed"/>
                             <Separator Background="#F1F5F9" Margin="0,0,0,14"/>

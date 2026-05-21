@@ -1,4 +1,4 @@
-<UserControl x:Class="e_learning_app.CreateExamQuestionsView"
+﻿<UserControl x:Class="e_learning_app.CreateExamQuestionsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F8FAFC">
@@ -114,7 +114,7 @@
                                     <!-- Nội dung bên trong -->
                                     <StackPanel HorizontalAlignment="Center" Margin="40">
                                         <TextBlock Text="✨" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                                        <TextBlock Text="Chưa có câu hỏi nào" FontWeight="SemiBold" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Chua có câu hỏi nào" FontWeight="SemiBold" Foreground="#94A3B8" HorizontalAlignment="Center"/>
                                         <TextBlock Text="Bắt đầu thêm câu hỏi từ bên phải hoặc import từ Excel" FontSize="12" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
@@ -122,7 +122,7 @@
                         </ScrollViewer>
                     </Grid>
 
-                    <Button Grid.Row="2" x:Name="BtnSubmit" Content="✅ Hoàn Tất &amp; Lưu Bài Thi" Height="56" Background="#10B981" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnSubmit_Click" FontSize="16">
+                    <Button Grid.Row="2" x:Name="BtnSubmit" Content="✅ Hoàn Tất &amp; Luu Bài Thi" Height="56" Background="#10B981" Foreground="White" FontWeight="Bold" Cursor="Hand" Click="BtnSubmit_Click" FontSize="16">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="14">

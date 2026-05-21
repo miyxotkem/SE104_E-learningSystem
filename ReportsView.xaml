@@ -138,7 +138,7 @@
                 <Border Grid.Column="0" Style="{StaticResource Card}">
                     <StackPanel>
                         <Grid Margin="0,0,0,14">
-                            <TextBlock Text="Bảng điểm theo lớp" FontWeight="Bold" FontSize="15" Foreground="#1E293B"/>
+                            <TextBlock Text="Bảng diểm theo lớp" FontWeight="Bold" FontSize="15" Foreground="#1E293B"/>
                             <Button x:Name="BtnViewAll" Content="Xem tất cả →" Background="Transparent"
                                     BorderThickness="0" Foreground="#3B82F6" FontSize="12" FontWeight="SemiBold"
                                     HorizontalAlignment="Right" VerticalAlignment="Center" Cursor="Hand"
@@ -155,7 +155,7 @@
                                     <ColumnDefinition Width="80"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Lớp học" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center" Margin="14,0"/>
-                                <TextBlock Grid.Column="1" Text="Sĩ số"   FontSize="12" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="Si số"   FontSize="12" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                 <TextBlock Grid.Column="2" Text="Điểm TB" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                 <TextBlock Grid.Column="3" Text="Đạt"     FontSize="12" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                 <TextBlock Grid.Column="4" Text="Xuất sắc" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -169,7 +169,7 @@
                 <!-- Right panel: distribution + top students -->
                 <Border Grid.Column="2" Style="{StaticResource Card}">
                     <StackPanel>
-                        <TextBlock Text="Phân bố điểm số" FontWeight="Bold" FontSize="15" Foreground="#1E293B" Margin="0,0,0,20"/>
+                        <TextBlock Text="Phân bố diểm số" FontWeight="Bold" FontSize="15" Foreground="#1E293B" Margin="0,0,0,20"/>
                         <StackPanel x:Name="DistributionPanel"/>
                         <Separator Background="#F1F5F9" Margin="0,20"/>
                         <TextBlock Text="🏆  Top học sinh xuất sắc" FontWeight="SemiBold" FontSize="13" Foreground="#1E293B" Margin="0,0,0,12"/>

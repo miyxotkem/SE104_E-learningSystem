@@ -1,4 +1,4 @@
-using Google.Cloud.Firestore;
+﻿using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
 
@@ -31,7 +31,7 @@ namespace e_learning_app.Class
 
         // Cho câu tự luận
         [FirestoreProperty]
-        public int MaxWords { get; set; }                 // Tối đa số từ
+        public int MaxWords { get; set; }                 // Tối da số từ
 
         // Điểm
         [FirestoreProperty]

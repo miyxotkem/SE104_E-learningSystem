@@ -1,4 +1,4 @@
-using Google.Apis.Util.Store;
+﻿using Google.Apis.Util.Store;
 using System.Windows;
 
 namespace e_learning_app
@@ -18,7 +18,7 @@ namespace e_learning_app
             BtnDashboard.Focus();
         }
 
-        // ─── Helper: deactivate all nav buttons ──────────────────────────
+        // --- Helper: deactivate all nav buttons --------------------------
         private void ClearNavSelection()
         {
             BtnDashboard.Style = (Style)FindResource("AdminNavBtn");
@@ -26,7 +26,7 @@ namespace e_learning_app
             BtnSettings.Style  = (Style)FindResource("AdminNavBtn");
         }
 
-        // ─── Navigation ──────────────────────────────────────────────────
+        // --- Navigation --------------------------------------------------
         private void BtnDashboard_Click(object sender, RoutedEventArgs e)
         {
             ClearNavSelection();
@@ -54,8 +54,8 @@ namespace e_learning_app
         private async void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
             var confirmed = CustomDialog.Confirm(
-                "Bạn có chắc muốn đăng xuất khỏi Admin Panel?",
-                "Xác nhận đăng xuất",
+                "Bạn có chắc muốn dang xuất khỏi Admin Panel?",
+                "Xác nhận dang xuất",
                 "Đăng xuất", "Hủy",
                 DialogType.Question);
 

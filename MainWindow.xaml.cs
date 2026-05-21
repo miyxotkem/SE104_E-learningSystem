@@ -1,7 +1,6 @@
 
 using e_learning_app.Views;
 using Google.Apis.Util.Store;
-using Google.Cloud.Firestore;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,7 +10,7 @@ namespace e_learning_app
     public partial class MainWindow : Window
     {
         private readonly DatabaseManager _dbManager;
-        private FirestoreChangeListener _userListener;
+        private System.Windows.Threading.DispatcherTimer _statusTimer;
         private bool _isForceLogout = false;
         public MainWindow(User loggedInUser)
         {
@@ -28,39 +27,41 @@ namespace e_learning_app
             btnDashBoard.Focus();
 
             this.Loaded += MainWindow_Loaded;
-            this.Closed += (s, e) => _userListener?.StopAsync();
+            this.Closed += (s, e) => _statusTimer?.Stop();
 
             StartUserStatusListener(loggedInUser?.Id);
         }
 
         private void StartUserStatusListener(string userId)
         {
-            if (string.IsNullOrEmpty(userId) || FirebaseService.Db == null) return;
+            if (string.IsNullOrEmpty(userId)) return;
 
-            DocumentReference docRef = FirebaseService.Db.Collection("Users").Document(userId);
-            _userListener = docRef.Listen(snapshot =>
+            _statusTimer = new System.Windows.Threading.DispatcherTimer();
+            _statusTimer.Interval = TimeSpan.FromSeconds(15);
+            _statusTimer.Tick += async (s, e) =>
             {
-                if (snapshot.Exists)
+                try
                 {
-                    var user = snapshot.ConvertTo<User>();
-                    if (user != null && user.IsBlocked)
+                    var userResponse = await e_learning_app.Class.ApiService.GetAsync<e_learning_app.Class.UserResponse>("users/profile");
+                    if (userResponse != null && userResponse.Data != null && userResponse.Data.IsBlocked)
                     {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            _userListener?.StopAsync();
-                            CustomDialog.Show("Tài khoản của bạn đã bị Admin khóa. Bạn sẽ bị đăng xuất ngay lập tức.", "Cảnh báo bảo mật", DialogType.Error);
+                        _statusTimer?.Stop();
+                        CustomDialog.Show("Tài khoản của bạn đã bị Admin khóa. Bạn sẽ bị đăng xuất ngay lập tức.", "Cảnh báo bảo mật", DialogType.Error);
 
-                            // Đăng xuất Firebase
-                            FirebaseService.SignOut();
+                        FirebaseService.SignOut();
 
-                            var loginWin = new LoginWindow(true);
-                            loginWin.Show();
-                            _isForceLogout = true;
-                            this.Close();
-                        });
+                        var loginWin = new LoginWindow(true);
+                        loginWin.Show();
+                        _isForceLogout = true;
+                        this.Close();
                     }
                 }
-            });
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Lỗi kiểm tra trạng thái user: " + ex.Message);
+                }
+            };
+            _statusTimer.Start();
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)

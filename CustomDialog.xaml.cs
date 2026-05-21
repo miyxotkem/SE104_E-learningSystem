@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -62,7 +62,7 @@ namespace e_learning_app
             this.Close();
         }
 
-        // Tìm cửa sổ đang hiển thị để làm Owner
+        // Tìm cửa sổ dang hiển thị để làm Owner
         private static Window GetActiveWindow()
         {
             var active = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);

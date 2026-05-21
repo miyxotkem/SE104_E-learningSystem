@@ -1,4 +1,5 @@
 using e_learning_app;
+using e_learning_app.Class;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -15,8 +16,7 @@ namespace e_learning_app.Views
     public partial class TeacherDashboardView : UserControl
     {
         private readonly DatabaseManager _dbManager;
-        private Google.Cloud.Firestore.FirestoreChangeListener _userNotifListener;
-        private Google.Cloud.Firestore.FirestoreChangeListener _systemNotifListener;
+        private System.Windows.Threading.DispatcherTimer _pollingTimer;
         private List<Notification> _dashboardNotifs = new List<Notification>();
         private List<Course> _myCoursesForNotif = new List<Course>();
 
@@ -83,8 +83,7 @@ namespace e_learning_app.Views
 
         private void TeacherDashboardView_Unloaded(object sender, RoutedEventArgs e)
         {
-            _userNotifListener?.StopAsync();
-            _systemNotifListener?.StopAsync();
+            _pollingTimer?.Stop();
         }
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -107,38 +106,30 @@ namespace e_learning_app.Views
             var currentUser = _dbManager.GetCurrentUser();
             if (currentUser == null) return;
 
-            try
-            {
-                var readNotifsSnap = await _dbManager.GetDb.Collection("Users").Document(currentUser.Id)
-                    .Collection("ReadNotifications").GetSnapshotAsync();
-
-                NotificationService.ReadNotifKeys.Clear();
-                foreach (var doc in readNotifsSnap.Documents)
-                {
-                    NotificationService.ReadNotifKeys.Add(doc.Id);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Lỗi đồng bộ ReadNotifications: " + ex.Message);
-            }
+            // Read notifications logic will be handled by the backend API 
+            // and we will rely on IsRead property returned from API.
 
             try
             {
-                var coursesSnap = await _dbManager.GetDb.Collection("Courses")
-                    .WhereEqualTo("InstructorId", currentUser.Id)
-                    .WhereEqualTo("IsActive", true)
-                    .GetSnapshotAsync();
+                var coursesResp = await e_learning_app.Class.ApiService.GetAsync<List<e_learning_app.Class.CourseResponse>>("courses");
 
                 List<Course> myCourses = new List<Course>();
                 int totalStudents = 0;
 
-                foreach (var doc in coursesSnap.Documents)
+                if (coursesResp != null)
                 {
-                    var c = doc.ConvertTo<Course>();
-                    c.Id = doc.Id;
-                    myCourses.Add(c);
-                    totalStudents += c.StudentCount;
+                    foreach (var cr in coursesResp)
+                    {
+                        if (cr.Data == null) continue;
+                        var c = cr.Data;
+                        c.Id = cr.Id;
+                        // Chỉ lấy course của instructor hiện tại và đang active
+                        var currentUser2 = _dbManager.GetCurrentUser();
+                        if (c.InstructorId != currentUser2?.Id) continue;
+                        if (!c.IsActive) continue;
+                        myCourses.Add(c);
+                        totalStudents += c.StudentCount;
+                    }
                 }
 
                 TxtTotalClasses.Text = myCourses.Count.ToString();
@@ -232,34 +223,33 @@ namespace e_learning_app.Views
                 int pendingGradingCount = 0;
                 foreach (var c in myCourses)
                 {
-                    var assigns = await _dbManager.GetDb.Collection("Courses").Document(c.Id).Collection("Assignments").GetSnapshotAsync();
-                    foreach (var asm in assigns.Documents)
+                    try
                     {
-                        if (asm.ContainsField("Deadline"))
+                        var assigns = await e_learning_app.Class.ApiService.GetAsync<List<AssignmentResponse>>($"courses/{c.Id}/assignments");
+                        if (assigns != null)
                         {
-                            var deadlineUtc = asm.GetValue<DateTime>("Deadline");
-                            var deadlineLocal = deadlineUtc.ToLocalTime();
-                            if (deadlineLocal < DateTime.Now) pendingGradingCount++;
+                            foreach (var asm in assigns)
+                            {
+                                if (asm.Deadline != default && asm.Deadline.ToLocalTime() < DateTime.Now)
+                                    pendingGradingCount++;
+                            }
                         }
+                    }
+                    catch
+                    {
+                        // Nếu API lỗi thì bỏ qua, không dừng toàn bộ dashboard
                     }
                 }
 
                 TxtPendingGrading.Text = pendingGradingCount.ToString();
                 _myCoursesForNotif = myCourses;
 
-                _userNotifListener = _dbManager.GetDb.Collection("Notifications")
-                    .WhereEqualTo("TargetId", currentUser.Id)
-                    .Listen(snapshot =>
-                    {
-                        Application.Current.Dispatcher.Invoke(() => UpdateNotificationsList(snapshot));
-                    });
+                _pollingTimer = new System.Windows.Threading.DispatcherTimer();
+                _pollingTimer.Interval = TimeSpan.FromSeconds(15);
+                _pollingTimer.Tick += async (s, args) => await FetchNotificationsAsync();
+                _pollingTimer.Start();
 
-                _systemNotifListener = _dbManager.GetDb.Collection("Notifications")
-                    .WhereEqualTo("TargetId", "all")
-                    .Listen(snapshot =>
-                    {
-                        Application.Current.Dispatcher.Invoke(() => UpdateNotificationsList(snapshot));
-                    });
+                _ = FetchNotificationsAsync();
             }
             catch (Exception ex)
             {
@@ -267,35 +257,25 @@ namespace e_learning_app.Views
             }
         }
 
-        private void UpdateNotificationsList(Google.Cloud.Firestore.QuerySnapshot snapshot)
+        private async Task FetchNotificationsAsync()
         {
-            foreach (var change in snapshot.Changes)
+            try
             {
-                var doc = change.Document;
-                var notif = doc.ConvertTo<Notification>();
-                notif.Id = doc.Id;
-                
-                if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Added)
+                var notifs = await e_learning_app.Class.ApiService.GetAsync<List<Notification>>("notifications");
+                if (notifs != null)
                 {
-                    if (!_dashboardNotifs.Any(n => n.Id == notif.Id))
-                        _dashboardNotifs.Add(notif);
-                }
-                else if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Modified)
-                {
-                    var existing = _dashboardNotifs.FirstOrDefault(n => n.Id == notif.Id);
-                    if (existing != null)
-                    {
-                        _dashboardNotifs.Remove(existing);
-                        _dashboardNotifs.Add(notif);
-                    }
-                }
-                else if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Removed)
-                {
-                    var existing = _dashboardNotifs.FirstOrDefault(n => n.Id == notif.Id);
-                    if (existing != null)
-                        _dashboardNotifs.Remove(existing);
+                    _dashboardNotifs = notifs;
+                    RefreshNotificationsUI();
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi fetch notifs: " + ex.Message);
+            }
+        }
+
+        private void RefreshNotificationsUI()
+        {
 
             var sortedDocs = _dashboardNotifs.OrderByDescending(n => n.CreatedAt).Take(5).ToList();
             var notifList = new ObservableCollection<NotifItem>();
@@ -316,7 +296,7 @@ namespace e_learning_app.Views
                     Content = n.Content,
                     NotifType = n.Type,
                     Time = n.TimeAgo,
-                    IsUnread = !NotificationService.ReadNotifKeys.Contains(n.Id)
+                    IsUnread = !n.IsRead
                 });
             }
 
@@ -371,18 +351,9 @@ namespace e_learning_app.Views
                 if (n.IsUnread)
                 {
                     n.IsUnread = false;
-                    NotificationService.ReadNotifKeys.Add(n.NotifKey);
-
-                    // Lưu trạng thái đã đọc lên Firebase
                     try
                     {
-                        var currentUser = _dbManager.GetCurrentUser();
-                        if (currentUser != null)
-                        {
-                            await _dbManager.GetDb.Collection("Users").Document(currentUser.Id)
-                                .Collection("ReadNotifications").Document(n.NotifKey)
-                                .SetAsync(new { ReadAt = DateTime.UtcNow });
-                        }
+                        await e_learning_app.Class.ApiService.PutAsync("notifications/read", new { NotificationIds = new List<string> { n.NotifKey } });
                     }
                     catch (Exception ex)
                     {

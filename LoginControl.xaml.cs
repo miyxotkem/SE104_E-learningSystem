@@ -44,7 +44,7 @@ namespace e_learning_app
             loginWin?.Close();
         }
 
-        // ─── Đăng nhập bằng Google ─────────────────────────────────
+        // --- Đăng nhập bằng Google ---------------------------------
         private async void login_google(object sender, RoutedEventArgs e)
         {
             btnLogin.IsEnabled = false;
@@ -57,38 +57,35 @@ namespace e_learning_app
                     string email    = fbUser.Info?.Email ?? "";
                     string fullName = fbUser.Info?.DisplayName ?? email;
                     string uid      = fbUser.Uid;
+                    string idToken  = fbUser.Credential.IdToken;
 
-
-                    await FirebaseService.CreateUserInFirestore(uid, email, fullName);
-
-                    var user = new User
-                    {
-                        Id       = uid,
-                        Email    = email,
-                        FullName = fullName
-                    };
-
-                    // Cố lấy FullName thực từ Firestore nếu có
+                    // Sync user qua Backend API (đồng bộ thông tin, tạo nếu chưa có)
                     try
                     {
-                        if (FirebaseService.Db != null)
+                        await e_learning_app.Class.ApiService.PostAsync("users/sync-user", new
                         {
-                            var doc = await FirebaseService.Db.Collection("Users").Document(uid).GetSnapshotAsync();
-                            if (doc.Exists)
-                            {
-                                var stored = doc.ConvertTo<User>();
-                                if (!string.IsNullOrWhiteSpace(stored?.FullName))
-                                    user.FullName = stored.FullName;
-                                if (!string.IsNullOrWhiteSpace(stored?.Role))
-                                    user.Role = stored.Role;
-                                else
-                                    user.Role = "Student";
+                            FullName = fullName,
+                            Email = email,
+                            Provider = "google",
+                            PhotoUrl = (string)null
+                        });
+                    }
+                    catch { /* sync user không bắt buộc */ }
 
-                                if (stored != null && stored.IsBlocked)
-                                {
-                                    CustomDialog.Show("Tài khoản của bạn đã bị khóa bởi Admin!", "Thông báo", DialogType.Warning);
-                                    return;
-                                }
+                    // Lấy thông tin user qua API
+                    var user = new User { Id = uid, Email = email, FullName = fullName, Role = "Student" };
+                    try
+                    {
+                        var userResp = await e_learning_app.Class.ApiService.GetAsync<e_learning_app.Class.UserResponse>($"users/{uid}");
+                        if (userResp?.Data != null)
+                        {
+                            if (!string.IsNullOrWhiteSpace(userResp.Data.FullName))
+                                user.FullName = userResp.Data.FullName;
+                            user.Role = !string.IsNullOrWhiteSpace(userResp.Data.Role) ? userResp.Data.Role : "Student";
+                            if (userResp.Data.IsBlocked)
+                            {
+                                CustomDialog.Show("Tài khoản của bạn đã bị khóa bởi Admin!", "Thông báo", DialogType.Warning);
+                                return;
                             }
                         }
                     }
@@ -99,7 +96,7 @@ namespace e_learning_app
             }
             catch (Exception ex)
             {
-                CustomDialog.Show("Lỗi đăng nhập Google: " + ex.Message, "Lỗi", DialogType.Error);
+                CustomDialog.Show("Lỗi dang nhập Google: " + ex.Message, "Lỗi", DialogType.Error);
             }
             finally
             {
@@ -107,20 +104,20 @@ namespace e_learning_app
             }
         }
 
-        // ─── Đăng nhập bằng Email/Password (nút bấm) ──────────────
+        // --- Đăng nhập bằng Email/Password (nút bấm) --------------
         private async void Login_Click(object sender, RoutedEventArgs e)
         {
             await DoEmailLogin();
         }
 
-        // ─── Đăng nhập bằng Enter ──────────────────────────────────
+        // --- Đăng nhập bằng Enter ----------------------------------
         private async void login_enter(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
                 await DoEmailLogin();
         }
 
-        // ─── Logic đăng nhập email/password dùng chung ─────────────
+        // --- Logic dang nhập email/password dùng chung -------------
         private async Task DoEmailLogin()
         {
             string email    = txtEmail.Text.Trim();
@@ -132,7 +129,7 @@ namespace e_learning_app
                 return;
             }
 
-            // ── Admin đặc biệt ──
+            // -- Admin đặc biệt --
             if (email == "admin" && password == "admin")
             {
                 var loginWin = Window.GetWindow(this) as LoginWindow;
@@ -148,50 +145,41 @@ namespace e_learning_app
 
             try
             {
-                string userId = await FirebaseService.LoginAsync(email, password);
-
-                if (userId == null)
+                var loginResult = await FirebaseService.LoginWithTokenAsync(email, password);
+                if (loginResult.Uid == null)
                 {
                     txtstatus.Text = "Sai Email hoặc Mật khẩu!";
                     return;
                 }
 
-                // Đảm bảo document tồn tại trên Firestore
-                await FirebaseService.CreateUserInFirestore(userId, email);
+                string userId = loginResult.Uid;
 
-                // Xây dựng user object ban đầu từ Firebase Auth UID
-                var user = new User
-                {
-                    Id       = userId,
-                    Email    = email,
-                    FullName = email.Split('@')[0]
-                };
-
-                // Fetch đúng Firestore document (dùng userId làm Document ID)
+                // Sync user qua Backend API (đồng bộ thông tin, tạo nếu chưa có)
                 try
                 {
-                    if (FirebaseService.Db != null)
+                    await e_learning_app.Class.ApiService.PostAsync("users/sync-user", new
                     {
-                        var doc = await FirebaseService.Db.Collection("Users").Document(userId).GetSnapshotAsync();
-                        if (doc.Exists)
-                        {
-                            var stored = doc.ConvertTo<User>();
-                            if (!string.IsNullOrWhiteSpace(stored?.FullName))
-                                user.FullName = stored.FullName;
-                            if (!string.IsNullOrWhiteSpace(stored?.Role))
-                                user.Role = stored.Role;
-                            else
-                                user.Role = "Student";
+                        FullName = email.Split('@')[0],
+                        Email = email,
+                        Provider = "email"
+                    });
+                }
+                catch { /* sync user không bắt buộc */ }
 
-                            if (stored != null && stored.IsBlocked)
-                            {
-                                txtstatus.Text = "Tài khoản của bạn đã bị khóa!";
-                                return;
-                            }
-                        }
-                        else
+                // Lấy thông tin user qua API
+                var user = new User { Id = userId, Email = email, FullName = email.Split('@')[0], Role = "Student" };
+                try
+                {
+                    var userResp = await e_learning_app.Class.ApiService.GetAsync<e_learning_app.Class.UserResponse>($"users/{userId}");
+                    if (userResp?.Data != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(userResp.Data.FullName))
+                            user.FullName = userResp.Data.FullName;
+                        user.Role = !string.IsNullOrWhiteSpace(userResp.Data.Role) ? userResp.Data.Role : "Student";
+                        if (userResp.Data.IsBlocked)
                         {
-                            user.Role = "Student";
+                            txtstatus.Text = "Tài khoản của bạn đã bị khóa!";
+                            return;
                         }
                     }
                 }
@@ -208,7 +196,7 @@ namespace e_learning_app
                     Properties.Settings.Default.SavedPassword = "";
                     Properties.Settings.Default.RememberMe = false;
 
-                    // Xóa session Firebase để lần sau không tự động đăng nhập
+                    // Xóa session Firebase để lần sau không tự động dang nhập
                     var repo = new SimpleUserRepository();
                     repo.DeleteUser();
                 }
@@ -226,7 +214,7 @@ namespace e_learning_app
             }
         }
 
-        // ─── Quên mật khẩu ─────────────────────────────────────────
+        // --- Quên mật khẩu -----------------------------------------
         private void ForgotPassword_click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             string email = txtEmail.Text.Trim();
@@ -237,7 +225,7 @@ namespace e_learning_app
             }
         }
 
-        // ─── Chuyển sang màn hình đăng ký ──────────────────────────
+        // --- Chuyển sang màn hình dang ký --------------------------
         private void GoToRegister_Click(object sender, MouseButtonEventArgs e)
         {
             var parent = Window.GetWindow(this) as LoginWindow;
@@ -246,3 +234,4 @@ namespace e_learning_app
         }
     }
 }
+

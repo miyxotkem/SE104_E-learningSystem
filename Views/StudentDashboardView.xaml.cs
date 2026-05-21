@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using e_learning_app.Class;
 
 namespace e_learning_app.Views
 {
     public partial class StudentDashboardView : UserControl
     {
         private readonly DatabaseManager _dbManager;
-        private Google.Cloud.Firestore.FirestoreChangeListener _userNotifListener;
-        private Google.Cloud.Firestore.FirestoreChangeListener _systemNotifListener;
+        private System.Windows.Threading.DispatcherTimer _pollingTimer;
         private List<Notification> _dashboardNotifs = new List<Notification>();
         private List<Course> _enrolledCoursesForNotif = new List<Course>();
 
@@ -100,41 +100,36 @@ namespace e_learning_app.Views
             if (currentUser == null) return;
 
             // Đồng bộ trạng thái đã đọc từ Firebase
-            try
-            {
-                var readNotifsSnap = await _dbManager.GetDb.Collection("Users").Document(currentUser.Id)
-                    .Collection("ReadNotifications").GetSnapshotAsync();
-
-                NotificationService.ReadNotifKeys.Clear();
-                foreach (var doc in readNotifsSnap.Documents)
-                {
-                    NotificationService.ReadNotifKeys.Add(doc.Id);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Lỗi đồng bộ ReadNotifications: " + ex.Message);
-            }
+            // Read notifications will be handled by the backend API 
+            // and we rely on IsRead property returned from API.
 
             try
             {
-                var registrationsSnap = await _dbManager.GetDb.Collection("courseRegistrations")
-                    .WhereEqualTo("userId", currentUser.Id)
-                    .WhereEqualTo("status", "accepted")
-                    .GetSnapshotAsync();
-
+                var registrations = await ApiService.GetAsync<List<System.Text.Json.JsonElement>>("courses/my-registrations");
                 List<Course> enrolledCourses = new List<Course>();
 
-                foreach (var reg in registrationsSnap.Documents)
+                foreach (var reg in registrations)
                 {
-                    string courseId = reg.GetValue<string>("courseId");
-                    var courseSnap = await _dbManager.GetDb.Collection("Courses").Document(courseId).GetSnapshotAsync();
-
-                    if (courseSnap.Exists)
+                    if (reg.TryGetProperty("data", out var dataProp) || reg.TryGetProperty("Data", out dataProp))
                     {
-                        var c = courseSnap.ConvertTo<Course>();
-                        c.Id = courseSnap.Id;
-                        if (c.IsActive) enrolledCourses.Add(c);
+                        if (dataProp.TryGetProperty("CourseId", out var courseIdProp) && dataProp.TryGetProperty("Status", out var statusProp))
+                        {
+                            if (statusProp.GetString()?.ToLower() == "accepted")
+                            {
+                                string courseId = courseIdProp.GetString();
+                                try
+                                {
+                                    var courseResp = await ApiService.GetAsync<CourseResponse>($"courses/{courseId}");
+                                    if (courseResp != null && courseResp.Data != null)
+                                    {
+                                        var c = courseResp.Data;
+                                        c.Id = courseResp.Id;
+                                        if (c.IsActive) enrolledCourses.Add(c);
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
                     }
                 }
 
@@ -154,8 +149,11 @@ namespace e_learning_app.Views
                         string instName = "Giảng viên phụ trách";
                         try
                         {
-                            var instDoc = await _dbManager.GetDb.Collection("Users").Document(c.InstructorId).GetSnapshotAsync();
-                            if (instDoc.Exists) instName = instDoc.GetValue<string>("FullName");
+                            var instDoc = await ApiService.GetAsync<System.Text.Json.JsonElement>($"users/{c.InstructorId}");
+                            if (instDoc.TryGetProperty("data", out var data) || instDoc.TryGetProperty("Data", out data))
+                            {
+                                if (data.TryGetProperty("FullName", out var fn)) instName = fn.GetString();
+                            }
                         }
                         catch { }
 
@@ -204,8 +202,11 @@ namespace e_learning_app.Views
                         string instName = "Giảng viên";
                         try
                         {
-                            var instDoc = await _dbManager.GetDb.Collection("Users").Document(c.InstructorId).GetSnapshotAsync();
-                            if (instDoc.Exists) instName = instDoc.GetValue<string>("FullName");
+                            var instDoc = await ApiService.GetAsync<System.Text.Json.JsonElement>($"users/{c.InstructorId}");
+                            if (instDoc.TryGetProperty("data", out var data) || instDoc.TryGetProperty("Data", out data))
+                            {
+                                if (data.TryGetProperty("FullName", out var fn)) instName = fn.GetString();
+                            }
                         }
                         catch { }
 
@@ -247,48 +248,91 @@ namespace e_learning_app.Views
                 // 1. Tính pendingAssignmentsCount
                 foreach (var c in enrolledCourses)
                 {
-                    var assigns = await _dbManager.GetDb.Collection("Courses").Document(c.Id).Collection("Assignments").GetSnapshotAsync();
-                    foreach (var asm in assigns.Documents)
+                    try
                     {
-                        bool isSubmitted = false;
-                        try
+                        var assigns = await ApiService.GetAsync<List<AssignmentResponse>>($"courses/{c.Id}/assignments");
+                        foreach (var asm in assigns)
                         {
-                            var subSnap = await _dbManager.GetDb.Collection("Courses").Document(c.Id)
-                                .Collection("Assignments").Document(asm.Id)
-                                .Collection("Submissions").WhereEqualTo("StudentId", currentUser.Id)
-                                .GetSnapshotAsync();
-                            isSubmitted = subSnap.Count > 0;
-                        }
-                        catch { }
-
-                        if (asm.ContainsField("Deadline"))
-                        {
-                            var deadlineLocal = asm.GetValue<DateTime>("Deadline").ToLocalTime();
-                            if (!isSubmitted && deadlineLocal > DateTime.Now)
+                            bool isSubmitted = false;
+                            try
                             {
-                                pendingAssignmentsCount++;
+                                var subs = await ApiService.GetAsync<List<System.Text.Json.JsonElement>>($"courses/{c.Id}/assignments/{asm.Id}/submissions");
+                                foreach (var sub in subs)
+                                {
+                                    if (sub.TryGetProperty("data", out var data) || sub.TryGetProperty("Data", out data))
+                                    {
+                                        if (data.TryGetProperty("StudentId", out var stuId) && stuId.GetString() == currentUser.Id)
+                                        {
+                                            isSubmitted = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            catch { }
+
+                            if (asm.Data != null && asm.Data.Deadline != default(DateTime))
+                            {
+                                var deadlineLocal = asm.Data.Deadline.ToLocalTime();
+                                if (!isSubmitted && deadlineLocal > DateTime.Now)
+                                {
+                                    pendingAssignmentsCount++;
+                                }
                             }
                         }
                     }
+                    catch { }
                 }
 
                 TxtPendingAssignments.Text = pendingAssignmentsCount.ToString();
-                _enrolledCoursesForNotif = enrolledCourses;
 
-                // 2. Thiết lập Lắng nghe thông báo (Real-time)
-                _userNotifListener = _dbManager.GetDb.Collection("Notifications")
-                    .WhereEqualTo("TargetId", currentUser.Id)
-                    .Listen(snapshot =>
+                // 2. Tính số lượng bài kiểm tra cần làm
+                int pendingExamsCount = 0;
+                foreach (var c in enrolledCourses)
+                {
+                    try
                     {
-                        Application.Current.Dispatcher.Invoke(() => UpdateNotificationsList(snapshot));
-                    });
+                        var exams = await ApiService.GetAsync<List<ExamResponse>>($"exams/course/{c.Id}");
+                        foreach (var exam in exams)
+                        {
+                            if (exam.Data.IsPublished)
+                            {
+                                var subs = await ApiService.GetAsync<List<System.Text.Json.JsonElement>>($"exams/{exam.Id}/submissions");
+                                int attemptsCount = 0;
+                                foreach (var sub in subs)
+                                {
+                                    if (sub.TryGetProperty("data", out var data) || sub.TryGetProperty("Data", out data))
+                                    {
+                                        if (data.TryGetProperty("StudentId", out var stuId) && stuId.GetString() == currentUser.Id)
+                                            attemptsCount++;
+                                    }
+                                }
 
-                _systemNotifListener = _dbManager.GetDb.Collection("Notifications")
-                    .WhereEqualTo("TargetId", "all")
-                    .Listen(snapshot =>
+                                bool canTake = false;
+                                if (!exam.Data.AllowMultipleAttempts)
+                                {
+                                    if (attemptsCount == 0) canTake = true;
+                                }
+                                else
+                                {
+                                    if (attemptsCount < exam.Data.MaxAttempts) canTake = true;
+                                }
+
+                                if (canTake) pendingExamsCount++;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
                     {
-                        Application.Current.Dispatcher.Invoke(() => UpdateNotificationsList(snapshot));
-                    });
+                        Console.WriteLine($"Lỗi tính bài kiểm tra cho lớp {c.Id}: {ex.Message}");
+                    }
+                }
+                              _pollingTimer = new System.Windows.Threading.DispatcherTimer();
+                _pollingTimer.Interval = TimeSpan.FromSeconds(15);
+                _pollingTimer.Tick += async (s, args) => await FetchNotificationsAsync();
+                _pollingTimer.Start();
+
+                _ = FetchNotificationsAsync();
             }
             catch (Exception ex)
             {
@@ -296,36 +340,25 @@ namespace e_learning_app.Views
             }
         }
 
-        private void UpdateNotificationsList(Google.Cloud.Firestore.QuerySnapshot snapshot)
+        private async Task FetchNotificationsAsync()
         {
-            foreach (var change in snapshot.Changes)
+            try
             {
-                var doc = change.Document;
-                var notif = doc.ConvertTo<Notification>();
-                notif.Id = doc.Id;
-                
-                if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Added)
+                var notifs = await e_learning_app.Class.ApiService.GetAsync<List<Notification>>("notifications");
+                if (notifs != null)
                 {
-                    if (!_dashboardNotifs.Any(n => n.Id == notif.Id))
-                        _dashboardNotifs.Add(notif);
-                }
-                else if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Modified)
-                {
-                    var existing = _dashboardNotifs.FirstOrDefault(n => n.Id == notif.Id);
-                    if (existing != null)
-                    {
-                        _dashboardNotifs.Remove(existing);
-                        _dashboardNotifs.Add(notif);
-                    }
-                }
-                else if (change.ChangeType == Google.Cloud.Firestore.DocumentChange.Type.Removed)
-                {
-                    var existing = _dashboardNotifs.FirstOrDefault(n => n.Id == notif.Id);
-                    if (existing != null)
-                        _dashboardNotifs.Remove(existing);
+                    _dashboardNotifs = notifs;
+                    RefreshNotificationsUI();
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi fetch notifs: " + ex.Message);
+            }
+        }
 
+        private void RefreshNotificationsUI()
+        {
             var sortedDocs = _dashboardNotifs.OrderByDescending(n => n.CreatedAt).Take(5).ToList();
             var notifList = new ObservableCollection<NotifItem>();
 
@@ -345,7 +378,7 @@ namespace e_learning_app.Views
                     Content = n.Content,
                     NotifType = n.Type,
                     Time = n.TimeAgo,
-                    IsUnread = !NotificationService.ReadNotifKeys.Contains(n.Id)
+                    IsUnread = !n.IsRead
                 });
             }
 
@@ -382,6 +415,11 @@ namespace e_learning_app.Views
             catch { return (SolidColorBrush)new BrushConverter().ConvertFromString(defaultHex); }
         }
 
+        private void StudentDashboardView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _pollingTimer?.Stop();
+        }
+
         private void BtnNavigateToCourse_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is Course course)
@@ -400,18 +438,9 @@ namespace e_learning_app.Views
                 if (n.IsUnread)
                 {
                     n.IsUnread = false;
-                    NotificationService.ReadNotifKeys.Add(n.NotifKey);
-
-                    // Lưu trạng thái đã đọc lên Firebase
                     try
                     {
-                        var currentUser = _dbManager.GetCurrentUser();
-                        if (currentUser != null)
-                        {
-                            await _dbManager.GetDb.Collection("Users").Document(currentUser.Id)
-                                .Collection("ReadNotifications").Document(n.NotifKey)
-                                .SetAsync(new { ReadAt = DateTime.UtcNow });
-                        }
+                        await e_learning_app.Class.ApiService.PutAsync("notifications/read", new { NotificationIds = new List<string> { n.NotifKey } });
                     }
                     catch (Exception ex)
                     {

@@ -1,4 +1,0 @@
-Client ID
-105514257729-ienl99san19bis48vav5lppchd7fuf1j.apps.googleusercontent.com
-Client secret
-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

@@ -43,31 +43,74 @@ namespace e_learning_app.Views
             {
                 TxtQuizTitle.Text = $"📝  {_exam.Title}";
 
-                // Double check attempt limit
+                // Double check attempt limit qua API
                 var user = _dbManager.GetCurrentUser();
                 if (user != null)
                 {
-                    var subSnap = await _dbManager.GetDb.Collection("exam_submissions")
-                        .WhereEqualTo("ExamId", _exam.Id)
-                        .WhereEqualTo("StudentId", user.Id)
-                        .GetSnapshotAsync();
-
-                    int attemptCount = subSnap.Count;
-                    int limit = _exam.AllowMultipleAttempts ? _exam.MaxAttempts : 1;
-
-                    if (attemptCount >= limit)
+                    try
                     {
-                        CustomDialog.Show("Bạn đã hết lượt làm bài cho bài thi này!", "Thông báo", DialogType.Warning);
-                        if (Window.GetWindow(this) is MainWindow mw)
-                            mw.MainContentArea.Content = new QuizHistoryView(_dbManager, _exam);
-                        else if (Window.GetWindow(this) is StudentMainWindow smw)
-                            smw.StudentContentArea.Content = new QuizHistoryView(_dbManager, _exam);
-                        return;
+                        var history = await e_learning_app.Class.ApiService.GetAsync<List<System.Text.Json.JsonElement>>("exams/my-history");
+                        int attemptCount = history?.Count(h =>
+                        {
+                            if (h.TryGetProperty("Data", out var d) && d.TryGetProperty("ExamId", out var eid))
+                                return eid.GetString() == _exam.Id;
+                            return false;
+                        }) ?? 0;
+
+                        int limit = _exam.AllowMultipleAttempts ? _exam.MaxAttempts : 1;
+
+                        if (attemptCount >= limit)
+                        {
+                            CustomDialog.Show("Bạn đã hết lượt làm bài cho bài thi này!", "Thông báo", DialogType.Warning);
+                            if (Window.GetWindow(this) is MainWindow mw)
+                                mw.MainContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+                            else if (Window.GetWindow(this) is StudentMainWindow smw)
+                                smw.StudentContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+                            return;
+                        }
+                    }
+                    catch
+                    {
+                        // Nếu API lỗi, vẫn cho tiếp tục
                     }
                 }
 
                 // Load questions from Firestore
-                _questions = await _dbManager.GetExamQuestionsAsync(_exam.Id);
+                var detailRes = await e_learning_app.Class.ApiService.GetAsync<System.Text.Json.JsonElement?>($"exams/{_exam.Id}");
+                if (detailRes != null && detailRes.HasValue)
+                {
+                    _questions = new System.Collections.Generic.List<e_learning_app.Class.ExamQuestion>();
+                    try
+                    {
+                        if (detailRes.Value.TryGetProperty("Data", out var docData) || detailRes.Value.TryGetProperty("data", out docData))
+                        {
+                            if ((docData.TryGetProperty("Questions", out var questionsElem) || docData.TryGetProperty("questions", out questionsElem)) && questionsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            {
+                                int qIndex = 0;
+                                foreach (var qElem in questionsElem.EnumerateArray())
+                                {
+                                    var q = new e_learning_app.Class.ExamQuestion { Id = qIndex.ToString(), QuestionOrder = qIndex + 1 };
+                                    if (qElem.TryGetProperty("QuestionText", out var textElem) || qElem.TryGetProperty("questionText", out textElem)) q.Content = textElem.GetString();
+                                    if (qElem.TryGetProperty("CorrectOptionIndex", out var correctIdxElem) || qElem.TryGetProperty("correctOptionIndex", out correctIdxElem)) q.CorrectAnswerIndex = correctIdxElem.GetInt32();
+                                    if (qElem.TryGetProperty("Points", out var pointsElem) || qElem.TryGetProperty("points", out pointsElem)) q.Points = pointsElem.GetDouble();
+
+                                    if ((qElem.TryGetProperty("Options", out var optsElem) || qElem.TryGetProperty("options", out optsElem)) && optsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                    {
+                                        var opts = optsElem.EnumerateArray().Select(o => o.GetString()).ToList();
+                                        q.Options = opts;
+                                    }
+                                    _questions.Add(q);
+                                    qIndex++;
+                                }
+                            }
+                        }
+                    }
+                    catch (System.Exception ex) 
+                    { 
+                        System.Windows.MessageBox.Show($"Lỗi phân tích câu hỏi từ máy chủ:\n{ex.Message}\n\nKiểm tra lại dữ liệu trong bài thi.", "Lỗi dữ liệu JSON", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        System.Console.WriteLine("Parse questions error: " + ex.Message); 
+                    }
+                }
 
                 if (_questions == null || _questions.Count == 0)
                 {
@@ -145,7 +188,7 @@ namespace e_learning_app.Views
             // Update UI
             TxtQuestionBadge.Text = $"Câu {index + 1}";
             TxtQuestionContent.Text = q.Content;
-            TxtProgressHeader.Text = $"Câu {index + 1} / {_questions.Count}  ·  {q.Points} điểm";
+            TxtProgressHeader.Text = $"Câu {index + 1} / {_questions.Count}  ·  {q.Points} diểm";
 
             // Progress Bar
             double progress = (double)(index + 1) / _questions.Count * 180;
@@ -284,37 +327,39 @@ namespace e_learning_app.Views
         {
             _timer?.Stop();
 
-            var user = _dbManager.GetCurrentUser();
-            var submission = new ExamSubmission
+            var request = new e_learning_app.Class.SubmitExamRequest();
+            for (int i = 0; i < _questions.Count; i++)
             {
-                ExamId = _exam.Id,
-                StudentId = user.Id,
-                StudentName = user.FullName,
-                TimeSpentSeconds = (int)(DateTime.Now - _startTime).TotalSeconds,
-                Status = SubmissionStatus.Submitted
-            };
-
-            foreach (var q in _questions)
-            {
-                submission.Answers.Add(new AnswerResponse
+                var q = _questions[i];
+                if (_studentAnswers.ContainsKey(q.Id) && int.TryParse(_studentAnswers[q.Id], out int ansIdx))
                 {
-                    QuestionId = q.Id,
-                    QuestionOrder = q.QuestionOrder,
-                    StudentAnswer = _studentAnswers.ContainsKey(q.Id) ? _studentAnswers[q.Id] : ""
-                });
+                    // The backend API expects the key to be the question index as a string
+                    request.Answers.Add(i.ToString(), ansIdx);
+                }
             }
 
             try
             {
-                // Grade automatically if multiple choice
-                var graded = await _dbManager.AutoGradeAndSubmitExamAsync(submission);
+                var response = await e_learning_app.Class.ApiService.PostAsync<e_learning_app.Class.SubmitExamRequest, System.Text.Json.JsonElement?>($"exams/{_exam.Id}/submit", request);
 
-                if (graded != null)
+                if (response != null && response.HasValue)
                 {
                     string msg = "Nộp bài thành công!";
                     if (_exam.ShowScore)
                     {
-                        msg += $"\nĐiểm của bạn: {graded.Score:F1} / {_questions.Sum(q => q.Points)} ({graded.Percentage:F1}%)";
+                        int score = 0;
+                        int totalQuestions = _questions.Count;
+                        
+                        try
+                        {
+                            var dataElement = response.Value;
+                            if (dataElement.TryGetProperty("Score", out var scoreProp) || dataElement.TryGetProperty("score", out scoreProp)) score = scoreProp.GetInt32();
+                            if (dataElement.TryGetProperty("TotalQuestions", out var totalQProp) || dataElement.TryGetProperty("totalQuestions", out totalQProp)) totalQuestions = totalQProp.GetInt32();
+                        }
+                        catch { }
+
+                        double percentage = totalQuestions > 0 ? (double)score / totalQuestions * 100 : 0;
+                        msg += $"\nĐiểm của bạn: {score} / {totalQuestions} ({percentage:F1}%)";
                     }
                     else
                     {
@@ -323,9 +368,10 @@ namespace e_learning_app.Views
 
                     CustomDialog.Show(msg, "Kết quả", DialogType.Success);
 
-                    // Navigate back to student dashboard or quiz list
                     if (Window.GetWindow(this) is MainWindow mw)
                         mw.NavDashboard_Click(null, null);
+                    else if (Window.GetWindow(this) is StudentMainWindow smw)
+                        smw.NavigateTo(new Views.StudentQuizView(_dbManager));
                 }
             }
             catch (Exception ex)
