@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Threading.Tasks;
+using System.Windows.Media.Effects;
 using e_learning_app.Class;
 
 namespace e_learning_app
@@ -262,19 +263,7 @@ namespace e_learning_app
             TxtPendingExams.Text = _allExams.Count(e => !e.IsPublished).ToString();
         }
 
-        private UIElement BuildExamCard(Exam exam)
-        {
-            var card = new ExamCardView
-            {
-                DataContext = exam
-            };
-
-            card.ViewClicked += (s, e) => ViewExam(exam);
-            card.EditClicked += (s, e) => EditExam(exam);
-            card.DeleteClicked += (s, e) => DeleteExam(exam);
-
-            return card;
-        }
+        
 
         // ==================== HELPER METHODS ====================
 
@@ -401,7 +390,8 @@ namespace e_learning_app
 
         private void EditExam(Exam exam)
         {
-            ShowEditExamDialog(exam);
+            if (Window.GetWindow(this) is MainWindow mw)
+                mw.NavigateTo(new EditExamView(_dbManager, exam));
         }
 
         private async void DeleteExam(Exam exam)
@@ -437,7 +427,7 @@ namespace e_learning_app
                     CustomDialog.Show($"Lỗi khi xóa:\n{ex.Message}", "Lỗi", DialogType.Error);
                 }
             }
-        }       
+        }
 
         /// <summary>
         /// Dialog chỉnh sửa bài thi
@@ -644,5 +634,6 @@ namespace e_learning_app
                 await LoadDataFromFirebaseAsync();
             }
         }
+
     }
 }

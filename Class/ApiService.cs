@@ -48,11 +48,7 @@ namespace e_learning_app.Class
     public static class ApiService
     {
         private static readonly HttpClient _httpClient = new HttpClient();
-#if DEBUG
-        private const string BaseUrl = "http://localhost:5105/api";
-#else
         private const string BaseUrl = "https://api-e-learning.thankfulflower-208a0ec8.eastasia.azurecontainerapps.io/api";
-#endif  
 
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions 
         { 
@@ -74,10 +70,17 @@ namespace e_learning_app.Class
 
         public static async Task<T> GetAsync<T>(string endpoint)
         {
-            var response = await _httpClient.GetAsync($"{BaseUrl}/{endpoint}");
-            response.EnsureSuccessStatusCode();
+            string fullUrl = $"{BaseUrl}/{endpoint}";
+            var response = await _httpClient.GetAsync(fullUrl);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorBody = await response.Content.ReadAsStringAsync();
+                throw new Exception($"HTTP {(int)response.StatusCode} ({response.ReasonPhrase}) khi gọi API: {fullUrl}\n\nNội dung lỗi: {errorBody}");
+            }
             
             var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(json)) return default;
             return JsonSerializer.Deserialize<T>(json, _jsonOptions);
         }
 
@@ -96,6 +99,7 @@ namespace e_learning_app.Class
             }
 
             var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(json)) return default;
             return JsonSerializer.Deserialize<TResponse>(json, _jsonOptions);
         }
 

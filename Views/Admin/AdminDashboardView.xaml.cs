@@ -58,6 +58,7 @@ namespace e_learning_app.Views.Admin
                 //TxtTotalCourses.Text  = "Lỗi";
                 TxtNewUsers.Text      = "Lỗi";
                 System.Diagnostics.Debug.WriteLine($"AdminDashboard error: {ex.Message}");
+                CustomDialog.Show($"Lỗi tải dashboard: {ex.Message}", "Lỗi tải dữ liệu", DialogType.Error);
             }
         }
     }

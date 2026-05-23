@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Windows.Media.Animation;
 using e_learning_app.Class;
 
 namespace e_learning_app.Views
@@ -22,7 +23,8 @@ namespace e_learning_app.Views
         private DispatcherTimer _timer;
         private TimeSpan _remainingTime;
         private double _totalSeconds;
-        private DateTime _startTime;
+        private DateTime _startTime;   // Real UTC start time used by timer
+        private ExamDraft _activeDraft; // Non-null when we restored from a saved draft
 
         public TakeQuizView(DatabaseManager dbManager, Exam exam)
         {
@@ -52,7 +54,7 @@ namespace e_learning_app.Views
                         var history = await e_learning_app.Class.ApiService.GetAsync<List<System.Text.Json.JsonElement>>("exams/my-history");
                         int attemptCount = history?.Count(h =>
                         {
-                            if (h.TryGetProperty("Data", out var d) && d.TryGetProperty("ExamId", out var eid))
+                            if ((h.TryGetProperty("Data", out var d) || h.TryGetProperty("data", out d)) && (d.TryGetProperty("ExamId", out var eid) || d.TryGetProperty("examId", out eid)))
                                 return eid.GetString() == _exam.Id;
                             return false;
                         }) ?? 0;
@@ -73,6 +75,9 @@ namespace e_learning_app.Views
                     {
                         // Nếu API lỗi, vẫn cho tiếp tục
                     }
+
+                    // Check for a saved draft
+                    _activeDraft = await _dbManager.GetExamDraftAsync(_exam.Id, user.Id);
                 }
 
                 // Load questions from Firestore
@@ -118,23 +123,83 @@ namespace e_learning_app.Views
                     return;
                 }
 
-                if (_exam.RandomizeQuestions)
+                if (_activeDraft != null)
                 {
-                    var rnd = new Random();
-                    _questions = _questions.OrderBy(x => rnd.Next()).ToList();
+                    // --- Restore from draft ---
+                    // Compute how much time has truly elapsed since the student first started
+                    double elapsedSeconds = (DateTime.UtcNow - _activeDraft.StartedAt).TotalSeconds;
+                    double leftSeconds = _totalSeconds - elapsedSeconds;
+
+                    if (leftSeconds <= 0)
+                    {
+                        // Time already expired while they were away - auto-submit
+                        _startTime = _activeDraft.StartedAt.ToLocalTime();
+                        RestoreDraftState(_activeDraft);
+                        CustomDialog.Show("Thời gian làm bài đã hết! Hệ thống sẽ tự động nộp bài.", "Hết giờ", DialogType.Warning);
+                        await SubmitQuiz();
+                        return;
+                    }
+
+                    bool resume = CustomDialog.Confirm(
+                        $"Bạn có bài làm đang dở của bài thi này.\n" +
+                        $"Thời gian còn lại: {TimeSpan.FromSeconds(leftSeconds):mm\\:ss}\n\n" +
+                        "Tiếp tục làm bài?",
+                        "Tiếp tục bài làm", "Tiếp tục", "Bắt đầu lại", DialogType.Question);
+
+                    if (resume)
+                    {
+                        // Keep original startTime so timer reflects real elapsed time
+                        _startTime = _activeDraft.StartedAt.ToLocalTime();
+                        _remainingTime = TimeSpan.FromSeconds(leftSeconds);
+                        RestoreDraftState(_activeDraft);
+                    }
+                    else
+                    {
+                        // Delete old draft, fresh start
+                        var u = _dbManager.GetCurrentUser();
+                        if (u != null) await _dbManager.DeleteExamDraftAsync(_exam.Id, u.Id);
+                        _activeDraft = null;
+                        FreshStart();
+                    }
+                }
+                else
+                {
+                    FreshStart();
                 }
 
                 // Initialize timer
                 StartTimer();
 
-                // Render first question
-                ShowQuestion(0);
+                // Render current question
+                ShowQuestion(_currentIndex);
                 UpdateQuestionMap();
             }
             catch (Exception ex)
             {
                 CustomDialog.Show($"Lỗi tải bài thi: {ex.Message}", "Lỗi", DialogType.Error);
             }
+        }
+
+        private void FreshStart()
+        {
+            if (_exam.RandomizeQuestions)
+            {
+                var rnd = new Random();
+                _questions = _questions.OrderBy(x => rnd.Next()).ToList();
+            }
+            _startTime = DateTime.Now;
+            _remainingTime = TimeSpan.FromSeconds(_totalSeconds);
+            _currentIndex = 0;
+        }
+
+        private void RestoreDraftState(ExamDraft draft)
+        {
+            // Restore answers
+            _studentAnswers = new Dictionary<string, string>(draft.Answers ?? new());
+            // Restore marked-for-review
+            _markedForReview = new HashSet<string>(draft.MarkedForReview ?? new List<string>());
+            // Restore last viewed question index (clamped)
+            _currentIndex = Math.Max(0, Math.Min(draft.LastQuestionIndex, _questions.Count - 1));
         }
 
         private void StartTimer()
@@ -162,17 +227,26 @@ namespace e_learning_app.Views
                     CustomDialog.Show("Hết giờ làm bài! Hệ thống sẽ tự động nộp bài.", "Hết giờ", DialogType.Warning);
                     _ = SubmitQuiz(); // Use discard for async call in non-async event
                 }
-                else if (_remainingTime.TotalMinutes < 1)
-                {
-                    // Pulse Red when < 1 min
-                    TxtTimer.Foreground = Brushes.Red;
-                    TimeProgressFill.Background = Brushes.Red;
-                    TxtTimer.Opacity = TxtTimer.Opacity == 1 ? 0.6 : 1;
-                }
                 else if (_remainingTime.TotalMinutes < 5)
                 {
-                    TxtTimer.Foreground = Brushes.OrangeRed;
-                    TimeProgressFill.Background = Brushes.OrangeRed;
+                    // Nguy hiểm: < 5 phút -> Đỏ và nhấp nháy
+                    TxtTimer.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)); // Red-500
+                    TimeProgressFill.Background = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+                    TxtTimer.Opacity = TxtTimer.Opacity >= 0.9 ? 0.5 : 1.0;
+                }
+                else if (_remainingTime.TotalMinutes < 10)
+                {
+                    // Cảnh báo: < 10 phút -> Vàng cam
+                    TxtTimer.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // Amber-500
+                    TimeProgressFill.Background = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
+                    TxtTimer.Opacity = 1.0;
+                }
+                else
+                {
+                    // Bình thường
+                    TxtTimer.Foreground = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B));
+                    TimeProgressFill.Background = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
+                    TxtTimer.Opacity = 1.0;
                 }
             };
             _timer.Start();
@@ -184,6 +258,16 @@ namespace e_learning_app.Views
 
             _currentIndex = index;
             var q = _questions[index];
+
+            // Trigger Animation (Slide & Fade)
+            if (MainContentContainer != null)
+            {
+                var fadeAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250));
+                var slideAnim = new ThicknessAnimation(new Thickness(40, 52, 40, 0), new Thickness(40, 32, 40, 20), TimeSpan.FromMilliseconds(250));
+                slideAnim.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
+                MainContentContainer.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+                MainContentContainer.BeginAnimation(FrameworkElement.MarginProperty, slideAnim);
+            }
 
             // Update UI
             TxtQuestionBadge.Text = $"Câu {index + 1}";
@@ -229,57 +313,128 @@ namespace e_learning_app.Views
             }
 
             // Mark Review state
-            if (_markedForReview.Contains(q.Id))
-                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF9, 0xC3)); // Yellowish
-            else
-                BtnMarkReview.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xF0));
+            BtnMarkReview.IsChecked = _markedForReview.Contains(q.Id);
 
             // Buttons
             BtnPrev.IsEnabled = index > 0;
             BtnNext.Content = index == _questions.Count - 1 ? "Câu cuối" : "Câu tiếp theo →";
 
             UpdateStats();
+            UpdateQuestionMap(); // Cập nhật lại bản đồ để làm nổi bật câu hiện tại
         }
 
         private void UpdateQuestionMap()
         {
-            PanelQuestionMap.Children.Clear();
+            if (PanelQuestionMap.Children.Count != _questions.Count)
+            {
+                PanelQuestionMap.Children.Clear();
+                for (int i = 0; i < _questions.Count; i++)
+                {
+                    var btn = new Button
+                    {
+                        Style = (Style)Resources["QMapBtn"],
+                        Content = (i + 1).ToString(),
+                        Tag = i,
+                        FontWeight = FontWeights.Bold
+                    };
+                    btn.Click += (s, e) => ShowQuestion((int)(s as Button).Tag);
+                    PanelQuestionMap.Children.Add(btn);
+                }
+            }
+
             for (int i = 0; i < _questions.Count; i++)
             {
                 var q = _questions[i];
-                var btn = new Button
-                {
-                    Style = (Style)Resources["QMapBtn"],
-                    Content = (i + 1).ToString(),
-                    Tag = i,
-                    FontWeight = FontWeights.Bold
-                };
+                var btn = (Button)PanelQuestionMap.Children[i];
 
-                // Colors based on state
-                if (i == _currentIndex)
+                bool isCurrent = i == _currentIndex;
+                bool isAnswered = _studentAnswers.ContainsKey(q.Id);
+                bool isMarked = _markedForReview.Contains(q.Id);
+
+                // 1. Màu sắc nền và chữ dựa trên trạng thái (Đã làm / Xem lại)
+                if (isMarked && isAnswered)
                 {
-                    btn.Background = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
-                    btn.Foreground = Brushes.White;
-                    btn.Width = 38; btn.Height = 38; // Current is slightly bigger
+                    // Đã làm nhưng đánh dấu xem lại
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7)); // Nền xanh (Đã làm)
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // Chữ cam (Xem lại)
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // Viền cam
                 }
-                else if (_markedForReview.Contains(q.Id))
+                else if (isMarked && !isAnswered)
                 {
-                    btn.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2));
-                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26));
+                    // Chưa làm và đánh dấu xem lại
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF9, 0xC3)); // Nền vàng
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0xD9, 0x77, 0x06)); // Chữ cam đậm
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // Viền cam
                 }
-                else if (_studentAnswers.ContainsKey(q.Id))
+                else if (!isMarked && isAnswered)
                 {
-                    btn.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7));
-                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A));
+                    // Đã làm
+                    btn.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7)); // Nền xanh
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)); // Chữ xanh
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)); // Viền xanh
                 }
                 else
                 {
-                    btn.Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9));
-                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
+                    // Chưa làm
+                    btn.Background = Brushes.White;
+                    btn.Foreground = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)); // Chữ xám
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0xCB, 0xD5, 0xE1)); // Viền xám
                 }
 
-                btn.Click += (s, e) => ShowQuestion((int)(s as Button).Tag);
-                PanelQuestionMap.Children.Add(btn);
+                // 2. Logic làm nổi bật câu hiện tại (Current Selection)
+                if (isCurrent)
+                {
+                    // Phóng to, viền dày màu xanh dương, thêm đổ bóng
+                    btn.Width = 46; 
+                    btn.Height = 46;
+                    btn.BorderThickness = new Thickness(2.5);
+                    btn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x25, 0x63, 0xEB)); // Viền xanh dương đậm (Blue-600)
+                    btn.Effect = new System.Windows.Media.Effects.DropShadowEffect 
+                    { 
+                        BlurRadius = 8, 
+                        ShadowDepth = 2, 
+                        Opacity = 0.25, 
+                        Color = Colors.Black 
+                    };
+                }
+                else
+                {
+                    // Trạng thái bình thường
+                    btn.Width = 40; 
+                    btn.Height = 40;
+                    btn.BorderThickness = new Thickness(1);
+                    btn.Effect = null;
+                }
+            }
+        }
+
+        private void BtnToggleMap_Click(object sender, RoutedEventArgs e)
+        {
+            if (ColumnRightPanel.Width.Value > 0)
+            {
+                // Đang mở -> Đóng lại
+                ColumnRightPanel.Width = new GridLength(0);
+                if (BtnFloatingToggle != null)
+                {
+                    BtnFloatingToggle.Content = "⯇";
+                    BtnFloatingToggle.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
+                    BtnFloatingToggle.Foreground = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
+                    if (BtnFloatingToggle.Effect is System.Windows.Media.Effects.DropShadowEffect shadow)
+                        shadow.Opacity = 0.15;
+                }
+            }
+            else
+            {
+                // Đang đóng -> Mở ra
+                ColumnRightPanel.Width = new GridLength(280);
+                if (BtnFloatingToggle != null)
+                {
+                    BtnFloatingToggle.Content = "⯈";
+                    BtnFloatingToggle.Background = new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9));
+                    BtnFloatingToggle.Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
+                    if (BtnFloatingToggle.Effect is System.Windows.Media.Effects.DropShadowEffect shadow)
+                        shadow.Opacity = 0;
+                }
             }
         }
 
@@ -302,16 +457,76 @@ namespace e_learning_app.Views
                 ShowQuestion(_currentIndex + 1);
         }
 
-        private void BtnMarkReview_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void BtnMarkReview_Click(object sender, RoutedEventArgs e)
         {
             var qId = _questions[_currentIndex].Id;
             if (_markedForReview.Contains(qId))
+            {
                 _markedForReview.Remove(qId);
+            }
             else
+            {
                 _markedForReview.Add(qId);
+            }
 
-            ShowQuestion(_currentIndex); // Refresh UI
             UpdateQuestionMap();
+            UpdateStats();
+        }
+
+        private async void BtnSaveExit_Click(object sender, RoutedEventArgs e)
+        {
+            var user = _dbManager.GetCurrentUser();
+            if (user == null)
+            {
+                CustomDialog.Show("Không xác định được học sinh hiện tại.", "Lỗi", DialogType.Error);
+                return;
+            }
+
+            // Stop the UI timer (timer "keeps running" conceptually via startTime saved in draft)
+            _timer?.Stop();
+
+            var draft = new ExamDraft
+            {
+                ExamId        = _exam.Id,
+                StudentId     = user.Id,
+                StudentName   = user.FullName,
+                // Preserve the ORIGINAL start time so elapsed time accumulates correctly
+                StartedAt     = (_activeDraft != null)
+                                    ? _activeDraft.StartedAt          // already UTC
+                                    : _startTime.ToUniversalTime(),
+                Answers       = new Dictionary<string, string>(_studentAnswers),
+                MarkedForReview = new List<string>(_markedForReview),
+                LastQuestionIndex = _currentIndex
+            };
+
+            bool saved = await _dbManager.SaveExamDraftAsync(draft);
+
+            if (saved)
+            {
+                // Show how much time they have left when they return
+                double elapsedSec  = (DateTime.UtcNow - draft.StartedAt).TotalSeconds;
+                double leftSec     = Math.Max(0, _totalSeconds - elapsedSec);
+                string leftDisplay = TimeSpan.FromSeconds(leftSec).ToString(@"mm\:ss");
+
+                CustomDialog.Show(
+                    $"Bài làm đã được lưu lại!\n" +
+                    $"⚠️ Đồng hồ vẫn tiếp tục chạy.\n" +
+                    $"Thời gian còn lại khi quay lại: ~{leftDisplay}",
+                    "Lưu thành công", DialogType.Success);
+            }
+            else
+            {
+                CustomDialog.Show("Không thể lưu bài làm. Kiểm tra kết nối mạng!", "Lỗi lưu", DialogType.Error);
+                // Resume timer if save failed
+                _timer?.Start();
+                return;
+            }
+
+            // Navigate away
+            if (Window.GetWindow(this) is MainWindow mainWin)
+                mainWin.NavDashboard_Click(null, null);
+            else if (Window.GetWindow(this) is StudentMainWindow stuWin)
+                stuWin.StudentContentArea.Content = new StudentDashboardView(_dbManager);
         }
 
         private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
@@ -344,6 +559,11 @@ namespace e_learning_app.Views
 
                 if (response != null && response.HasValue)
                 {
+                    // Delete draft (if any) now that we have a real submission
+                    var u = _dbManager.GetCurrentUser();
+                    if (u != null)
+                        await _dbManager.DeleteExamDraftAsync(_exam.Id, u.Id);
+
                     string msg = "Nộp bài thành công!";
                     if (_exam.ShowScore)
                     {
@@ -362,9 +582,7 @@ namespace e_learning_app.Views
                         msg += $"\nĐiểm của bạn: {score} / {totalQuestions} ({percentage:F1}%)";
                     }
                     else
-                    {
                         msg += "\nKết quả của bạn đã được ghi nhận.";
-                    }
 
                     CustomDialog.Show(msg, "Kết quả", DialogType.Success);
 

@@ -247,7 +247,7 @@ namespace e_learning_app
             public string Uid { get; set; } = string.Empty;
         }
 
-        public static async Task<string> RegisterAsync(string email, string password)
+        public static async Task<string> RegisterAsync(string email, string password, string fullName)
         {
             try
             {
@@ -255,7 +255,7 @@ namespace e_learning_app
                 { 
                     Email = email, 
                     Password = password,
-                    FullName = email.Split('@')[0]
+                    FullName = fullName
                 };
                 var response = await ApiService.PostAsync<BackendRegisterRequest, BackendRegisterResponse>("auth/register", req);
 

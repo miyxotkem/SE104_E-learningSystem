@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -53,12 +53,11 @@ namespace e_learning_app
             }
             try
             {
-                string newUserId = await FirebaseService.RegisterAsync(email, password);
+                string newUserId = await FirebaseService.RegisterAsync(email, password, fullName);
                 this.IsEnabled = false;
 
                 if (newUserId != null)
                 {
-                    await FirebaseService.CreateUserInFirestore(newUserId, email, fullName); // Luu vào Firestore với Email và FullName
                     CustomDialog.Show("Đăng ký thành công! Bạn có thể dang nhập ngay bây giờ.", "Thành công", DialogType.Success);
                     var parent_window=Window.GetWindow(this) as LoginWindow;
                     if (parent_window != null)

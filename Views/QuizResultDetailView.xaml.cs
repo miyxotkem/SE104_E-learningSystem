@@ -14,15 +14,17 @@ namespace e_learning_app.Views
         private readonly DatabaseManager _dbManager;
         private readonly Exam _exam;
         private readonly ExamSubmission _submission;
+        private readonly bool _isTeacherView;
         private List<ExamQuestion> _allQuestions = new();
         private List<object> _processedQuestions = new();
 
-        public QuizResultDetailView(DatabaseManager dbManager, Exam exam, ExamSubmission submission)
+        public QuizResultDetailView(DatabaseManager dbManager, Exam exam, ExamSubmission submission, bool isTeacherView = false)
         {
             InitializeComponent();
             _dbManager = dbManager;
             _exam = exam;
             _submission = submission;
+            _isTeacherView = isTeacherView;
             
             LoadDetails();
         }
@@ -39,34 +41,38 @@ namespace e_learning_app.Views
             {
                 var detailRes = await e_learning_app.Class.ApiService.GetAsync<System.Text.Json.JsonElement?>($"exams/{_exam.Id}");
                 _allQuestions = new System.Collections.Generic.List<e_learning_app.Class.ExamQuestion>();
-                if (detailRes != null && detailRes.HasValue) { try { if (detailRes.Value.TryGetProperty("Data", out var docData))
-                        if (docData.TryGetProperty("Questions", out var questionsElem) && questionsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
+                if (detailRes != null && detailRes.HasValue) 
+                { 
+                    try 
+                    { 
+                        var root = detailRes.Value;
+                        if (root.TryGetProperty("Data", out var docData) || root.TryGetProperty("data", out docData))
                         {
-                            int qIndex = 0;
-                            foreach (var qElem in questionsElem.EnumerateArray())
+                            if ((docData.TryGetProperty("Questions", out var questionsElem) || docData.TryGetProperty("questions", out questionsElem)) && questionsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
                             {
-                                var q = new e_learning_app.Class.ExamQuestion { Id = qIndex.ToString(), QuestionOrder = qIndex + 1 };
-                                if (qElem.TryGetProperty("QuestionText", out var textElem)) q.Content = textElem.GetString();
-                                if (qElem.TryGetProperty("CorrectOptionIndex", out var correctIdxElem)) q.CorrectAnswerIndex = correctIdxElem.GetInt32();
-                                if (qElem.TryGetProperty("Points", out var pointsElem)) q.Points = pointsElem.GetDouble();
-                                
-                                if (qElem.TryGetProperty("Options", out var optsElem) && optsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                int qIndex = 0;
+                                foreach (var qElem in questionsElem.EnumerateArray())
                                 {
-                                    var opts = optsElem.EnumerateArray().Select(o => o.GetString()).ToList();
-                                    q.Options = opts;
+                                    var q = new e_learning_app.Class.ExamQuestion { Id = qIndex.ToString(), QuestionOrder = qIndex + 1 };
+                                    if (qElem.TryGetProperty("QuestionText", out var textElem) || qElem.TryGetProperty("questionText", out textElem)) q.Content = textElem.GetString();
+                                    if (qElem.TryGetProperty("CorrectOptionIndex", out var correctIdxElem) || qElem.TryGetProperty("correctOptionIndex", out correctIdxElem)) q.CorrectAnswerIndex = correctIdxElem.GetInt32();
+                                    if (qElem.TryGetProperty("Points", out var pointsElem) || qElem.TryGetProperty("points", out pointsElem)) q.Points = pointsElem.GetDouble();
                                     
-                                    
-                                    
+                                    if ((qElem.TryGetProperty("Options", out var optsElem) || qElem.TryGetProperty("options", out optsElem)) && optsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                    {
+                                        q.Options = optsElem.EnumerateArray().Select(o => o.GetString()).ToList();
+                                    }
+                                    _allQuestions.Add(q);
+                                    qIndex++;
                                 }
-                                _allQuestions.Add(q);
-                                qIndex++;
                             }
                         }
-                    } catch { }
+                    } 
+                    catch { }
                 }
                 
                 double maxScore = _allQuestions.Sum(q => q.Points);
-                TxtScoreLarge.Text = $"{_submission.Score:F1} / {maxScore:F1}";
+                TxtScoreLarge.Text = $"{_submission.Score:F1} / 10";
 
                 ProcessQuestions();
                 ApplyFilter("All");
@@ -175,7 +181,12 @@ namespace e_learning_app.Views
         private void BtnBack_Click(object sender, RoutedEventArgs e)
         {
             if (Window.GetWindow(this) is MainWindow mw)
-                mw.MainContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+            {
+                if (_isTeacherView)
+                    mw.MainContentArea.Content = new ExamReportView(_exam, _dbManager);
+                else
+                    mw.MainContentArea.Content = new QuizHistoryView(_dbManager, _exam);
+            }
             else if (Window.GetWindow(this) is StudentMainWindow smw)
                 smw.StudentContentArea.Content = new QuizHistoryView(_dbManager, _exam);
         }

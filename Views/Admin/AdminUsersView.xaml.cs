@@ -75,6 +75,7 @@ namespace e_learning_app.Views.Admin
             {
                 TxtUserCount.Text = "Không thể tải dữ liệu";
                 System.Diagnostics.Debug.WriteLine($"AdminUsersView load error: {ex.Message}");
+                CustomDialog.Show($"Lỗi tải danh sách người dùng: {ex.Message}", "Lỗi API", DialogType.Error);
             }
         }
 

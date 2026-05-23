@@ -55,6 +55,9 @@ namespace e_learning_app.Class
         public DateTime? ScheduledDate { get; set; }
 
         [FirestoreProperty]
+        public DateTime? Deadline { get; set; }
+
+        [FirestoreProperty]
         public bool IsPublished { get; set; }
 
         [FirestoreProperty]

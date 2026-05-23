@@ -7,6 +7,29 @@
              Background="#F8FAFC">
 
     <UserControl.Resources>
+        <!-- Back Button Style (shared style) -->
+        <Style x:Key="BackButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#64748B"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" Padding="0,5">
+                            <TextBlock x:Name="Txt" Text="{TemplateBinding Content}" FontSize="14" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Txt" Property="Foreground" Value="#3B82F6"/>
+                                <Setter TargetName="Txt" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Primary Action Button Style -->
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#3B82F6"/>
             <Setter Property="Foreground" Value="White"/>
@@ -45,8 +68,7 @@
         <!-- Header Section -->
         <Grid Grid.Row="0" Margin="0,0,0,30">
             <StackPanel>
-                <Button Content="← Quay lại" Background="Transparent" Foreground="#64748B" FontWeight="Medium" 
-                        BorderThickness="0" HorizontalAlignment="Left" Cursor="Hand" Click="BtnBack_Click"/>
+                <Button Content="← Quay lại" Style="{StaticResource BackButtonStyle}" HorizontalAlignment="Left" Click="BtnBack_Click"/>
                 
                 <Grid Margin="0,20,0,0">
                     <Grid.ColumnDefinitions>
@@ -97,12 +119,73 @@
         <Grid Grid.Row="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Text="Lịch sử làm bài" FontSize="18" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,15"/>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <!-- Draft In-Progress Banner -->
+            <Border x:Name="DraftBanner" Grid.Row="1" Visibility="Collapsed"
+                    Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1.5"
+                    CornerRadius="14" Padding="20,16" Margin="0,0,0,16">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.07" Color="#F59E0B"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Icon -->
+                    <Border Grid.Column="0" Width="48" Height="48" Background="#FEF3C7" CornerRadius="12" VerticalAlignment="Center">
+                        <TextBlock Text="⏳" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Info -->
+                    <StackPanel Grid.Column="1" Margin="16,0,16,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Bài đang làm" FontSize="15" FontWeight="Bold" Foreground="#92400E"/>
+                            <Border Background="#FEF3C7" CornerRadius="6" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="CHƯA NỘP" FontSize="10" FontWeight="Bold" Foreground="#D97706"/>
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Text="⏱ Thời gian còn lại: " FontSize="13" Foreground="#78350F"/>
+                            <TextBlock x:Name="TxtDraftTimeLeft" Text="--:--" FontSize="13" FontWeight="Bold" Foreground="#DC2626"/>
+                        </StackPanel>
+                        <TextBlock x:Name="TxtDraftAnswerCount" Text="Đã trả lời 0 câu" FontSize="12" Foreground="#92400E" Margin="0,3,0,0"/>
+                        <TextBlock x:Name="TxtDraftSavedAt" Text="" FontSize="11" Foreground="#B45309" Margin="0,3,0,0"/>
+                    </StackPanel>
+
+                    <!-- Actions -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <Button x:Name="BtnContinueDraft" Content="▶ Tiếp tục" Height="42" Padding="20,0"
+                                Background="#F59E0B" Foreground="White" FontWeight="Bold" FontSize="13"
+                                Cursor="Hand" Click="BtnContinueDraft_Click">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Opacity" Value="0.88"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button x:Name="BtnDiscardDraft" Content="🗑 Xóa bài" Height="34" Padding="12,0"
+                                Background="Transparent" Foreground="#B45309" FontSize="11" FontWeight="SemiBold"
+                                BorderThickness="0" Cursor="Hand" Margin="0,6,0,0" Click="BtnDiscardDraft_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <ListBox x:Name="ItemsHistory" Background="Transparent" BorderThickness="0"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      PreviewMouseWheel="ItemsHistory_PreviewMouseWheel">

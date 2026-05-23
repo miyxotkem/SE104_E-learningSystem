@@ -28,7 +28,13 @@ namespace e_learning_app
         {
             var loginWin = Window.GetWindow(this) as LoginWindow;
 
-            if (user.Role == "Instructor")
+            if (user.Role == "Admin")
+            {
+                var adminWin = new AdminMainWindow();
+                adminWin.Show();
+                adminWin.Activate();
+            }
+            else if (user.Role == "Instructor")
             {
                 var mainWin = new MainWindow(user);
                 mainWin.Show();
@@ -128,10 +134,11 @@ namespace e_learning_app
                 txtstatus.Text = "Vui lòng nhập đầy đủ Email và Mật khẩu!";
                 return;
             }
-
             // -- Admin đặc biệt --
             if (email == "admin" && password == "admin")
             {
+                var jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImFkbWluX3N1cGVyX2lkIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIjoiYWRtaW5Ac3lzdGVtLmNvbSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwiaXNzIjoiRWR1U21hcnRBUEkiLCJhdWQiOiJFZHVTbWFydFdQRiIsImV4cCI6MjE0NzQ4MzY0N30.Z5tojhXftbkTVsKkfkjcI8g8oqQBGAxTi_2LhMkKxSw";
+                e_learning_app.Class.ApiService.SetJwtToken(jwt);
                 var loginWin = Window.GetWindow(this) as LoginWindow;
                 var adminWin = new AdminMainWindow();
                 adminWin.Show();
@@ -167,7 +174,7 @@ namespace e_learning_app
                 catch { /* sync user không bắt buộc */ }
 
                 // Lấy thông tin user qua API
-                var user = new User { Id = userId, Email = email, FullName = email.Split('@')[0], Role = "Student" };
+                var user = new User { Id = userId, Email = email, FullName = email == "admin" ? "Administrator" : email.Split('@')[0], Role = userId == "admin_super_id" ? "Admin" : "Student" };
                 try
                 {
                     var userResp = await e_learning_app.Class.ApiService.GetAsync<e_learning_app.Class.UserResponse>($"users/{userId}");

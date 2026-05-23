@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Input;
 using e_learning_app.Class;
+using System.Windows.Controls.Primitives;
 
 namespace e_learning_app.Views
 {
@@ -18,6 +19,8 @@ namespace e_learning_app.Views
         private List<Exam> _allExams = new();
         private List<ExamSubmission> _studentSubmissions = new();
         private System.Windows.Threading.DispatcherTimer _pollingTimer;
+        private List<object> _renderedItems = new(); // cache for filtering
+        private string _activeFilter = "all";
 
         public StudentQuizView(DatabaseManager dbManager)
         {
@@ -82,9 +85,9 @@ namespace e_learning_app.Views
                 string statusColor = isDone ? "#3B82F6" : (exam.IsActive ? "#16A34A" : "#64748B");
                 string statusBg = isDone ? "#EFF6FF" : (exam.IsActive ? "#DCFCE7" : "#F1F5F9");
 
-                // Highest Score
+                // Highest Score (Hệ 10)
                 var examSubmissions = _studentSubmissions.Where(s => s.ExamId == exam.Id).ToList();
-                double? maxScore = examSubmissions.Any() ? examSubmissions.Max(s => s.Score) : null;
+                double? maxScore = examSubmissions.Any() ? examSubmissions.Max(s => s.Percentage) / 10 : null;
 
                 examList.Add(new
                 {
@@ -96,7 +99,79 @@ namespace e_learning_app.Views
                 });
             }
 
-            ExamsList.ItemsSource = examList;
+            _renderedItems = examList;
+            ApplyFilter();
+        }
+
+        private void ApplyFilter()
+        {
+            string search = TxtSearch?.Text?.Trim().ToLower() ?? "";
+
+            var filtered = _renderedItems.Cast<dynamic>().Where(item =>
+            {
+                Exam exam = item.Exam;
+                string statusText = (string)item.StatusText;
+
+                // Search filter
+                bool matchSearch = string.IsNullOrEmpty(search)
+                    || exam.Title.ToLower().Contains(search)
+                    || (exam.Description ?? "").ToLower().Contains(search)
+                    || (exam.ClassName ?? "").ToLower().Contains(search);
+
+                // Status chip filter
+                bool matchStatus = _activeFilter switch
+                {
+                    "open"   => exam.IsActive && statusText != "Hoàn thành",
+                    "done"   => statusText == "Hoàn thành",
+                    "closed" => !exam.IsActive,
+                    _        => true
+                };
+
+                return matchSearch && matchStatus;
+            }).ToList();
+
+            ExamsList.ItemsSource = filtered;
+
+            bool isEmpty = filtered.Count == 0;
+            PanelEmpty.Visibility = isEmpty ? Visibility.Visible : Visibility.Collapsed;
+            ExamsList.Visibility  = isEmpty ? Visibility.Collapsed : Visibility.Visible;
+
+            // Update empty state message
+            if (isEmpty)
+            {
+                TxtEmpty.Text = string.IsNullOrEmpty(search)
+                    ? "Không có bài kiểm tra nào trong mục này"
+                    : $"Không tìm thấy kết quả cho \"{TxtSearch.Text.Trim()}\""; 
+            }
+        }
+
+        private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            bool hasText = !string.IsNullOrEmpty(TxtSearch.Text);
+            SearchPlaceholder.Visibility = hasText ? Visibility.Collapsed : Visibility.Visible;
+            BtnClearSearch.Visibility    = hasText ? Visibility.Visible   : Visibility.Collapsed;
+            ApplyFilter();
+        }
+
+        private void BtnClearSearch_Click(object sender, RoutedEventArgs e)
+        {
+            TxtSearch.Clear();
+            TxtSearch.Focus();
+        }
+
+        private void FilterChip_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not ToggleButton clicked) return;
+
+            // Uncheck all chips, then check only the clicked one
+            ChipAll.IsChecked    = false;
+            ChipOpen.IsChecked   = false;
+            ChipDone.IsChecked   = false;
+            ChipClosed.IsChecked = false;
+            clicked.IsChecked    = true;
+
+            _activeFilter = clicked.Tag?.ToString() ?? "all";
+            ApplyFilter();
         }
 
         private void ExamsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
