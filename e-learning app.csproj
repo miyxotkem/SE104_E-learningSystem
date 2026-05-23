@@ -10,6 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="WebAPI_E_learning\**" />
+    <EmbeddedResource Remove="WebAPI_E_learning\**" />
+    <None Remove="WebAPI_E_learning\**" />
+    <Page Remove="WebAPI_E_learning\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="CloudinaryDotNet" Version="1.29.0" />
     <PackageReference Include="Google.Apis.Auth" Version="1.74.0" />
