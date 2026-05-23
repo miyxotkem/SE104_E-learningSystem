@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace e_learning_app.Class
@@ -53,7 +54,7 @@ namespace e_learning_app.Class
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions 
         { 
             PropertyNameCaseInsensitive = true,
-            Converters = { new FirestoreDateTimeConverter() }
+            Converters = { new FirestoreDateTimeConverter(), new JsonStringEnumConverter() }
         };
 
         public static void SetJwtToken(string token)
