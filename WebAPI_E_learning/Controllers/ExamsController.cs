@@ -78,6 +78,7 @@ namespace WebAPI_E_learning.Controllers
         {
             var resultList = new List<object>();
             var userNamesCache = new Dictionary<string, string>();
+            var examCache = new Dictionary<string, Dictionary<string, object>>(); // Cache exams to avoid multiple Firestore hits
 
             foreach (var doc in documents)
             {
@@ -90,15 +91,19 @@ namespace WebAPI_E_learning.Controllers
                     if (data.TryGetValue("ExamId", out object examIdObj) && examIdObj != null)
                     {
                         var examId = examIdObj.ToString();
-                        var examRef = _firestoreDb.Collection("exams").Document(examId);
-                        var examSnap = await examRef.GetSnapshotAsync();
-                        if (examSnap.Exists)
+                        if (!examCache.TryGetValue(examId, out var examData))
                         {
-                            var examData = examSnap.ToDictionary();
-                            if (examData.TryGetValue("ClassId", out object classIdObj))
+                            var examRef = _firestoreDb.Collection("exams").Document(examId);
+                            var examSnap = await examRef.GetSnapshotAsync();
+                            if (examSnap.Exists)
                             {
-                                data["CourseId"] = classIdObj;
+                                examData = examSnap.ToDictionary();
+                                examCache[examId] = examData;
                             }
+                        }
+                        if (examData != null && examData.TryGetValue("ClassId", out object classIdObj))
+                        {
+                            data["CourseId"] = classIdObj;
                         }
                     }
                 }
@@ -130,6 +135,28 @@ namespace WebAPI_E_learning.Controllers
                     }
                 }
 
+                // Cache exam data if we haven't already for evaluating answers
+                string submissionExamId = data.TryGetValue("ExamId", out var eid) ? eid?.ToString() : null;
+                Dictionary<string, object> subExamData = null;
+                if (!string.IsNullOrEmpty(submissionExamId))
+                {
+                    if (!examCache.TryGetValue(submissionExamId, out subExamData))
+                    {
+                        var examSnap = await _firestoreDb.Collection("exams").Document(submissionExamId).GetSnapshotAsync();
+                        if (examSnap.Exists)
+                        {
+                            subExamData = examSnap.ToDictionary();
+                            examCache[submissionExamId] = subExamData;
+                        }
+                    }
+                }
+
+                System.Collections.IList questionsList = null;
+                if (subExamData != null && subExamData.TryGetValue("Questions", out var qObj) && qObj is System.Collections.IList qList)
+                {
+                    questionsList = qList;
+                }
+
                 // CHUẨN HOÁ Answers: Đôi khi Firestore lưu Answers là một Map/Dictionary thay vì Array
                 if (data.TryGetValue("Answers", out var ansObj))
                 {
@@ -138,27 +165,112 @@ namespace WebAPI_E_learning.Controllers
                     {
                         foreach (var kvp in dictAns)
                         {
+                            string qId = kvp.Key;
+                            int.TryParse(qId, out int qIdx);
+                            string studentAnswer = kvp.Value?.ToString();
+
+                            bool? isCorrect = null;
+                            double pointsEarned = 0.0;
+                            double questionPoints = 1.0;
+
+                            if (questionsList != null && qIdx >= 0 && qIdx < questionsList.Count)
+                            {
+                                if (questionsList[qIdx] is Dictionary<string, object> qDict)
+                                {
+                                    questionPoints = qDict.TryGetValue("Points", out var pts) ? Convert.ToDouble(pts) : 1.0;
+                                    if (qDict.TryGetValue("CorrectOptionIndex", out var correctOpt) && int.TryParse(studentAnswer, out int studentOpt))
+                                    {
+                                        isCorrect = (Convert.ToInt32(correctOpt) == studentOpt);
+                                        pointsEarned = isCorrect == true ? questionPoints : 0.0;
+                                    }
+                                }
+                            }
+
                             formattedAnswers.Add(new
                             {
-                                QuestionOrder = int.TryParse(kvp.Key, out int idx) ? idx + 1 : 0,
-                                StudentAnswer = kvp.Value?.ToString(),
-                                IsCorrect = (bool?)null,
-                                PointsEarned = 0.0
+                                QuestionId = qId,
+                                QuestionOrder = qIdx + 1,
+                                StudentAnswer = studentAnswer,
+                                IsCorrect = isCorrect,
+                                PointsEarned = pointsEarned
                             });
                         }
                     }
-                    else if (ansObj is IList<object> listAns)
+                    else if (ansObj is System.Collections.IList listAns)
                     {
                         for (int i = 0; i < listAns.Count; i++)
                         {
-                            if (listAns[i] is IDictionary<string, object> obj) formattedAnswers.Add(obj);
-                            else formattedAnswers.Add(new
+                            if (listAns[i] is IDictionary<string, object> obj)
                             {
-                                QuestionOrder = i + 1,
-                                StudentAnswer = listAns[i]?.ToString(),
-                                IsCorrect = (bool?)null,
-                                PointsEarned = 0.0
-                            });
+                                var enrichedObj = new Dictionary<string, object>(obj);
+                                string qId = enrichedObj.TryGetValue("QuestionId", out var qidVal) ? qidVal?.ToString() : i.ToString();
+                                int qIdx = i;
+                                if (int.TryParse(qId, out int parsedIdx))
+                                {
+                                    qIdx = parsedIdx;
+                                }
+                                string studentAnswer = enrichedObj.TryGetValue("StudentAnswer", out var saVal) ? saVal?.ToString() : null;
+
+                                enrichedObj["QuestionId"] = qId;
+                                if (!enrichedObj.ContainsKey("QuestionOrder"))
+                                {
+                                    enrichedObj["QuestionOrder"] = qIdx + 1;
+                                }
+
+                                if (!enrichedObj.ContainsKey("IsCorrect") || enrichedObj["IsCorrect"] == null)
+                                {
+                                    bool? isCorrect = null;
+                                    double pointsEarned = 0.0;
+                                    double questionPoints = 1.0;
+
+                                    if (questionsList != null && qIdx >= 0 && qIdx < questionsList.Count)
+                                    {
+                                        if (questionsList[qIdx] is Dictionary<string, object> qDict)
+                                        {
+                                            questionPoints = qDict.TryGetValue("Points", out var pts) ? Convert.ToDouble(pts) : 1.0;
+                                            if (qDict.TryGetValue("CorrectOptionIndex", out var correctOpt) && int.TryParse(studentAnswer, out int studentOpt))
+                                            {
+                                                isCorrect = (Convert.ToInt32(correctOpt) == studentOpt);
+                                                pointsEarned = isCorrect == true ? questionPoints : 0.0;
+                                            }
+                                        }
+                                    }
+                                    enrichedObj["IsCorrect"] = isCorrect;
+                                    enrichedObj["PointsEarned"] = pointsEarned;
+                                }
+                                formattedAnswers.Add(enrichedObj);
+                            }
+                            else
+                            {
+                                string qId = i.ToString();
+                                string studentAnswer = listAns[i]?.ToString();
+
+                                bool? isCorrect = null;
+                                double pointsEarned = 0.0;
+                                double questionPoints = 1.0;
+
+                                if (questionsList != null && i < questionsList.Count)
+                                {
+                                    if (questionsList[i] is Dictionary<string, object> qDict)
+                                    {
+                                        questionPoints = qDict.TryGetValue("Points", out var pts) ? Convert.ToDouble(pts) : 1.0;
+                                        if (qDict.TryGetValue("CorrectOptionIndex", out var correctOpt) && int.TryParse(studentAnswer, out int studentOpt))
+                                        {
+                                            isCorrect = (Convert.ToInt32(correctOpt) == studentOpt);
+                                            pointsEarned = isCorrect == true ? questionPoints : 0.0;
+                                        }
+                                    }
+                                }
+
+                                formattedAnswers.Add(new
+                                {
+                                    QuestionId = qId,
+                                    QuestionOrder = i + 1,
+                                    StudentAnswer = studentAnswer,
+                                    IsCorrect = isCorrect,
+                                    PointsEarned = pointsEarned
+                                });
+                            }
                         }
                     }
                     data["Answers"] = formattedAnswers;
@@ -168,7 +280,12 @@ namespace WebAPI_E_learning.Controllers
                     data["Answers"] = new List<object>();
                 }
 
-                if (!data.ContainsKey("Percentage"))
+                double percentage = 0.0;
+                if (data.TryGetValue("Percentage", out object pctObj) && pctObj != null)
+                {
+                    percentage = Convert.ToDouble(pctObj);
+                }
+                else
                 {
                     double score = 0;
                     double total = 0;
@@ -180,8 +297,12 @@ namespace WebAPI_E_learning.Controllers
                     {
                         total = Convert.ToDouble(totalObj);
                     }
-                    data["Percentage"] = total > 0 ? Math.Round((score / total) * 100, 2) : 0.0;
+                    percentage = total > 0 ? Math.Round((score / total) * 100, 2) : 0.0;
+                    data["Percentage"] = percentage;
                 }
+
+                // Đồng bộ và chuẩn hoá Score về hệ điểm 10 dựa trên Percentage
+                data["Score"] = Math.Round(percentage / 10.0, 2);
 
                 resultList.Add(new { Id = id, Data = data });
             }
@@ -470,29 +591,53 @@ namespace WebAPI_E_learning.Controllers
 
             var examData = examSnap.ToDictionary();
 
-            int score = 0;
+            double earnedPoints = 0;
+            double totalPoints = 0;
+            int correctCount = 0;
             int totalQuestions = 0;
+
+            var richAnswers = new List<Dictionary<string, object>>();
 
             if (examData.TryGetValue("Questions", out object questionsObj))
             {
-                if (questionsObj is List<object> questions)
+                if (questionsObj is System.Collections.IList questions)
                 {
                     totalQuestions = questions.Count;
                     for (int i = 0; i < questions.Count; i++)
                     {
                         if (questions[i] is Dictionary<string, object> qDict)
                         {
-                            if (request.Answers.TryGetValue(i.ToString(), out int studentAnswer))
+                            string qId = i.ToString(); // Sử dụng index làm QuestionId để khớp chính xác với Client WPF
+                            double questionPoints = qDict.TryGetValue("Points", out var ptsObj) ? Convert.ToDouble(ptsObj) : 1.0;
+                            totalPoints += questionPoints;
+
+                            bool isCorrect = false;
+                            double pointsEarned = 0.0;
+                            string studentAnswer = null;
+
+                            if (request.Answers.TryGetValue(i.ToString(), out int studentOpt))
                             {
+                                studentAnswer = studentOpt.ToString();
                                 if (qDict.TryGetValue("CorrectOptionIndex", out object correctOpt))
                                 {
-                                    // Chuyển đổi an toàn sang int đề phòng Firestore lưu dạng long
-                                    if (Convert.ToInt32(correctOpt) == studentAnswer)
+                                    if (Convert.ToInt32(correctOpt) == studentOpt)
                                     {
-                                        score++;
+                                        correctCount++;
+                                        earnedPoints += questionPoints;
+                                        isCorrect = true;
+                                        pointsEarned = questionPoints;
                                     }
                                 }
                             }
+
+                            richAnswers.Add(new Dictionary<string, object>
+                            {
+                                { "QuestionId", qId },
+                                { "QuestionOrder", i + 1 },
+                                { "StudentAnswer", studentAnswer },
+                                { "IsCorrect", isCorrect },
+                                { "PointsEarned", pointsEarned }
+                            });
                         }
                     }
                 }
@@ -509,7 +654,9 @@ namespace WebAPI_E_learning.Controllers
             }
             catch { }
 
-            double percentage = totalQuestions > 0 ? Math.Round(((double)score / totalQuestions) * 100, 2) : 0.0;
+            if (totalPoints == 0) totalPoints = totalQuestions > 0 ? totalQuestions : 1.0;
+            double percentage = Math.Round((earnedPoints / totalPoints) * 100, 2);
+            double finalScore = Math.Round(percentage / 10.0, 2);
 
             var subData = new Dictionary<string, object>
             {
@@ -517,10 +664,10 @@ namespace WebAPI_E_learning.Controllers
                 { "StudentName", studentName },
                 { "ExamId", id },
                 { "CourseId", examData.ContainsKey("ClassId") ? examData["ClassId"] : "" },
-                { "Score", score },
+                { "Score", finalScore }, // Lưu điểm số quy đổi hệ 10 vào DB
                 { "TotalQuestions", totalQuestions },
                 { "Percentage", percentage },
-                { "Answers", request.Answers },
+                { "Answers", richAnswers }, // Lưu câu trả lời chuẩn hoá hoàn chỉnh
                 { "SubmittedAt", DateTime.UtcNow }
             };
 
@@ -529,7 +676,7 @@ namespace WebAPI_E_learning.Controllers
             return Ok(new
             {
                 Message = "Exam submitted successfully.",
-                Score = score,
+                Score = correctCount, // Trả về số câu đúng để Client hiển thị thông báo tức thời
                 TotalQuestions = totalQuestions,
                 Percentage = percentage,
                 StudentName = studentName,
