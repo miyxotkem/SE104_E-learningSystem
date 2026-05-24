@@ -90,12 +90,23 @@ namespace e_learning_app.Views
 
             foreach (var q in _allQuestions)
             {
-                var studentAnsResponse = _submission.Answers.FirstOrDefault(a => a.QuestionId == q.Id);
-                bool isCorrect = studentAnsResponse?.IsCorrect ?? false;
+                var studentAnsResponse = _submission.Answers.FirstOrDefault(a => 
+                    (!string.IsNullOrEmpty(a.QuestionId) && a.QuestionId == q.Id) || 
+                    (a.QuestionOrder == q.QuestionOrder));
                 
                 int studentChoiceIdx = -1;
                 if (studentAnsResponse != null && int.TryParse(studentAnsResponse.StudentAnswer, out int val))
                     studentChoiceIdx = val;
+
+                bool isCorrect = false;
+                if (studentChoiceIdx != -1)
+                {
+                    isCorrect = (studentChoiceIdx == q.CorrectAnswerIndex);
+                }
+                else if (studentAnsResponse?.IsCorrect != null)
+                {
+                    isCorrect = studentAnsResponse.IsCorrect.Value;
+                }
 
                 var options = new List<object>();
                 if (q.Options != null)
@@ -126,6 +137,7 @@ namespace e_learning_app.Views
                         }
                         else if (!isStudentChoice && isCorrectChoice)
                         {
+                            bg = new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7)); // Green bg
                             border = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A));
                             text = new SolidColorBrush(Color.FromRgb(0x15, 0x80, 0x3D));
                             icon = "✓";
