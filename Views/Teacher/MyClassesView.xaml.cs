@@ -86,6 +86,26 @@ namespace e_learning_app.Views
                 {
                     var course = item.Data;
                     course.Id = item.Id;
+                    
+                    try 
+                    {
+                        var regs = await ApiService.GetAsync<List<RegistrationResponse>>($"courses/{course.Id}/students");
+                        int enrolledCount = regs?.Count(r => r.Data.status?.ToLower() == "active" || r.Data.status?.ToLower() == "accepted") ?? 0;
+                        var assigns = await ApiService.GetAsync<List<AssignmentResponse>>($"courses/{course.Id}/assignments");
+                        int assignCount = assigns?.Count ?? 0;
+                        
+                        if (course.StudentCount != enrolledCount || course.AssignmentCount != assignCount)
+                        {
+                            course.StudentCount = enrolledCount;
+                            course.AssignmentCount = assignCount;
+                            if (course.InstructorId == currentUser.Id)
+                            {
+                                await _dbManager.UpdateCourseAsync(course);
+                            }
+                        }
+                    } 
+                    catch { }
+
                     _allClasses.Add(course);
                 }
 

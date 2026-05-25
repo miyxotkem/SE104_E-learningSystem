@@ -18,6 +18,8 @@ namespace WebAPI_E_learning.Models
         public string AccentColor { get; set; } = string.Empty;
         public string InstructorId { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
+        public int StudentCount { get; set; } = 0;
+        public int AssignmentCount { get; set; } = 0;
     }
 
     public class UpdateCourseRequest : CreateCourseRequest { }

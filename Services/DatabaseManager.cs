@@ -1,4 +1,4 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Bibliography;
 using e_learning_app;
 using e_learning_app.Class;
 using System;
@@ -141,10 +141,24 @@ namespace e_learning_app
             {
                 var request = new
                 {
-                    Title = course.Title,
-                    Description = course.Description,
-                    ThumbnailUrl = (string)null,
-                    Price = 0.0
+                    Title = course.Title ?? string.Empty,
+                    Description = course.Description ?? string.Empty,
+                    ThumbnailUrl = string.Empty,
+                    Price = 0.0,
+                    Courseid = course.Id ?? string.Empty,
+                    ClassName = course.ClassName ?? string.Empty,
+                    CourseType = course.CourseType ?? string.Empty,
+                    Category = course.Category ?? string.Empty,
+                    DayOfWeek = course.DayOfWeek ?? string.Empty,
+                    StartPeriod = course.StartPeriod,
+                    EndPeriod = course.EndPeriod,
+                    Semester = course.Semester ?? string.Empty,
+                    Emoji = course.Emoji ?? string.Empty,
+                    AccentColor = course.AccentColor ?? string.Empty,
+                    IsActive = course.IsActive,
+                    InstructorId = course.InstructorId ?? string.Empty,
+                    StudentCount = course.StudentCount,
+                    AssignmentCount = course.AssignmentCount
                 };
                 return await ApiService.PutAsync($"courses/{course.Id}", request);
             }

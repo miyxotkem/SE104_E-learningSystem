@@ -10,7 +10,7 @@ namespace e_learning_app.Class
         // Shortcut properties for easier access in views
         public string Title => Data?.Title ?? string.Empty;
         public string Description => Data?.Description ?? string.Empty;
-        public DateTime Deadline => Data?.Deadline ?? default;
+        public DateTime Deadline => (Data?.Deadline != default && Data?.Deadline != DateTime.MinValue) ? Data.Deadline : (Data?.DueDate ?? default);
         public string AttachedFileUrl => Data?.AttachedFileUrl ?? string.Empty;
         public bool IsGradesPublished => Data?.IsGradesPublished ?? false;
     }

@@ -118,7 +118,9 @@ namespace WebAPI_E_learning.Controllers
                 { "AccentColor", request.AccentColor },
                 { "InstructorId", string.IsNullOrEmpty(request.InstructorId) ? GetCurrentUserId() : request.InstructorId },
                 { "CreatedAt", DateTime.UtcNow },
-                { "IsActive", request.IsActive }
+                { "IsActive", request.IsActive },
+                { "StudentCount", request.StudentCount },
+                { "AssignmentCount", request.AssignmentCount }
             };
 
             DocumentReference docRef;
@@ -149,6 +151,18 @@ namespace WebAPI_E_learning.Controllers
                 { "Description", request.Description },
                 { "ThumbnailUrl", request.ThumbnailUrl },
                 { "Price", (double)request.Price },
+                { "ClassName", request.ClassName },
+                { "CourseType", request.CourseType },
+                { "Category", request.Category },
+                { "DayOfWeek", request.DayOfWeek },
+                { "StartPeriod", request.StartPeriod },
+                { "EndPeriod", request.EndPeriod },
+                { "Semester", request.Semester },
+                { "Emoji", request.Emoji },
+                { "AccentColor", request.AccentColor },
+                { "IsActive", request.IsActive },
+                { "StudentCount", request.StudentCount },
+                { "AssignmentCount", request.AssignmentCount },
                 { "UpdatedAt", DateTime.UtcNow }
             };
 

@@ -1,4 +1,4 @@
-﻿using e_learning_app;
+using e_learning_app;
 using e_learning_app.Class;
 using Microsoft.Win32;
 using System;
@@ -189,16 +189,27 @@ namespace e_learning_app.Views
             try
             {
                 var regs = await ApiService.GetAsync<List<RegistrationResponse>>($"courses/{_course.Id}/students");
-                int count = regs?.Count(r => r.Data.status?.ToLower() == "pending") ?? 0;
-                
-                if (count > 0)
+                if (regs != null)
                 {
-                    BadgeBorder.Visibility = Visibility.Visible;
-                    TxtPendingCount.Text = count > 99 ? "99+" : count.ToString();
-                }
-                else
-                {
-                    BadgeBorder.Visibility = Visibility.Collapsed;
+                    int pendingCount = regs.Count(r => r.Data.status?.ToLower() == "pending");
+                    int enrolledCount = regs.Count(r => r.Data.status?.ToLower() == "active" || r.Data.status?.ToLower() == "accepted");
+
+                    if (_course.InstructorId == CurrentUserId && _course.StudentCount != enrolledCount)
+                    {
+                        _course.StudentCount = enrolledCount;
+                        await _dbManager.UpdateCourseAsync(_course);
+                        TxtStudentCount.Text = enrolledCount.ToString();
+                    }
+
+                    if (pendingCount > 0)
+                    {
+                        BadgeBorder.Visibility = Visibility.Visible;
+                        TxtPendingCount.Text = pendingCount > 99 ? "99+" : pendingCount.ToString();
+                    }
+                    else
+                    {
+                        BadgeBorder.Visibility = Visibility.Collapsed;
+                    }
                 }
             }
             catch { }
@@ -380,6 +391,7 @@ namespace e_learning_app.Views
                         CustomDialog.Show("Tải video lên thành công!", "Thành công", DialogType.Success);
                     }
                 }
+                LoadLessonsAsync();
                 CloseAddVideoDrawer_Click(null, null);
             }
             catch (Exception ex)
@@ -850,6 +862,7 @@ namespace e_learning_app.Views
                     await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Tài liệu mới", $"Giáo viên vừa thêm tài liệu: {newContent.Title}", "Course", CurrentUserId, "Giáo viên");
                 }
             }
+            LoadCourseContent();
             CloseAddDrawer_Click(null, null);
         }
 
@@ -874,6 +887,12 @@ namespace e_learning_app.Views
                     _assignments = new ObservableCollection<Assignment>(list.OrderBy(a => a.Deadline));
                     AssignmentsList.ItemsSource = _assignments;
                     TxtAssignmentCount.Text = _assignments.Count.ToString();
+                    
+                    if (_course.InstructorId == CurrentUserId && _course.AssignmentCount != _assignments.Count)
+                    {
+                        _course.AssignmentCount = _assignments.Count;
+                        await _dbManager.UpdateCourseAsync(_course);
+                    }
                 }
             }
             catch (Exception ex) { Debug.WriteLine("Lỗi tải bài tập: " + ex.Message); }
@@ -967,8 +986,7 @@ namespace e_learning_app.Views
                     if (_course.AssignmentCount > 0)
                     {
                         _course.AssignmentCount--;
-                        var updateCourseReq = new { AssignmentCount = _course.AssignmentCount };
-                        await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
+                        await _dbManager.UpdateCourseAsync(_course);
                     }
 
                     _assignments.Remove(_assignmentToDelete);
@@ -1093,8 +1111,7 @@ namespace e_learning_app.Views
                     await ApiService.PostAsync($"courses/{_course.Id}/assignments", newAssignmentReq);
 
                     _course.AssignmentCount++;
-                    var updateCourseReq = new { AssignmentCount = _course.AssignmentCount };
-                    await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq); // Note: Assuming the Web API allows partial update or we can just ignore it as we use API
+                    await _dbManager.UpdateCourseAsync(_course);
                     await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Bài tập mới", $"Giáo viên vừa tạo bài tập: {newAssignmentReq.Title}", "Homework");
                 }
 
@@ -1369,8 +1386,8 @@ namespace e_learning_app.Views
                         var sub = subResp.Data;
                         string sId = sub.StudentId;
                         
-                        var userResp = await ApiService.GetAsync<User>($"users/{sId}");
-                        string name = userResp != null ? userResp.FullName : "Học viên ẩn danh";
+                        var userResp = await ApiService.GetAsync<UserResponse>($"users/{sId}");
+                        string name = userResp?.Data != null && !string.IsNullOrWhiteSpace(userResp.Data.FullName) ? userResp.Data.FullName : "Học viên ẩn danh";
 
                         list.Add(new GradingItem
                         {
@@ -1913,8 +1930,7 @@ namespace e_learning_app.Views
                     if (req != null) await NotificationService.SendNotificationAsync(_dbManager, req.UserId, "Vào lớp thành công", $"Yêu cầu tham gia lớp '{_course.ClassName}' của bạn đã được chấp nhận.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
 
                     _course.StudentCount++;
-                    var updateCourseReq = new { StudentCount = _course.StudentCount };
-                    await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
+                    await _dbManager.UpdateCourseAsync(_course);
 
                     TxtStudentCount.Text = _course.StudentCount.ToString();
                     SetupPendingRequestsListener();
@@ -1957,8 +1973,7 @@ namespace e_learning_app.Views
                 }
 
                 _course.StudentCount += _pendingRequests.Count;
-                var updateCourseReq = new { StudentCount = _course.StudentCount };
-                await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
+                await _dbManager.UpdateCourseAsync(_course);
 
                 TxtStudentCount.Text = _course.StudentCount.ToString();
                 SetupPendingRequestsListener();
@@ -2005,9 +2020,9 @@ namespace e_learning_app.Views
                         var reg = regResp.Data;
                         if (reg.status?.ToLower() == "active" || reg.status?.ToLower() == "accepted")
                         {
-                            var userResp = await ApiService.GetAsync<User>($"users/{reg.userId}");
-                            string name = userResp != null && !string.IsNullOrWhiteSpace(userResp.FullName) ? userResp.FullName : "Học viên ẩn danh";
-                            string email = userResp != null ? userResp.Email : "";
+                            var userResp = await ApiService.GetAsync<UserResponse>($"users/{reg.userId}");
+                            string name = userResp?.Data != null && !string.IsNullOrWhiteSpace(userResp.Data.FullName) ? userResp.Data.FullName : (reg.fullName ?? "Học viên ẩn danh");
+                            string email = userResp?.Data != null ? userResp.Data.Email : (reg.email ?? "");
 
                             list.Add(new EnrolledStudent
                             {
@@ -2056,8 +2071,7 @@ namespace e_learning_app.Views
                             _course.StudentCount--;
                         }
 
-                        var updateCourseReq = new { StudentCount = _course.StudentCount };
-                        await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
+                        await _dbManager.UpdateCourseAsync(_course);
 
                         if (removedStudent != null)
                         {

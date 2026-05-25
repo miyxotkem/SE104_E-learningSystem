@@ -125,13 +125,31 @@ namespace e_learning_app.Class
         {
             var content = new StringContent(JsonSerializer.Serialize(data), Encoding.UTF8, "application/json");
             var response = await _httpClient.PutAsync($"{BaseUrl}/{endpoint}", content);
-            return response.IsSuccessStatusCode;
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    e_learning_app.CustomDialog.Show($"Server Azure đã báo lỗi (HTTP {(int)response.StatusCode}):\n\n{error}", "Lỗi từ Backend", e_learning_app.DialogType.Error);
+                });
+                return false;
+            }
+            return true;
         }
 
         public static async Task<bool> DeleteAsync(string endpoint)
         {
             var response = await _httpClient.DeleteAsync($"{BaseUrl}/{endpoint}");
-            return response.IsSuccessStatusCode;
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    e_learning_app.CustomDialog.Show($"Server Azure đã báo lỗi (HTTP {(int)response.StatusCode}):\n\n{error}", "Lỗi từ Backend", e_learning_app.DialogType.Error);
+                });
+                return false;
+            }
+            return true;
         }
     }
 }
