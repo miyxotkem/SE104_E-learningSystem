@@ -199,8 +199,8 @@ namespace e_learning_app
             {
                 filtered = filtered.Where(e =>
                 {
-                    if (_statusFilters.Contains("active") && e.IsActive) return true;
-                    if (_statusFilters.Contains("closed") && !e.IsActive && e.IsPublished) return true;
+                    if (_statusFilters.Contains("active") && e.IsPublished && e.IsActive) return true;
+                    if (_statusFilters.Contains("closed") && !e.IsActive) return true;
                     if (_statusFilters.Contains("draft") && !e.IsPublished) return true;
                     return false;
                 });
@@ -259,7 +259,7 @@ namespace e_learning_app
             if (TxtTotalExams == null || TxtActiveExams == null || TxtPendingExams == null) return;
 
             TxtTotalExams.Text = _allExams.Count.ToString();
-            TxtActiveExams.Text = _allExams.Count(e => e.IsActive).ToString();
+            TxtActiveExams.Text = _allExams.Count(e => e.IsPublished && e.IsActive).ToString();
             TxtPendingExams.Text = _allExams.Count(e => !e.IsPublished).ToString();
         }
 

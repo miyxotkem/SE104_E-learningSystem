@@ -80,7 +80,7 @@ namespace e_learning_app.Views
             var filtered = _filterMode switch
             {
                 "unread" => _all.Where(n => !n.IsRead),
-                "sent" => _all.Where(n => n.SenderId == currentUser?.Id),
+                "read" => _all.Where(n => n.IsRead),
                 _ => _all
             };
 
@@ -92,8 +92,8 @@ namespace e_learning_app.Views
                 var emptyNotif = new Notification
                 {
                     Id = "empty",
-                    Title = "Chua có thông báo nào",
-                    Content = "Hộp thu của bạn dang trống. Hãy quay lại sau nhé!",
+                    Title = "Chưa có thông báo nào",
+                    Content = "Hộp thư của bạn đang trống. Hãy quay lại sau nhé!",
                     Type = "System",
                     CreatedAt = DateTime.UtcNow,
                     IsRead = true
@@ -104,7 +104,8 @@ namespace e_learning_app.Views
             Notifications = new ObservableCollection<Notification>(list);
 
             BtnFilterAll.Content = $"Tất cả ({_all.Count})";
-            BtnFilterUnread.Content = $"Chua đọc ({_all.Count(n => !n.IsRead)})";
+            BtnFilterUnread.Content = $"Chưa đọc ({_all.Count(n => !n.IsRead)})";
+            BtnFilterRead.Content = $"Đã xem ({_all.Count(n => n.IsRead)})";
         }
 
         private async void BtnViewNotif_Click(object sender, RoutedEventArgs e)

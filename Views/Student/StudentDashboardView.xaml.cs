@@ -449,7 +449,7 @@ namespace e_learning_app.Views
                 {
                     if (Window.GetWindow(this) is StudentMainWindow smw_exam)
                     {
-                        smw_exam.StudentContentArea.Content = new StudentQuizView(_dbManager);
+                        smw_exam.BtnQuiz_Click(null, null);
                     }
                     return;
                 }
@@ -465,8 +465,7 @@ namespace e_learning_app.Views
         {
             if (Window.GetWindow(this) is StudentMainWindow mw)
             {
-                mw.StudentContentArea.Content = new TeachingScheduleView(_dbManager);
-
+                mw.BtnSchedule_Click(null, null);
             }
         }
 

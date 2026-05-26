@@ -487,16 +487,18 @@ namespace e_learning_app.Views
 
             var draft = new ExamDraft
             {
+                Id            = $"{_exam.Id}_{user.Id}",
                 ExamId        = _exam.Id,
                 StudentId     = user.Id,
                 StudentName   = user.FullName,
                 // Preserve the ORIGINAL start time so elapsed time accumulates correctly
                 StartedAt     = (_activeDraft != null)
-                                    ? _activeDraft.StartedAt          // already UTC
-                                    : _startTime.ToUniversalTime(),
+                                    ? DateTime.SpecifyKind(_activeDraft.StartedAt, DateTimeKind.Utc)
+                                    : DateTime.SpecifyKind(_startTime.ToUniversalTime(), DateTimeKind.Utc),
                 Answers       = new Dictionary<string, string>(_studentAnswers),
                 MarkedForReview = new List<string>(_markedForReview),
-                LastQuestionIndex = _currentIndex
+                LastQuestionIndex = _currentIndex,
+                SavedAt       = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
             };
 
             bool saved = await _dbManager.SaveExamDraftAsync(draft);
@@ -526,7 +528,7 @@ namespace e_learning_app.Views
             if (Window.GetWindow(this) is MainWindow mainWin)
                 mainWin.NavDashboard_Click(null, null);
             else if (Window.GetWindow(this) is StudentMainWindow stuWin)
-                stuWin.StudentContentArea.Content = new StudentDashboardView(_dbManager);
+                stuWin.BtnQuiz_Click(null, null);
         }
 
         private async void BtnSubmit_Click(object sender, RoutedEventArgs e)

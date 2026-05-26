@@ -13,16 +13,16 @@ using System.Windows.Controls;
 namespace e_learning_app
 {
     /// <summary>
-    /// DatabaseManager Ä‘Ã£ Ä‘Æ°á»£c refactor hoÃ n toÃ n sang REST API.
-    /// KhÃ´ng cÃ²n phá»¥ thuá»™c vÃ o Firestore SDK hay firebase_json.json.
-    /// Táº¥t cáº£ dá»¯ liá»‡u Ä‘Æ°á»£c truy cáº­p qua ApiService.
+    /// DatabaseManager đã được refactor hoàn toàn sang REST API.
+    /// Không còn phụ thuộc vào Firestore SDK hay firebase_json.json.
+    /// Tất cả dữ liệu được truy cập qua ApiService.
     /// </summary>
     public class DatabaseManager
     {
         private User _currentUser = null;
 
-        // Giá»¯ láº¡i GetDb dÆ°á»›i dáº¡ng null Ä‘á»ƒ cÃ¡c view cÅ© chÆ°a refactor khÃ´ng lá»—i biÃªn dá»‹ch
-        // Trong tÆ°Æ¡ng lai, xÃ³a property nÃ y hoÃ n toÃ n
+        // Giữ lại GetDb dưới dạng null để các view cũ chưa refactor không lỗi biên dịch
+        // Trong tương lai, xóa property này hoàn toàn
         public object GetDb => null;
 
         public User GetCurrentUser() => _currentUser;
@@ -35,8 +35,8 @@ namespace e_learning_app
 
         public void Initialize()
         {
-            // KhÃ´ng cÃ²n cáº§n khá»Ÿi táº¡o Firestore ná»¯a.
-            // ApiService Ä‘Ã£ tá»± cáº¥u hÃ¬nh tá»« FirebaseService.Initialize()
+            // Không còn cần khởi tạo Firestore nữa.
+            // ApiService đã tự cấu hình từ FirebaseService.Initialize()
         }
 
         // ==========================================

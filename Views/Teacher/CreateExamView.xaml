@@ -203,6 +203,19 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="DatePickerTextBox">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="4,0,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DatePickerTextBox">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="0" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -295,7 +308,7 @@
                                 <ColumnDefinition Width="120"/>
                             </Grid.ColumnDefinitions>
                             <DatePicker x:Name="DpDeadlineDate" Grid.Column="0" Style="{StaticResource ModernDatePicker}" SelectedDateChanged="Sync_UI_Date"/>
-                            <ComboBox x:Name="CbDeadlineTime" Grid.Column="2" Style="{StaticResource ModernComboBox}" SelectionChanged="Sync_UI_Selection" IsEditable="True">
+                            <ComboBox x:Name="CbDeadlineTime" Grid.Column="2" Height="42" FontSize="13" IsEditable="True" Padding="12,0" VerticalContentAlignment="Center" BorderBrush="#E2E8F0" SelectionChanged="Sync_UI_Selection">
                                 <ComboBoxItem Content="23:59" IsSelected="True"/>
                                 <ComboBoxItem Content="12:00"/>
                                 <ComboBoxItem Content="17:00"/>

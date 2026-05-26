@@ -787,6 +787,9 @@ namespace WebAPI_E_learning.Controllers
                 if (string.IsNullOrEmpty(draft.ExamId) || string.IsNullOrEmpty(draft.StudentId))
                     return BadRequest("ExamId and StudentId are required");
 
+                draft.StartedAt = DateTime.SpecifyKind(draft.StartedAt, DateTimeKind.Utc);
+                draft.SavedAt = DateTime.UtcNow;
+
                 var draftRef = _firestoreDb.Collection("exams").Document(draft.ExamId).Collection("drafts").Document(draft.StudentId);
                 await draftRef.SetAsync(draft);
                 return Ok(draft);

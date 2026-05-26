@@ -1518,7 +1518,7 @@ namespace e_learning_app.Views
                 };
 
                 await ApiService.PutAsync($"courses/{_course.Id}/assignments/{_currentViewedAssignment.Id}/submissions/{_currentGradingItem.StudentId}/grade", req);
-                await NotificationService.SendNotificationAsync(_dbManager, _currentGradingItem.StudentId, "Ä ã có điểm", $"Bài tập '{_currentViewedAssignment.Title}' của bạn đã có điểm: {score}/10", "Homework", courseId: _course.Id);
+                await NotificationService.SendNotificationAsync(_dbManager, _currentGradingItem.StudentId, "Đã có điểm", $"Bài tập '{_currentViewedAssignment.Title}' của bạn đã có điểm: {score}/10", "Homework", courseId: _course.Id);
 
                 _currentGradingItem.Score = score;
                 _currentGradingItem.Comment = comment;

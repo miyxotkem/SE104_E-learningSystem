@@ -6,7 +6,7 @@ namespace WebAPI_E_learning.Models
     public class ExamDraft
     {
         [FirestoreDocumentId]
-        public string Id { get; set; } = string.Empty;
+        public string? Id { get; set; } = string.Empty;
 
         [FirestoreProperty]
         public string ExamId { get; set; } = string.Empty;

@@ -1,4 +1,4 @@
-﻿using Google.Apis.Util.Store;
+using Google.Apis.Util.Store;
 using System.Windows;
 
 namespace e_learning_app

@@ -96,7 +96,7 @@
         <StackPanel Grid.Row="2" Orientation="Horizontal">
             <RadioButton x:Name="BtnFilterAll" Content="Tất cả" Style="{StaticResource FilterTabBtn}" IsChecked="True" Checked="FilterTab_Checked" Tag="all"/>
             <RadioButton x:Name="BtnFilterUnread" Content="Chua đọc" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="unread"/>
-            <RadioButton x:Name="BtnFilterSent" Content="Đã gửi" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="sent"/>
+            <RadioButton x:Name="BtnFilterRead" Content="Đã xem" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="read"/>
         </StackPanel>
 
         <!-- LIST NOTIFICATIONS -->

@@ -182,7 +182,7 @@ namespace e_learning_app
                     IsActive = true, // Force active for preview styling
                     IsPublished = ChkPublished?.IsChecked ?? false,
                     Deadline = deadline,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 if (PreviewExamCard != null)

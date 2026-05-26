@@ -106,7 +106,7 @@ namespace e_learning_app
             NavigateTo(new MyClassesView(_dbManager));
         }
 
-        private void BtnSchedule_Click(object sender, RoutedEventArgs e)
+        public void BtnSchedule_Click(object sender, RoutedEventArgs e)
         {
             SetActiveNav(BtnSchedule);
             NavigateTo(new TeachingScheduleView(_dbManager));

@@ -41,11 +41,7 @@ namespace e_learning_app
         {
             get
             {
-                var diff = DateTime.UtcNow - CreatedAt;
-                if (diff.TotalDays >= 1) return $"{(int)diff.TotalDays} ngày trước";
-                if (diff.TotalHours >= 1) return $"{(int)diff.TotalHours} giờ trước";
-                if (diff.TotalMinutes >= 1) return $"{(int)diff.TotalMinutes} phút trước";
-                return "Vừa xong";
+                return CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
             }
         }
 
