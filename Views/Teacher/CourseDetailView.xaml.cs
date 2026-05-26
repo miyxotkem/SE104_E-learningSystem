@@ -1,4 +1,4 @@
-﻿using e_learning_app;
+using e_learning_app;
 using e_learning_app.Class;
 using Microsoft.Win32;
 using System;
@@ -1369,8 +1369,8 @@ namespace e_learning_app.Views
                         var sub = subResp.Data;
                         string sId = sub.StudentId;
                         
-                        var userResp = await ApiService.GetAsync<User>($"users/{sId}");
-                        string name = userResp != null ? userResp.FullName : "Học viên ẩn danh";
+                        var userResp = await ApiService.GetAsync<UserResponse>($"users/{sId}");
+                        string name = userResp?.Data != null ? userResp.Data.FullName : "Học viên ẩn danh";
 
                         list.Add(new GradingItem
                         {
@@ -2005,9 +2005,8 @@ namespace e_learning_app.Views
                         var reg = regResp.Data;
                         if (reg.status?.ToLower() == "active" || reg.status?.ToLower() == "accepted")
                         {
-                            var userResp = await ApiService.GetAsync<User>($"users/{reg.userId}");
-                            string name = userResp != null && !string.IsNullOrWhiteSpace(userResp.FullName) ? userResp.FullName : "Học viên ẩn danh";
-                            string email = userResp != null ? userResp.Email : "";
+                            string name = !string.IsNullOrWhiteSpace(reg.fullName) ? reg.fullName : "Học viên ẩn danh";
+                            string email = reg.email ?? "";
 
                             list.Add(new EnrolledStudent
                             {

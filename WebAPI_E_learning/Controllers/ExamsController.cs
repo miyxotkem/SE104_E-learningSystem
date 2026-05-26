@@ -796,5 +796,333 @@ namespace WebAPI_E_learning.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        [HttpGet("{id}/questions")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetExamQuestions(string id)
+        {
+            var docRef = _firestoreDb.Collection("exams").Document(id);
+            var docSnap = await docRef.GetSnapshotAsync();
+            if (!docSnap.Exists) return NotFound(new { Message = "Exam not found." });
+
+            var data = docSnap.ToDictionary();
+            var questionsList = new List<Dictionary<string, object>>();
+            bool hasQuestions = false;
+
+            // 1. Tự động load câu hỏi từ subcollection "questions"
+            try
+            {
+                var subQuestionsSnap = await docRef.Collection("questions").GetSnapshotAsync();
+                if (subQuestionsSnap.Documents.Count > 0)
+                {
+                    var sortedDocs = subQuestionsSnap.Documents
+                        .Select(d => new { Doc = d, Order = d.ContainsField("QuestionOrder") ? Convert.ToInt32(d.GetValue<object>("QuestionOrder")) : 0 })
+                        .OrderBy(x => x.Order)
+                        .Select(x => x.Doc);
+
+                    foreach (var doc in sortedDocs)
+                    {
+                        var qData = doc.ToDictionary();
+                        var qDict = new Dictionary<string, object>();
+
+                        qDict["Id"] = doc.Id;
+                        qDict["QuestionOrder"] = qData.TryGetValue("QuestionOrder", out var order) ? Convert.ToInt32(order) : 0;
+                        qDict["Type"] = qData.TryGetValue("Type", out var type) ? type?.ToString() : "MultipleChoice";
+                        
+                        string questionText = qData.TryGetValue("Content", out var content) ? content?.ToString() : (qData.TryGetValue("QuestionText", out var qt) ? qt?.ToString() : "");
+                        qDict["Content"] = questionText;
+                        qDict["QuestionText"] = questionText;
+
+                        qDict["Options"] = qData.TryGetValue("Options", out var opts) ? opts : new List<string>();
+
+                        int correctIndex = qData.TryGetValue("CorrectAnswerIndex", out var corr) ? Convert.ToInt32(corr) : (qData.TryGetValue("CorrectOptionIndex", out var coi) ? Convert.ToInt32(coi) : 0);
+                        qDict["CorrectAnswerIndex"] = correctIndex;
+                        qDict["CorrectOptionIndex"] = correctIndex;
+
+                        qDict["Points"] = qData.TryGetValue("Points", out var pts) ? Convert.ToDouble(pts) : 1.0;
+                        qDict["MaxWords"] = qData.TryGetValue("MaxWords", out var mw) ? Convert.ToInt32(mw) : 0;
+
+                        questionsList.Add(qDict);
+                    }
+                    hasQuestions = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading subcollection questions in GetExamQuestions: {ex.Message}");
+            }
+
+            // 2. Load từ array "Questions" trong exam document
+            if (!hasQuestions && data.TryGetValue("Questions", out var questionsObj) && questionsObj != null)
+            {
+                if (questionsObj is System.Collections.IEnumerable enumerable)
+                {
+                    int index = 1;
+                    foreach (var qObj in enumerable)
+                    {
+                        if (qObj is Dictionary<string, object> qData)
+                        {
+                            var qDict = new Dictionary<string, object>();
+                            
+                            qDict["Id"] = qData.TryGetValue("QuestionId", out var qid) ? qid?.ToString() : Guid.NewGuid().ToString("N");
+                            qDict["QuestionOrder"] = qData.TryGetValue("QuestionOrder", out var order) ? Convert.ToInt32(order) : index++;
+                            qDict["Type"] = qData.TryGetValue("Type", out var type) ? type?.ToString() : "MultipleChoice";
+
+                            string questionText = qData.TryGetValue("Content", out var content) ? content?.ToString() : (qData.TryGetValue("QuestionText", out var qt) ? qt?.ToString() : "");
+                            qDict["Content"] = questionText;
+                            qDict["QuestionText"] = questionText;
+
+                            qDict["Options"] = qData.TryGetValue("Options", out var opts) ? opts : new List<string>();
+
+                            int correctIndex = qData.TryGetValue("CorrectAnswerIndex", out var corr) ? Convert.ToInt32(corr) : (qData.TryGetValue("CorrectOptionIndex", out var coi) ? Convert.ToInt32(coi) : 0);
+                            qDict["CorrectAnswerIndex"] = correctIndex;
+                            qDict["CorrectOptionIndex"] = correctIndex;
+
+                            qDict["Points"] = qData.TryGetValue("Points", out var pts) ? Convert.ToDouble(pts) : 1.0;
+                            qDict["MaxWords"] = qData.TryGetValue("MaxWords", out var mw) ? Convert.ToInt32(mw) : 0;
+
+                            questionsList.Add(qDict);
+                        }
+                    }
+                    hasQuestions = true;
+                }
+            }
+
+            // 3. Nếu bài thi lưu bằng QuestionIds và câu hỏi nằm ngoài Collection "questions"
+            if (!hasQuestions && data.TryGetValue("QuestionIds", out var qIdsObj))
+            {
+                if (qIdsObj is System.Collections.IEnumerable qIdsEnum)
+                {
+                    int index = 1;
+                    foreach (var qIdObj in qIdsEnum)
+                    {
+                        var qId = qIdObj?.ToString();
+                        if (string.IsNullOrEmpty(qId)) continue;
+                        try
+                        {
+                            var qDoc = await _firestoreDb.Collection("questions").Document(qId).GetSnapshotAsync();
+                            if (qDoc.Exists)
+                            {
+                                var qData = qDoc.ToDictionary();
+                                var qDict = new Dictionary<string, object>();
+                                
+                                qDict["Id"] = qDoc.Id;
+                                qDict["QuestionOrder"] = qData.TryGetValue("QuestionOrder", out var order) ? Convert.ToInt32(order) : index++;
+                                qDict["Type"] = qData.TryGetValue("Type", out var type) ? type?.ToString() : "MultipleChoice";
+
+                                string questionText = qData.TryGetValue("Content", out var content) ? content?.ToString() : (qData.TryGetValue("QuestionText", out var qt) ? qt?.ToString() : "");
+                                qDict["Content"] = questionText;
+                                qDict["QuestionText"] = questionText;
+
+                                qDict["Options"] = qData.TryGetValue("Options", out var opts) ? opts : new List<string>();
+
+                                int correctIndex = qData.TryGetValue("CorrectAnswerIndex", out var corr) ? Convert.ToInt32(corr) : (qData.TryGetValue("CorrectOptionIndex", out var coi) ? Convert.ToInt32(coi) : 0);
+                                qDict["CorrectAnswerIndex"] = correctIndex;
+                                qDict["CorrectOptionIndex"] = correctIndex;
+
+                                qDict["Points"] = qData.TryGetValue("Points", out var pts) ? Convert.ToDouble(pts) : 1.0;
+                                qDict["MaxWords"] = qData.TryGetValue("MaxWords", out var mw) ? Convert.ToInt32(mw) : 0;
+
+                                questionsList.Add(qDict);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error loading question {qId} in GetExamQuestions: {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            return Ok(questionsList);
+        }
+
+        [HttpDelete("{id}/questions/{questionId}")]
+        [Authorize(Roles = "Instructor,Admin")]
+        public async Task<IActionResult> DeleteExamQuestion(string id, string questionId)
+        {
+            var examRef = _firestoreDb.Collection("exams").Document(id);
+            var docSnap = await examRef.GetSnapshotAsync();
+            if (!docSnap.Exists) return NotFound(new { Message = "Exam not found." });
+
+            var data = docSnap.ToDictionary();
+            bool deleted = false;
+
+            // Xóa trong array "Questions" của exam document
+            if (data.TryGetValue("Questions", out var questionsObj) && questionsObj is System.Collections.IList questionsList)
+            {
+                var newQuestions = new List<object>();
+                foreach (var qObj in questionsList)
+                {
+                    if (qObj is Dictionary<string, object> qData)
+                    {
+                        string qId = qData.TryGetValue("QuestionId", out var qidVal) ? qidVal?.ToString() : "";
+                        if (qId == questionId)
+                        {
+                            deleted = true;
+                            continue;
+                        }
+                    }
+                    newQuestions.Add(qObj);
+                }
+
+                if (deleted)
+                {
+                    var updates = new Dictionary<string, object>
+                    {
+                        { "Questions", newQuestions },
+                        { "TotalQuestions", newQuestions.Count },
+                        { "UpdatedAt", DateTime.UtcNow }
+                    };
+
+                    if (data.TryGetValue("QuestionIds", out var qIdsObj) && qIdsObj is System.Collections.IList qIdsList)
+                    {
+                        var newQIds = new List<string>();
+                        foreach (var qId in qIdsList)
+                        {
+                            if (qId?.ToString() != questionId)
+                            {
+                                newQIds.Add(qId?.ToString());
+                            }
+                        }
+                        updates["QuestionIds"] = newQIds;
+                    }
+
+                    await examRef.UpdateAsync(updates);
+                }
+            }
+
+            // Xóa trong subcollection "questions"
+            try
+            {
+                var subDocRef = examRef.Collection("questions").Document(questionId);
+                var subDocSnap = await subDocRef.GetSnapshotAsync();
+                if (subDocSnap.Exists)
+                {
+                    await subDocRef.DeleteAsync();
+                    deleted = true;
+
+                    var subQuestionsSnap = await examRef.Collection("questions").GetSnapshotAsync();
+                    await examRef.UpdateAsync(new Dictionary<string, object>
+                    {
+                        { "TotalQuestions", subQuestionsSnap.Documents.Count },
+                        { "UpdatedAt", DateTime.UtcNow }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting subcollection question in DeleteExamQuestion: {ex.Message}");
+            }
+
+            if (!deleted)
+            {
+                return NotFound(new { Message = "Question not found in the exam." });
+            }
+
+            return Ok(new { success = true, Message = "Question deleted successfully." });
+        }
+
+        public class SaveExamWithQuestionsRequest
+        {
+            public string ExamId { get; set; } = string.Empty;
+            public string ClassId { get; set; } = string.Empty;
+            public string? ClassName { get; set; }
+            public string? Title { get; set; }
+            public string? Description { get; set; }
+            public int TimeLimitMinutes { get; set; }
+            public double PassingScore { get; set; }
+            public bool IsPublished { get; set; }
+            public bool IsActive { get; set; }
+            public bool AllowReview { get; set; }
+            public bool RandomizeQuestions { get; set; }
+            public bool ShowScore { get; set; }
+            public bool AllowMultipleAttempts { get; set; }
+            public int MaxAttempts { get; set; }
+            public List<QuestionModel> Questions { get; set; } = new();
+        }
+
+        [HttpPost("with-questions")]
+        [Authorize(Roles = "Instructor,Admin")]
+        public async Task<IActionResult> SaveExamWithQuestions([FromBody] SaveExamWithQuestionsRequest request)
+        {
+            if (string.IsNullOrEmpty(request.ExamId)) return BadRequest("ExamId is required.");
+
+            var examRef = _firestoreDb.Collection("exams").Document(request.ExamId);
+            var docSnap = await examRef.GetSnapshotAsync();
+
+            string className = request.ClassName ?? "";
+            if (string.IsNullOrEmpty(className) && !string.IsNullOrEmpty(request.ClassId))
+            {
+                try
+                {
+                    var courseSnap = await _firestoreDb.Collection("Courses").Document(request.ClassId).GetSnapshotAsync();
+                    if (courseSnap.Exists)
+                    {
+                        if (courseSnap.ContainsField("ClassName"))
+                        {
+                            className = courseSnap.GetValue<string>("ClassName");
+                        }
+                        else if (courseSnap.ContainsField("Title"))
+                        {
+                            className = courseSnap.GetValue<string>("Title");
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            var examData = new Dictionary<string, object>
+            {
+                { "ClassId", request.ClassId },
+                { "ClassName", className },
+                { "Title", request.Title ?? "" },
+                { "DurationMinutes", request.TimeLimitMinutes },
+                { "TimeLimitMinutes", request.TimeLimitMinutes },
+                { "Description", request.Description ?? "" },
+                { "PassingScore", request.PassingScore },
+                { "IsPublished", request.IsPublished },
+                { "IsActive", request.IsActive },
+                { "AllowReview", request.AllowReview },
+                { "RandomizeQuestions", request.RandomizeQuestions },
+                { "ShowScore", request.ShowScore },
+                { "AllowMultipleAttempts", request.AllowMultipleAttempts },
+                { "MaxAttempts", request.MaxAttempts },
+                { "TotalQuestions", request.Questions.Count },
+                { "UpdatedAt", DateTime.UtcNow }
+            };
+
+            var questionsList = new List<Dictionary<string, object>>();
+            var questionIds = new List<string>();
+            foreach (var q in request.Questions)
+            {
+                string qId = string.IsNullOrEmpty(q.QuestionId) ? Guid.NewGuid().ToString("N") : q.QuestionId;
+                questionIds.Add(qId);
+
+                questionsList.Add(new Dictionary<string, object>
+                {
+                    { "QuestionId", qId },
+                    { "QuestionText", q.QuestionText },
+                    { "Options", q.Options },
+                    { "CorrectOptionIndex", q.CorrectOptionIndex },
+                    { "Points", q.Points }
+                });
+            }
+            examData.Add("Questions", questionsList);
+            examData.Add("QuestionIds", questionIds);
+
+            if (docSnap.Exists)
+            {
+                await examRef.UpdateAsync(examData);
+            }
+            else
+            {
+                examData.Add("CreatedAt", DateTime.UtcNow);
+                examData.Add("InstructorId", GetCurrentUserId());
+                await examRef.SetAsync(examData);
+            }
+
+            return Ok(new { success = true, Message = "Exam and questions saved successfully." });
+        }
     }
 }

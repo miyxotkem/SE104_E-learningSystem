@@ -396,7 +396,8 @@ namespace e_learning_app
                 if (_isPartialEdit)
                 {
                     // Partial edit: chỉ cập nhật metadata bài thi
-                    await _dbManager.UpdateExamAsync(_exam);
+                    bool success = await _dbManager.UpdateExamAsync(_exam);
+                    if (!success) { BtnSave.IsEnabled = true; LoadingOverlay.Visibility = Visibility.Collapsed; return; }
                 }
                 else
                 {
@@ -414,7 +415,8 @@ namespace e_learning_app
                     }
 
                     // Lưu exam + questions
-                    await _dbManager.SaveExamWithQuestionsAsync(_exam, newQuestions);
+                    bool success = await _dbManager.SaveExamWithQuestionsAsync(_exam, newQuestions);
+                    if (!success) { BtnSave.IsEnabled = true; LoadingOverlay.Visibility = Visibility.Collapsed; return; }
                 }
 
                 CustomDialog.Show("✅ Đã lưu thay đổi thành công!", "Thành Công", DialogType.Success);

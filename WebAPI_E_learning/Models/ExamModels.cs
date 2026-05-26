@@ -22,6 +22,7 @@ namespace WebAPI_E_learning.Models
 
     public class QuestionModel
     {
+        public string QuestionId { get; set; } = string.Empty;
         public string QuestionText { get; set; } = string.Empty;
         public System.Collections.Generic.List<string> Options { get; set; } = new();
         public int CorrectOptionIndex { get; set; }

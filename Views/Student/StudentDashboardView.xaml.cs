@@ -327,7 +327,11 @@ namespace e_learning_app.Views
                         Console.WriteLine($"Lỗi tính bài kiểm tra cho lớp {c.Id}: {ex.Message}");
                     }
                 }
-                              _pollingTimer = new System.Windows.Threading.DispatcherTimer();
+
+                TxtAvgScore.Text = pendingExamsCount.ToString();
+                _enrolledCoursesForNotif = enrolledCourses;
+
+                _pollingTimer = new System.Windows.Threading.DispatcherTimer();
                 _pollingTimer.Interval = TimeSpan.FromSeconds(15);
                 _pollingTimer.Tick += async (s, args) => await FetchNotificationsAsync();
                 _pollingTimer.Start();

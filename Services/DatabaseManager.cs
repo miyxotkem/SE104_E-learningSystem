@@ -1,4 +1,4 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Bibliography;
 using e_learning_app;
 using e_learning_app.Class;
 using System;
@@ -143,6 +143,16 @@ namespace e_learning_app
                 {
                     Title = course.Title,
                     Description = course.Description,
+                    ClassName = course.ClassName,
+                    Category = course.Category,
+                    Semester = course.Semester,
+                    Emoji = course.Emoji,
+                    AccentColor = course.AccentColor,
+                    CourseType = course.CourseType,
+                    DayOfWeek = course.DayOfWeek,
+                    StartPeriod = course.StartPeriod,
+                    EndPeriod = course.EndPeriod,
+                    IsActive = course.IsActive,
                     ThumbnailUrl = (string)null,
                     Price = 0.0
                 };
@@ -240,7 +250,34 @@ namespace e_learning_app
         public async Task<List<e_learning_app.Class.ExamQuestion>> GetExamQuestionsAsync(string examId) => await ApiService.GetAsync<List<e_learning_app.Class.ExamQuestion>>($"exams/{examId}/questions") ?? new List<e_learning_app.Class.ExamQuestion>();
         public async Task<bool> UpdateExamAsync(Exam exam) => await ApiService.PutAsync($"exams/{exam.Id}", exam) != null;
         public async Task<bool> DeleteExamQuestionAsync(string examId, string questionId) => await ApiService.DeleteAsync($"exams/{examId}/questions/{questionId}") != null;
-        public async Task<bool> SaveExamWithQuestionsAsync(Exam exam, List<e_learning_app.Class.ExamQuestion> questions) => await ApiService.PostAsync<Exam, Exam>($"exams/with-questions", exam) != null;
+        public async Task<bool> SaveExamWithQuestionsAsync(Exam exam, List<e_learning_app.Class.ExamQuestion> questions)
+        {
+            var request = new
+            {
+                ExamId = exam.Id,
+                ClassId = exam.ClassId,
+                ClassName = exam.ClassName,
+                Title = exam.Title,
+                Description = exam.Description,
+                TimeLimitMinutes = exam.TimeLimitMinutes,
+                PassingScore = exam.PassingScore,
+                IsPublished = exam.IsPublished,
+                IsActive = exam.IsActive,
+                AllowReview = exam.AllowReview,
+                RandomizeQuestions = exam.RandomizeQuestions,
+                ShowScore = exam.ShowScore,
+                AllowMultipleAttempts = exam.AllowMultipleAttempts,
+                MaxAttempts = exam.MaxAttempts,
+                Questions = questions.Select(q => new {
+                    QuestionId = q.Id,
+                    QuestionText = q.Content,
+                    Options = q.Options,
+                    CorrectOptionIndex = q.CorrectAnswerIndex,
+                    Points = q.Points
+                }).ToList()
+            };
+            return await ApiService.PostAsync<object, Exam>($"exams/with-questions", request) != null;
+        }
         public async Task<ExamDraft> GetExamDraftAsync(string examId, string studentId) => await ApiService.GetAsync<ExamDraft>($"exams/{examId}/drafts/{studentId}");
         public async Task DeleteExamDraftAsync(string examId, string studentId) => await ApiService.DeleteAsync($"exams/{examId}/drafts/{studentId}");
         public async Task<bool> SaveExamDraftAsync(ExamDraft draft) => await ApiService.PostAsync<ExamDraft, ExamDraft>($"exams/drafts", draft) != null;
