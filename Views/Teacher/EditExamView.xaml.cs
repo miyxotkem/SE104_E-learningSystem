@@ -290,10 +290,12 @@ namespace e_learning_app
                 var ws = wb.Worksheets.Add("Questions");
                 ws.Cell(1, 1).Value = "Câu hỏi"; ws.Cell(1, 2).Value = "Đáp án A"; ws.Cell(1, 3).Value = "Đáp án B";
                 ws.Cell(1, 4).Value = "Đáp án C"; ws.Cell(1, 5).Value = "Đáp án D"; ws.Cell(1, 6).Value = "Đáp án đúng";
-                ws.Range("A1:F1").Style.Font.Bold = true;
-                ws.Range("A1:F1").Style.Fill.BackgroundColor = XLColor.LightBlue;
+                ws.Cell(1, 7).Value = "Điểm";
+                ws.Range("A1:G1").Style.Font.Bold = true;
+                ws.Range("A1:G1").Style.Fill.BackgroundColor = XLColor.LightBlue;
                 ws.Cell(2, 1).Value = "Thủ đô của Việt Nam là gì?";
                 ws.Cell(2, 2).Value = "Hà Nội"; ws.Cell(2, 3).Value = "Hồ Chí Minh"; ws.Cell(2, 4).Value = "Đà Nẵng"; ws.Cell(2, 5).Value = "Hải Phòng"; ws.Cell(2, 6).Value = "A";
+                ws.Cell(2, 7).Value = 1.0;
                 ws.Columns().AdjustToContents();
                 wb.SaveAs(dlg.FileName);
                 CustomDialog.Show("Đã tải file mẫu thành công!", "Thành công", DialogType.Success);
@@ -333,10 +335,24 @@ namespace e_learning_app
                         if (string.IsNullOrWhiteSpace(content) || (ans != "A" && ans != "B" && ans != "C" && ans != "D"))
                         { failed++; continue; }
 
+                        double points = 1.0;
+                        var pointsCell = r.Cell(7);
+                        if (!pointsCell.IsEmpty())
+                        {
+                            if (double.TryParse(pointsCell.GetString(), out double p))
+                            {
+                                points = p;
+                            }
+                            else
+                            {
+                                try { points = pointsCell.GetDouble(); } catch { }
+                            }
+                        }
+
                         _questions.Add(new QuestionEditModel
                         {
                             OriginalId = null, Content = content, OptA = a, OptB = b, OptC = c, OptD = d,
-                            CorrectAnswer = ans, Points = 1.0
+                            CorrectAnswer = ans, Points = points
                         });
                         added++;
                     }

@@ -163,7 +163,7 @@ namespace e_learning_app.Views
             EditYearInput.Items.Clear();
             for (int i = currentYear - 2; i <= currentYear + 3; i++)
             {
-                EditYearInput.Items.Add($"{i}-{i + 1}");
+                EditYearInput.Items.Add($"{i} - {i + 1}");
             }
         }
 
@@ -189,16 +189,27 @@ namespace e_learning_app.Views
             try
             {
                 var regs = await ApiService.GetAsync<List<RegistrationResponse>>($"courses/{_course.Id}/students");
-                int count = regs?.Count(r => r.Data.status?.ToLower() == "pending") ?? 0;
-                
-                if (count > 0)
+                if (regs != null)
                 {
-                    BadgeBorder.Visibility = Visibility.Visible;
-                    TxtPendingCount.Text = count > 99 ? "99+" : count.ToString();
-                }
-                else
-                {
-                    BadgeBorder.Visibility = Visibility.Collapsed;
+                    int pendingCount = regs.Count(r => r.Data.status?.ToLower() == "pending");
+                    int enrolledCount = regs.Count(r => r.Data.status?.ToLower() == "active" || r.Data.status?.ToLower() == "accepted");
+
+                    if (_course.InstructorId == CurrentUserId && _course.StudentCount != enrolledCount)
+                    {
+                        _course.StudentCount = enrolledCount;
+                        await _dbManager.UpdateCourseAsync(_course);
+                        TxtStudentCount.Text = enrolledCount.ToString();
+                    }
+
+                    if (pendingCount > 0)
+                    {
+                        BadgeBorder.Visibility = Visibility.Visible;
+                        TxtPendingCount.Text = pendingCount > 99 ? "99+" : pendingCount.ToString();
+                    }
+                    else
+                    {
+                        BadgeBorder.Visibility = Visibility.Collapsed;
+                    }
                 }
             }
             catch { }
@@ -380,6 +391,7 @@ namespace e_learning_app.Views
                         CustomDialog.Show("Tải video lên thành công!", "Thành công", DialogType.Success);
                     }
                 }
+                LoadLessonsAsync();
                 CloseAddVideoDrawer_Click(null, null);
             }
             catch (Exception ex)
@@ -850,6 +862,7 @@ namespace e_learning_app.Views
                     await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Tài liệu mới", $"Giáo viên vừa thêm tài liệu: {newContent.Title}", "Course", CurrentUserId, "Giáo viên");
                 }
             }
+            LoadCourseContent();
             CloseAddDrawer_Click(null, null);
         }
 
@@ -874,6 +887,12 @@ namespace e_learning_app.Views
                     _assignments = new ObservableCollection<Assignment>(list.OrderBy(a => a.Deadline));
                     AssignmentsList.ItemsSource = _assignments;
                     TxtAssignmentCount.Text = _assignments.Count.ToString();
+                    
+                    if (_course.InstructorId == CurrentUserId && _course.AssignmentCount != _assignments.Count)
+                    {
+                        _course.AssignmentCount = _assignments.Count;
+                        await _dbManager.UpdateCourseAsync(_course);
+                    }
                 }
             }
             catch (Exception ex) { Debug.WriteLine("Lỗi tải bài tập: " + ex.Message); }
@@ -967,8 +986,7 @@ namespace e_learning_app.Views
                     if (_course.AssignmentCount > 0)
                     {
                         _course.AssignmentCount--;
-                        var updateCourseReq = new { AssignmentCount = _course.AssignmentCount };
-                        await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
+                        await _dbManager.UpdateCourseAsync(_course);
                     }
 
                     _assignments.Remove(_assignmentToDelete);
@@ -1093,8 +1111,7 @@ namespace e_learning_app.Views
                     await ApiService.PostAsync($"courses/{_course.Id}/assignments", newAssignmentReq);
 
                     _course.AssignmentCount++;
-                    var updateCourseReq = new { AssignmentCount = _course.AssignmentCount };
-                    await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq); // Note: Assuming the Web API allows partial update or we can just ignore it as we use API
+                    await _dbManager.UpdateCourseAsync(_course);
                     await NotificationService.SendToClassAsync(_dbManager, _course.Id, "Bài tập mới", $"Giáo viên vừa tạo bài tập: {newAssignmentReq.Title}", "Homework");
                 }
 
@@ -1305,6 +1322,7 @@ namespace e_learning_app.Views
                     using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
                     using (HttpClient client = new HttpClient())
                     {
+                        var addedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                         int currentIndex = 0;
                         foreach (var resp in submissions)
                         {
@@ -1315,14 +1333,55 @@ namespace e_learning_app.Views
 
                             var sub = resp.Data;
                             string displayFileName = GetDisplayNameFromUrl(sub.FileUrl, "submission");
-                            string finalZipName = sub.IsLate ? $"late_{sub.StudentId}_{displayFileName}" : $"{sub.StudentId}_{displayFileName}";
-
-                            var fileBytes = await client.GetByteArrayAsync(sub.FileUrl);
-
-                            ZipArchiveEntry fileEntry = archive.CreateEntry(finalZipName);
-                            using (Stream writer = fileEntry.Open())
+                            if (string.IsNullOrEmpty(displayFileName))
                             {
-                                await writer.WriteAsync(fileBytes, 0, fileBytes.Length);
+                                displayFileName = "bai_nop";
+                            }
+
+                            // Làm sạch tên file để tránh các ký tự không hợp lệ trong tệp ZIP
+                            string cleanFileName = string.Join("_", displayFileName.Split(Path.GetInvalidFileNameChars()));
+                            string finalZipName = sub.IsLate ? $"late_{sub.StudentId}_{cleanFileName}" : $"{sub.StudentId}_{cleanFileName}";
+
+                            // Đảm bảo không trùng tên file trong ZIP để tránh ngoại lệ ArgumentException
+                            if (addedNames.Contains(finalZipName))
+                            {
+                                string nameWithoutExt = Path.GetFileNameWithoutExtension(finalZipName);
+                                string ext = Path.GetExtension(finalZipName);
+                                int suffix = 1;
+                                while (addedNames.Contains($"{nameWithoutExt}_{suffix}{ext}"))
+                                {
+                                    suffix++;
+                                }
+                                finalZipName = $"{nameWithoutExt}_{suffix}{ext}";
+                            }
+                            addedNames.Add(finalZipName);
+
+                            try
+                            {
+                                var fileBytes = await client.GetByteArrayAsync(sub.FileUrl);
+                                ZipArchiveEntry fileEntry = archive.CreateEntry(finalZipName);
+                                using (Stream writer = fileEntry.Open())
+                                {
+                                    await writer.WriteAsync(fileBytes, 0, fileBytes.Length);
+                                }
+                            }
+                            catch (Exception downloadEx)
+                            {
+                                // Ghi tệp thông báo lỗi thay vì làm sập toàn bộ tiến trình tải xuống
+                                string errorFileName = sub.IsLate ? $"error_late_{sub.StudentId}.txt" : $"error_{sub.StudentId}.txt";
+                                if (addedNames.Contains(errorFileName))
+                                {
+                                    errorFileName = $"error_{sub.StudentId}_{currentIndex}.txt";
+                                }
+                                addedNames.Add(errorFileName);
+
+                                ZipArchiveEntry errorEntry = archive.CreateEntry(errorFileName);
+                                using (Stream writer = errorEntry.Open())
+                                using (StreamWriter textWriter = new StreamWriter(writer))
+                                {
+                                    await textWriter.WriteLineAsync($"Lỗi tải tệp: {downloadEx.Message}");
+                                    await textWriter.WriteLineAsync($"Đường dẫn gốc: {sub.FileUrl}");
+                                }
                             }
                         }
                     }
@@ -1370,7 +1429,7 @@ namespace e_learning_app.Views
                         string sId = sub.StudentId;
                         
                         var userResp = await ApiService.GetAsync<UserResponse>($"users/{sId}");
-                        string name = userResp?.Data != null ? userResp.Data.FullName : "Học viên ẩn danh";
+                        string name = userResp?.Data != null && !string.IsNullOrWhiteSpace(userResp.Data.FullName) ? userResp.Data.FullName : "Học viên ẩn danh";
 
                         list.Add(new GradingItem
                         {
@@ -1663,13 +1722,21 @@ namespace e_learning_app.Views
 
             if (!string.IsNullOrEmpty(_course.Semester) && _course.Semester.Contains(" - "))
             {
-                string[] parts = _course.Semester.Split(new[] { " - " }, StringSplitOptions.None);
-                SetComboBoxByContent(EditSemesterInput, parts[0].Trim());
-                if (parts.Length > 1)
+                int firstDashIdx = _course.Semester.IndexOf(" - ");
+                string semPart = _course.Semester.Substring(0, firstDashIdx).Trim();
+                string yearPart = _course.Semester.Substring(firstDashIdx + 3).Trim();
+
+                SetComboBoxByContent(EditSemesterInput, semPart);
+                
+                string standardYearPart = yearPart.Replace(" ", "");
+                foreach (var item in EditYearInput.Items)
                 {
-                    string yearValue = parts[1].Trim();
-                    foreach (var item in EditYearInput.Items)
-                        if (item.ToString() == yearValue) { EditYearInput.SelectedItem = item; break; }
+                    string standardItem = item.ToString().Replace(" ", "");
+                    if (standardItem == standardYearPart)
+                    {
+                        EditYearInput.SelectedItem = item;
+                        break;
+                    }
                 }
             }
             MainScrollViewer.Effect = new BlurEffect { Radius = 10 }; EditDrawer.Visibility = Visibility.Visible;
@@ -1913,8 +1980,7 @@ namespace e_learning_app.Views
                     if (req != null) await NotificationService.SendNotificationAsync(_dbManager, req.UserId, "Vào lớp thành công", $"Yêu cầu tham gia lớp '{_course.ClassName}' của bạn đã được chấp nhận.", "System", CurrentUserId, "Giáo viên", courseId: _course.Id);
 
                     _course.StudentCount++;
-                    var updateCourseReq = new { StudentCount = _course.StudentCount };
-                    await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
+                    await _dbManager.UpdateCourseAsync(_course);
 
                     TxtStudentCount.Text = _course.StudentCount.ToString();
                     SetupPendingRequestsListener();
@@ -1957,8 +2023,7 @@ namespace e_learning_app.Views
                 }
 
                 _course.StudentCount += _pendingRequests.Count;
-                var updateCourseReq = new { StudentCount = _course.StudentCount };
-                await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
+                await _dbManager.UpdateCourseAsync(_course);
 
                 TxtStudentCount.Text = _course.StudentCount.ToString();
                 SetupPendingRequestsListener();
@@ -2005,8 +2070,9 @@ namespace e_learning_app.Views
                         var reg = regResp.Data;
                         if (reg.status?.ToLower() == "active" || reg.status?.ToLower() == "accepted")
                         {
-                            string name = !string.IsNullOrWhiteSpace(reg.fullName) ? reg.fullName : "Học viên ẩn danh";
-                            string email = reg.email ?? "";
+                            var userResp = await ApiService.GetAsync<UserResponse>($"users/{reg.userId}");
+                            string name = userResp?.Data != null && !string.IsNullOrWhiteSpace(userResp.Data.FullName) ? userResp.Data.FullName : (reg.fullName ?? "Học viên ẩn danh");
+                            string email = userResp?.Data != null ? userResp.Data.Email : (reg.email ?? "");
 
                             list.Add(new EnrolledStudent
                             {
@@ -2055,8 +2121,7 @@ namespace e_learning_app.Views
                             _course.StudentCount--;
                         }
 
-                        var updateCourseReq = new { StudentCount = _course.StudentCount };
-                        await ApiService.PutAsync($"courses/{_course.Id}", updateCourseReq);
+                        await _dbManager.UpdateCourseAsync(_course);
 
                         if (removedStudent != null)
                         {

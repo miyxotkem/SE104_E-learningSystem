@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.CreateCoursesView"
+<UserControl x:Class="e_learning_app.CreateCoursesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F5F7FA">
@@ -187,8 +187,8 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Loại môn học" Style="{StaticResource FieldLabelStyle}"/>
                                 <ComboBox x:Name="CbCourseType" Style="{StaticResource ModernComboBox}" Tag="Chọn loại môn" SelectedIndex="0">
-                                    <ComboBoxItem Content="Đại cuong"/>
-                                    <ComboBoxItem Content="Co sở ngành"/>
+                                    <ComboBoxItem Content="Đại cương"/>
+                                    <ComboBoxItem Content="Cơ sở ngành"/>
                                     <ComboBoxItem Content="Chuyên ngành"/>
                                     <ComboBoxItem Content="Đồ án"/>
                                 </ComboBox>

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.Views.CourseDetailView"
+<UserControl x:Class="e_learning_app.Views.CourseDetailView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:e_learning_app.Views"
@@ -740,8 +740,8 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Loại môn học" Foreground="#64748B" Margin="0,0,0,5"/>
                                 <ComboBox x:Name="EditTypeInput" Tag="Chọn loại môn" Style="{StaticResource ModernComboBox}" SelectedIndex="0">
-                                    <ComboBoxItem Content="Đại cuong"/>
-                                    <ComboBoxItem Content="Co sở ngành"/>
+                                    <ComboBoxItem Content="Đại cương"/>
+                                    <ComboBoxItem Content="Cơ sở ngành"/>
                                     <ComboBoxItem Content="Chuyên ngành"/>
                                     <ComboBoxItem Content="Đồ án"/>
                                 </ComboBox>

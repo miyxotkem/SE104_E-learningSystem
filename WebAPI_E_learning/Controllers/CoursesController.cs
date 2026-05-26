@@ -158,7 +158,9 @@ namespace WebAPI_E_learning.Controllers
                 { "AccentColor", request.AccentColor },
                 { "InstructorId", string.IsNullOrEmpty(request.InstructorId) ? GetCurrentUserId() : request.InstructorId },
                 { "CreatedAt", DateTime.UtcNow },
-                { "IsActive", request.IsActive }
+                { "IsActive", request.IsActive },
+                { "StudentCount", request.StudentCount },
+                { "AssignmentCount", request.AssignmentCount }
             };
 
             DocumentReference docRef;
@@ -256,6 +258,20 @@ namespace WebAPI_E_learning.Controllers
         {
             var docRef = _firestoreDb.Collection("Courses").Document(id);
             if (!(await docRef.GetSnapshotAsync()).Exists) return NotFound();
+
+            // Xóa tất cả các thông báo liên quan đến lớp học này
+            var notifsSnap = await _firestoreDb.Collection("Notifications")
+                .WhereEqualTo("CourseId", id)
+                .GetSnapshotAsync();
+            if (notifsSnap.Documents.Count > 0)
+            {
+                var batch = _firestoreDb.StartBatch();
+                foreach (var doc in notifsSnap.Documents)
+                {
+                    batch.Delete(doc.Reference);
+                }
+                await batch.CommitAsync();
+            }
 
             await docRef.DeleteAsync();
             return Ok(new { Message = "Course deleted successfully." });
@@ -498,6 +514,22 @@ namespace WebAPI_E_learning.Controllers
             return Ok(assignments);
         }
 
+        [HttpGet("{courseId}/assignments/{asmId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAssignmentDetail(string courseId, string asmId)
+        {
+            var docRef = _firestoreDb.Collection("Courses").Document(courseId)
+                                     .Collection("Assignments").Document(asmId);
+            var docSnap = await docRef.GetSnapshotAsync();
+            if (!docSnap.Exists) return NotFound(new { Message = "Assignment not found." });
+
+            return Ok(new
+            {
+                Id = docSnap.Id,
+                Data = ConvertFirestoreTypes(docSnap.ToDictionary())
+            });
+        }
+
         [HttpPost("{courseId}/assignments")]
         [Authorize(Roles = "Instructor,Admin")]
         public async Task<IActionResult> CreateAssignment(string courseId, [FromBody] CreateAssignmentRequest request)
@@ -524,7 +556,23 @@ namespace WebAPI_E_learning.Controllers
         {
             string uid = GetCurrentUserId();
             var asmRef = _firestoreDb.Collection("Courses").Document(courseId).Collection("Assignments").Document(asmId);
-            if (!(await asmRef.GetSnapshotAsync()).Exists) return NotFound("Assignment not found.");
+            var asmSnap = await asmRef.GetSnapshotAsync();
+            if (!asmSnap.Exists) return NotFound("Assignment not found.");
+
+            // Tính toán xem có nộp muộn (trễ hạn) hay không
+            bool isLate = false;
+            var asmDict = asmSnap.ToDictionary();
+            if (asmDict.ContainsKey("DueDate") && asmDict["DueDate"] != null)
+            {
+                if (asmDict["DueDate"] is Timestamp ts)
+                {
+                    isLate = DateTime.UtcNow > ts.ToDateTime().ToUniversalTime();
+                }
+                else if (DateTime.TryParse(asmDict["DueDate"].ToString(), out DateTime dueDate))
+                {
+                    isLate = DateTime.UtcNow > dueDate.ToUniversalTime();
+                }
+            }
 
             var subData = new Dictionary<string, object>
             {
@@ -532,6 +580,7 @@ namespace WebAPI_E_learning.Controllers
                 { "FileUrl", request.FileUrl },
                 { "Content", request.Content },
                 { "SubmittedAt", DateTime.UtcNow },
+                { "IsLate", isLate },
                 { "Score", null }
             };
 

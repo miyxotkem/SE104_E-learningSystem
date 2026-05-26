@@ -110,9 +110,9 @@ namespace e_learning_app.Views
 
                 foreach (var reg in registrations)
                 {
-                    if (reg.TryGetProperty("data", out var dataProp) || reg.TryGetProperty("Data", out dataProp))
+                    if (TryGetProp(reg, "data", out var dataProp))
                     {
-                        if (dataProp.TryGetProperty("CourseId", out var courseIdProp) && dataProp.TryGetProperty("Status", out var statusProp))
+                        if (TryGetProp(dataProp, "CourseId", out var courseIdProp) && TryGetProp(dataProp, "Status", out var statusProp))
                         {
                             if (statusProp.GetString()?.ToLower() == "accepted")
                             {
@@ -150,9 +150,9 @@ namespace e_learning_app.Views
                         try
                         {
                             var instDoc = await ApiService.GetAsync<System.Text.Json.JsonElement>($"users/{c.InstructorId}");
-                            if (instDoc.TryGetProperty("data", out var data) || instDoc.TryGetProperty("Data", out data))
+                            if (TryGetProp(instDoc, "data", out var data))
                             {
-                                if (data.TryGetProperty("FullName", out var fn)) instName = fn.GetString();
+                                if (TryGetProp(data, "FullName", out var fn)) instName = fn.GetString();
                             }
                         }
                         catch { }
@@ -203,9 +203,9 @@ namespace e_learning_app.Views
                         try
                         {
                             var instDoc = await ApiService.GetAsync<System.Text.Json.JsonElement>($"users/{c.InstructorId}");
-                            if (instDoc.TryGetProperty("data", out var data) || instDoc.TryGetProperty("Data", out data))
+                            if (TryGetProp(instDoc, "data", out var data))
                             {
-                                if (data.TryGetProperty("FullName", out var fn)) instName = fn.GetString();
+                                if (TryGetProp(data, "FullName", out var fn)) instName = fn.GetString();
                             }
                         }
                         catch { }
@@ -257,24 +257,16 @@ namespace e_learning_app.Views
                             try
                             {
                                 var subs = await ApiService.GetAsync<List<System.Text.Json.JsonElement>>($"courses/{c.Id}/assignments/{asm.Id}/submissions");
-                                foreach (var sub in subs)
+                                if (subs != null && subs.Any())
                                 {
-                                    if (sub.TryGetProperty("data", out var data) || sub.TryGetProperty("Data", out data))
-                                    {
-                                        if (data.TryGetProperty("StudentId", out var stuId) && stuId.GetString() == currentUser.Id)
-                                        {
-                                            isSubmitted = true;
-                                            break;
-                                        }
-                                    }
+                                    isSubmitted = true;
                                 }
                             }
                             catch { }
 
-                            if (asm.Data != null && asm.Data.Deadline != default(DateTime))
+                            if (asm.Data != null)
                             {
-                                var deadlineLocal = asm.Data.Deadline.ToLocalTime();
-                                if (!isSubmitted && deadlineLocal > DateTime.Now)
+                                if (!isSubmitted)
                                 {
                                     pendingAssignmentsCount++;
                                 }
@@ -288,44 +280,45 @@ namespace e_learning_app.Views
 
                 // 2. Tính số lượng bài kiểm tra cần làm
                 int pendingExamsCount = 0;
-                foreach (var c in enrolledCourses)
+                try
                 {
-                    try
+                    var myHistory = await ApiService.GetAsync<List<ExamSubmissionResponse>>("exams/my-history");
+                    var studentSubmissions = myHistory?.Select(r => r.Data).ToList() ?? new List<ExamSubmission>();
+
+                    foreach (var c in enrolledCourses)
                     {
-                        var exams = await ApiService.GetAsync<List<ExamResponse>>($"exams/course/{c.Id}");
-                        foreach (var exam in exams)
+                        try
                         {
-                            if (exam.Data.IsPublished)
+                            var exams = await ApiService.GetAsync<List<ExamResponse>>($"exams/course/{c.Id}");
+                            foreach (var exam in exams)
                             {
-                                var subs = await ApiService.GetAsync<List<System.Text.Json.JsonElement>>($"exams/{exam.Id}/submissions");
-                                int attemptsCount = 0;
-                                foreach (var sub in subs)
+                                if (exam.Data.IsPublished && exam.Data.IsActive)
                                 {
-                                    if (sub.TryGetProperty("data", out var data) || sub.TryGetProperty("Data", out data))
+                                    int attemptsCount = studentSubmissions.Count(s => s.ExamId == exam.Id);
+
+                                    bool canTake = false;
+                                    if (!exam.Data.AllowMultipleAttempts)
                                     {
-                                        if (data.TryGetProperty("StudentId", out var stuId) && stuId.GetString() == currentUser.Id)
-                                            attemptsCount++;
+                                        if (attemptsCount == 0) canTake = true;
                                     }
-                                }
+                                    else
+                                    {
+                                        if (attemptsCount < exam.Data.MaxAttempts) canTake = true;
+                                    }
 
-                                bool canTake = false;
-                                if (!exam.Data.AllowMultipleAttempts)
-                                {
-                                    if (attemptsCount == 0) canTake = true;
+                                    if (canTake) pendingExamsCount++;
                                 }
-                                else
-                                {
-                                    if (attemptsCount < exam.Data.MaxAttempts) canTake = true;
-                                }
-
-                                if (canTake) pendingExamsCount++;
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Lỗi tính bài kiểm tra cho lớp {c.Id}: {ex.Message}");
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Lỗi tính bài kiểm tra cho lớp {c.Id}: {ex.Message}");
-                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Lỗi lấy lịch sử bài thi: {ex.Message}");
                 }
 
                 TxtAvgScore.Text = pendingExamsCount.ToString();
@@ -484,6 +477,26 @@ namespace e_learning_app.Views
             {
                 mw.BtnNotifications_Click(null, null);
             }
+        }
+
+        private static bool TryGetProp(System.Text.Json.JsonElement el, string name, out System.Text.Json.JsonElement val)
+        {
+            if (el.TryGetProperty(name, out val)) return true;
+            if (char.IsUpper(name[0]))
+            {
+                string camel = char.ToLower(name[0]) + name.Substring(1);
+                if (el.TryGetProperty(camel, out val)) return true;
+            }
+            else
+            {
+                string pascal = char.ToUpper(name[0]) + name.Substring(1);
+                if (el.TryGetProperty(pascal, out val)) return true;
+            }
+            string upper = name.ToUpper();
+            if (el.TryGetProperty(upper, out val)) return true;
+            string lower = name.ToLower();
+            if (el.TryGetProperty(lower, out val)) return true;
+            return false;
         }
     }
 }

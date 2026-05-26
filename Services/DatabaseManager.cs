@@ -141,20 +141,24 @@ namespace e_learning_app
             {
                 var request = new
                 {
-                    Title = course.Title,
-                    Description = course.Description,
-                    ClassName = course.ClassName,
-                    Category = course.Category,
-                    Semester = course.Semester,
-                    Emoji = course.Emoji,
-                    AccentColor = course.AccentColor,
-                    CourseType = course.CourseType,
-                    DayOfWeek = course.DayOfWeek,
+                    Title = course.Title ?? string.Empty,
+                    Description = course.Description ?? string.Empty,
+                    ThumbnailUrl = string.Empty,
+                    Price = 0.0,
+                    Courseid = course.Id ?? string.Empty,
+                    ClassName = course.ClassName ?? string.Empty,
+                    CourseType = course.CourseType ?? string.Empty,
+                    Category = course.Category ?? string.Empty,
+                    DayOfWeek = course.DayOfWeek ?? string.Empty,
                     StartPeriod = course.StartPeriod,
                     EndPeriod = course.EndPeriod,
+                    Semester = course.Semester ?? string.Empty,
+                    Emoji = course.Emoji ?? string.Empty,
+                    AccentColor = course.AccentColor ?? string.Empty,
                     IsActive = course.IsActive,
-                    ThumbnailUrl = (string)null,
-                    Price = 0.0
+                    InstructorId = course.InstructorId ?? string.Empty,
+                    StudentCount = course.StudentCount,
+                    AssignmentCount = course.AssignmentCount
                 };
                 return await ApiService.PutAsync($"courses/{course.Id}", request);
             }
@@ -245,7 +249,20 @@ namespace e_learning_app
         /// <summary>
         /// Äáº¿m sá»‘ lÆ°á»£ng bÃ i ná»™p cá»§a má»™t bÃ i thi (kiá»ƒm tra trÆ°á»›c khi cho phÃ©p full edit)
         /// </summary>
-        public async Task<List<Course>> GetAllCoursesAsync() => await ApiService.GetAsync<List<Course>>("courses") ?? new List<Course>();
+        public async Task<List<Course>> GetAllCoursesAsync()
+        {
+            var response = await ApiService.GetAsync<List<CourseResponse>>("courses");
+            if (response == null) return new List<Course>();
+            return response.Select(c =>
+            {
+                var course = c.Data;
+                if (course != null)
+                {
+                    course.Id = c.Id;
+                }
+                return course;
+            }).Where(c => c != null).ToList();
+        }
         public async Task<int> GetSubmissionCountByExamAsync(string examId) => 0;
         public async Task<List<e_learning_app.Class.ExamQuestion>> GetExamQuestionsAsync(string examId) => await ApiService.GetAsync<List<e_learning_app.Class.ExamQuestion>>($"exams/{examId}/questions") ?? new List<e_learning_app.Class.ExamQuestion>();
         public async Task<bool> UpdateExamAsync(Exam exam) => await ApiService.PutAsync($"exams/{exam.Id}", exam) != null;

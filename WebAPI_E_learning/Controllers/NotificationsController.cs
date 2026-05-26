@@ -30,6 +30,10 @@ namespace WebAPI_E_learning.Controllers
         {
             string uid = GetCurrentUserId();
 
+            // Lấy danh sách khóa học đang tồn tại để ẩn thông báo của các khóa học đã xóa
+            var coursesSnap = await _firestoreDb.Collection("Courses").GetSnapshotAsync();
+            var activeCourseIds = coursesSnap.Documents.Select(d => d.Id).ToHashSet();
+
             // Lấy thông báo cá nhân
             var userNotifsSnap = await _firestoreDb.Collection("Notifications")
                 .WhereEqualTo("TargetId", uid)
@@ -51,6 +55,14 @@ namespace WebAPI_E_learning.Controllers
             foreach (var doc in userNotifsSnap.Documents.Concat(systemNotifsSnap.Documents))
             {
                 var dict = doc.ToDictionary();
+                string courseId = dict.ContainsKey("CourseId") ? dict["CourseId"].ToString() : "";
+                
+                // Nếu thông báo liên kết với một lớp học cụ thể nhưng lớp đó đã bị xóa, bỏ qua
+                if (!string.IsNullOrEmpty(courseId) && !activeCourseIds.Contains(courseId))
+                {
+                    continue;
+                }
+
                 bool isRead = dict.ContainsKey("IsRead") && Convert.ToBoolean(dict["IsRead"]);
                 
                 // Nếu là thông báo hệ thống thì check readIds
@@ -67,7 +79,7 @@ namespace WebAPI_E_learning.Controllers
                     SenderId = dict.ContainsKey("SenderId") ? dict["SenderId"].ToString() : "",
                     SenderName = dict.ContainsKey("SenderName") ? dict["SenderName"].ToString() : "",
                     TargetId = dict.ContainsKey("TargetId") ? dict["TargetId"].ToString() : "",
-                    CourseId = dict.ContainsKey("CourseId") ? dict["CourseId"].ToString() : "",
+                    CourseId = courseId,
                     Type = dict.ContainsKey("Type") ? dict["Type"].ToString() : "",
                     CreatedAt = dict.ContainsKey("CreatedAt") ? ((Google.Cloud.Firestore.Timestamp)dict["CreatedAt"]).ToDateTime() : DateTime.UtcNow,
                     IsRead = isRead

@@ -13,13 +13,22 @@ using System.Windows.Controls.Primitives;
 
 namespace e_learning_app.Views
 {
+    public class ExamListItem
+    {
+        public Exam Exam { get; set; }
+        public string StatusText { get; set; }
+        public Brush StatusColor { get; set; }
+        public Brush StatusBg { get; set; }
+        public string MaxScoreDisplay { get; set; }
+    }
+
     public partial class StudentQuizView : UserControl
     {
         private readonly DatabaseManager _dbManager;
         private List<Exam> _allExams = new();
         private List<ExamSubmission> _studentSubmissions = new();
         private System.Windows.Threading.DispatcherTimer _pollingTimer;
-        private List<object> _renderedItems = new(); // cache for filtering
+        private List<ExamListItem> _renderedItems = new(); // cache for filtering
         private string _activeFilter = "all";
 
         public StudentQuizView(DatabaseManager dbManager)
@@ -74,7 +83,7 @@ namespace e_learning_app.Views
 
         private void RenderExams()
         {
-            var examList = new List<object>();
+            var examList = new List<ExamListItem>();
             foreach (var exam in _allExams)
             {
                 var submission = _studentSubmissions.FirstOrDefault(s => s.ExamId == exam.Id);
@@ -89,7 +98,7 @@ namespace e_learning_app.Views
                 var examSubmissions = _studentSubmissions.Where(s => s.ExamId == exam.Id).ToList();
                 double? maxScore = examSubmissions.Any() ? examSubmissions.Max(s => s.Percentage) / 10 : null;
 
-                examList.Add(new
+                examList.Add(new ExamListItem
                 {
                     Exam = exam,
                     StatusText = statusText,
@@ -107,10 +116,10 @@ namespace e_learning_app.Views
         {
             string search = TxtSearch?.Text?.Trim().ToLower() ?? "";
 
-            var filtered = _renderedItems.Cast<dynamic>().Where(item =>
+            var filtered = _renderedItems.Where(item =>
             {
                 Exam exam = item.Exam;
-                string statusText = (string)item.StatusText;
+                string statusText = item.StatusText;
 
                 // Search filter
                 bool matchSearch = string.IsNullOrEmpty(search)
@@ -176,11 +185,9 @@ namespace e_learning_app.Views
 
         private void ExamsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ExamsList.SelectedItem != null)
+            if (ExamsList.SelectedItem is ExamListItem selectedItem)
             {
-                dynamic selectedItem = ExamsList.SelectedItem;
                 NavigateToHistory(selectedItem.Exam);
-
                 ExamsList.SelectedItem = null;
             }
         }

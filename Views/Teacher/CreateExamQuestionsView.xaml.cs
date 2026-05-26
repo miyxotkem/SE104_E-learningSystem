@@ -35,6 +35,9 @@ namespace e_learning_app
         private string _correctAns;
         public string CorrectAns { get => _correctAns; set { _correctAns = value; Validate(); OnPropertyChanged(nameof(CorrectAns)); } }
 
+        private double _points = 1.0;
+        public double Points { get => _points; set { _points = value; OnPropertyChanged(nameof(Points)); } }
+
         private bool _isValid;
         public bool IsValid { get => _isValid; set { _isValid = value; OnPropertyChanged(nameof(IsValid)); } }
 
@@ -223,8 +226,9 @@ namespace e_learning_app
                     worksheet.Cell(1, 4).Value = "Đáp án C";
                     worksheet.Cell(1, 5).Value = "Đáp án D";
                     worksheet.Cell(1, 6).Value = "Đáp án đúng";
+                    worksheet.Cell(1, 7).Value = "Điểm";
                     
-                    var headerRange = worksheet.Range("A1:F1");
+                    var headerRange = worksheet.Range("A1:G1");
                     headerRange.Style.Font.Bold = true;
                     headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
                     
@@ -234,6 +238,7 @@ namespace e_learning_app
                     worksheet.Cell(2, 4).Value = "Đà Nẵng";
                     worksheet.Cell(2, 5).Value = "Hải Phòng";
                     worksheet.Cell(2, 6).Value = "A";
+                    worksheet.Cell(2, 7).Value = 1.0;
                     
                     worksheet.Columns().AdjustToContents();
                     
@@ -319,6 +324,20 @@ namespace e_learning_app
                             currentRow++;
                             if (currentRow == 1) continue;
 
+                            double points = 1.0;
+                            var pointsCell = row.Cell(7);
+                            if (!pointsCell.IsEmpty())
+                            {
+                                if (double.TryParse(pointsCell.GetString(), out double p))
+                                {
+                                    points = p;
+                                }
+                                else
+                                {
+                                    try { points = pointsCell.GetDouble(); } catch { }
+                                }
+                            }
+
                             var item = new ImportQuestionItem
                             {
                                 Content = row.Cell(1).GetString(),
@@ -326,7 +345,8 @@ namespace e_learning_app
                                 OptB = row.Cell(3).GetString(),
                                 OptC = row.Cell(4).GetString(),
                                 OptD = row.Cell(5).GetString(),
-                                CorrectAns = row.Cell(6).GetString()
+                                CorrectAns = row.Cell(6).GetString(),
+                                Points = points
                             };
                             item.Validate();
                             newItems.Add(item);
@@ -357,7 +377,7 @@ namespace e_learning_app
                             Content = item.Content,
                             Options = new List<string> { item.OptA, item.OptB, item.OptC, item.OptD },
                             CorrectAnswerIndex = correctIdx,
-                            Points = 1.0
+                            Points = item.Points
                         };
                         _questions.Add(newQuestion);
                         added++;

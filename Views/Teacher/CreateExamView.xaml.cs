@@ -37,7 +37,17 @@ namespace e_learning_app
                     return;
                 }
 
-                _allCourses = await _dbManager.GetAllCoursesAsync();
+                var allFetchedCourses = await _dbManager.GetAllCoursesAsync();
+                var currentUser = _dbManager.GetCurrentUser();
+
+                if (currentUser != null && currentUser.Role == "Instructor")
+                {
+                    _allCourses = allFetchedCourses.Where(c => c.InstructorId == currentUser.Id).ToList();
+                }
+                else
+                {
+                    _allCourses = allFetchedCourses;
+                }
                 
                 if (_allCourses == null || _allCourses.Count == 0)
                 {
