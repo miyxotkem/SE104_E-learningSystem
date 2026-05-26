@@ -280,11 +280,32 @@ namespace e_learning_app
             }
             catch { }
 
+            Brush backgroundBrush;
+            Brush borderBrush;
+            Brush textAccentBrush;
+
+            try
+            {
+                Color accentColor = (Color)ColorConverter.ConvertFromString(ev.ColorHex);
+                // Create soft pastel background with ~12% opacity (Alpha = 30)
+                backgroundBrush = new SolidColorBrush(Color.FromArgb(30, accentColor.R, accentColor.G, accentColor.B));
+                borderBrush = new SolidColorBrush(accentColor);
+                textAccentBrush = borderBrush;
+            }
+            catch
+            {
+                backgroundBrush = new SolidColorBrush(Color.FromArgb(30, 59, 130, 246));
+                borderBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246));
+                textAccentBrush = borderBrush;
+            }
+
             var border = new Border
             {
-                Background = GetColorWithFallback(ev.ColorHex, "#DBEAFE"),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(10),
+                Background = backgroundBrush,
+                BorderBrush = borderBrush,
+                BorderThickness = new Thickness(4, 0, 0, 0), // Premium left accent border
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(10, 8, 8, 8),
                 Margin = parentCanvas == null ? new Thickness(0, 0, 10, 10) : new Thickness(0),
                 Cursor = System.Windows.Input.Cursors.Hand,
                 Height = parentCanvas == null ? double.NaN : height,
@@ -311,8 +332,8 @@ namespace e_learning_app
             {
                 Text = ev.Time,
                 FontSize = 10,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69)),
+                FontWeight = FontWeights.Bold,
+                Foreground = textAccentBrush, // Use the vibrant accent color!
                 Margin = new Thickness(0, 0, 0, 4)
             };
             stack.Children.Add(txtTime);

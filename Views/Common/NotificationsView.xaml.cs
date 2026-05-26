@@ -81,7 +81,6 @@ namespace e_learning_app.Views
             {
                 "unread" => _all.Where(n => !n.IsRead),
                 "sent" => _all.Where(n => n.SenderId == currentUser?.Id),
-                "system" => _all.Where(n => n.Type == "System"),
                 _ => _all
             };
 
@@ -206,9 +205,33 @@ namespace e_learning_app.Views
             }
         }
 
-        private void BtnMarkAllRead_Click(object sender, RoutedEventArgs e) 
+        private async void BtnMarkAllRead_Click(object sender, RoutedEventArgs e) 
         {
-            // Tính nang có thể mở rộng sau
+            var unreadIds = _all.Where(n => !n.IsRead && n.Id != "empty").Select(n => n.Id).ToList();
+            if (unreadIds.Count == 0) return;
+
+            foreach (var n in _all)
+            {
+                if (unreadIds.Contains(n.Id))
+                {
+                    n.IsRead = true;
+                    NotificationService.ReadNotifKeys.Add(n.Id);
+                }
+            }
+            Refresh();
+
+            try
+            {
+                var currentUser = _dbManager.GetCurrentUser();
+                if (currentUser != null)
+                {
+                    await ApiService.PutAsync("notifications/read", new { NotificationIds = unreadIds });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi khi đánh dấu đọc tất cả: " + ex.Message);
+            }
         }
 
 

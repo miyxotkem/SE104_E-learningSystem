@@ -64,11 +64,35 @@ namespace WebAPI_E_learning.Controllers
         public async Task<IActionResult> GetAllCourses()
         {
             var snapshot = await _firestoreDb.Collection("Courses").GetSnapshotAsync();
-            var courses = snapshot.Documents.Select(d => new
+            var courses = new List<object>();
+
+            foreach (var doc in snapshot.Documents)
             {
-                Id = d.Id,
-                Data = ConvertFirestoreTypes(d.ToDictionary())
-            });
+                var courseData = doc.ToDictionary();
+                string id = doc.Id;
+
+                // Calculate actual StudentCount dynamically
+                var regSnap = await _firestoreDb.Collection("courseRegistrations")
+                    .WhereEqualTo("courseId", id)
+                    .WhereIn("status", new[] { "accepted", "active" })
+                    .GetSnapshotAsync();
+                int actualStudentCount = regSnap.Documents.Count;
+
+                // Calculate actual AssignmentCount dynamically
+                var asmSnap = _firestoreDb.Collection("Courses").Document(id).Collection("Assignments");
+                var asmSnapDoc = await asmSnap.GetSnapshotAsync();
+                int actualAssignmentCount = asmSnapDoc.Documents.Count;
+
+                courseData["StudentCount"] = actualStudentCount;
+                courseData["AssignmentCount"] = actualAssignmentCount;
+
+                courses.Add(new
+                {
+                    Id = id,
+                    Data = ConvertFirestoreTypes(courseData)
+                });
+            }
+
             return Ok(courses);
         }
 
@@ -79,6 +103,22 @@ namespace WebAPI_E_learning.Controllers
             var docRef = _firestoreDb.Collection("Courses").Document(id);
             var docSnap = await docRef.GetSnapshotAsync();
             if (!docSnap.Exists) return NotFound(new { Message = "Course not found." });
+
+            var courseData = docSnap.ToDictionary();
+
+            // Calculate actual StudentCount dynamically
+            var regSnap = await _firestoreDb.Collection("courseRegistrations")
+                .WhereEqualTo("courseId", id)
+                .WhereIn("status", new[] { "accepted", "active" })
+                .GetSnapshotAsync();
+            int actualStudentCount = regSnap.Documents.Count;
+
+            // Calculate actual AssignmentCount dynamically
+            var asmSnap = await docRef.Collection("Assignments").GetSnapshotAsync();
+            int actualAssignmentCount = asmSnap.Documents.Count;
+
+            courseData["StudentCount"] = actualStudentCount;
+            courseData["AssignmentCount"] = actualAssignmentCount;
 
             // Fetch lessons from the root Lessons collection to align with GetLessons and AddLesson
             var lessonsSnap = await _firestoreDb.Collection("Lessons")
@@ -92,7 +132,7 @@ namespace WebAPI_E_learning.Controllers
             return Ok(new
             {
                 Id = docSnap.Id,
-                Data = ConvertFirestoreTypes(docSnap.ToDictionary()),
+                Data = ConvertFirestoreTypes(courseData),
                 Lessons = lessons
             });
         }
@@ -139,34 +179,76 @@ namespace WebAPI_E_learning.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Instructor,Admin")]
-        public async Task<IActionResult> UpdateCourse(string id, [FromBody] UpdateCourseRequest request)
+        public async Task<IActionResult> UpdateCourse(string id, [FromBody] System.Text.Json.JsonElement requestBody)
         {
             var docRef = _firestoreDb.Collection("Courses").Document(id);
             var docSnap = await docRef.GetSnapshotAsync();
             if (!docSnap.Exists) return NotFound(new { Message = "Course not found." });
 
-            var updates = new Dictionary<string, object>
+            var allowedFields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                { "Title", request.Title },
-                { "Description", request.Description },
-                { "ThumbnailUrl", request.ThumbnailUrl },
-                { "Price", (double)request.Price },
-                { "ClassName", request.ClassName },
-                { "CourseType", request.CourseType },
-                { "Category", request.Category },
-                { "DayOfWeek", request.DayOfWeek },
-                { "StartPeriod", request.StartPeriod },
-                { "EndPeriod", request.EndPeriod },
-                { "Semester", request.Semester },
-                { "Emoji", request.Emoji },
-                { "AccentColor", request.AccentColor },
-                { "IsActive", request.IsActive },
-                { "StudentCount", request.StudentCount },
-                { "AssignmentCount", request.AssignmentCount },
-                { "UpdatedAt", DateTime.UtcNow }
+                { "Title", "Title" },
+                { "Description", "Description" },
+                { "ClassName", "ClassName" },
+                { "Category", "Category" },
+                { "Semester", "Semester" },
+                { "Emoji", "Emoji" },
+                { "AccentColor", "AccentColor" },
+                { "StudentCount", "StudentCount" },
+                { "AssignmentCount", "AssignmentCount" },
+                { "IsActive", "IsActive" },
+                { "DayOfWeek", "DayOfWeek" },
+                { "StartPeriod", "StartPeriod" },
+                { "EndPeriod", "EndPeriod" },
+                { "Price", "Price" },
+                { "ThumbnailUrl", "ThumbnailUrl" },
+                { "InstructorId", "InstructorId" },
+                { "CourseType", "CourseType" }
             };
 
-            await docRef.UpdateAsync(updates);
+            var updates = new Dictionary<string, object>();
+            foreach (var property in requestBody.EnumerateObject())
+            {
+                if (allowedFields.TryGetValue(property.Name, out string firestoreKey))
+                {
+                    var val = property.Value;
+                    switch (val.ValueKind)
+                    {
+                        case System.Text.Json.JsonValueKind.Null:
+                            updates[firestoreKey] = null;
+                            break;
+                        case System.Text.Json.JsonValueKind.String:
+                            updates[firestoreKey] = val.GetString() ?? "";
+                            break;
+                        case System.Text.Json.JsonValueKind.Number:
+                            if (val.TryGetInt32(out int iVal))
+                            {
+                                updates[firestoreKey] = iVal;
+                            }
+                            else if (val.TryGetDouble(out double dVal))
+                            {
+                                updates[firestoreKey] = dVal;
+                            }
+                            break;
+                        case System.Text.Json.JsonValueKind.True:
+                            updates[firestoreKey] = true;
+                            break;
+                        case System.Text.Json.JsonValueKind.False:
+                            updates[firestoreKey] = false;
+                            break;
+                        default:
+                            updates[firestoreKey] = val.ToString();
+                            break;
+                    }
+                }
+            }
+
+            if (updates.Count > 0)
+            {
+                updates["UpdatedAt"] = DateTime.UtcNow;
+                await docRef.UpdateAsync(updates);
+            }
+
             return Ok(new { Message = "Course updated successfully." });
         }
 
@@ -176,6 +258,20 @@ namespace WebAPI_E_learning.Controllers
         {
             var docRef = _firestoreDb.Collection("Courses").Document(id);
             if (!(await docRef.GetSnapshotAsync()).Exists) return NotFound();
+
+            // Xóa tất cả các thông báo liên quan đến lớp học này
+            var notifsSnap = await _firestoreDb.Collection("Notifications")
+                .WhereEqualTo("CourseId", id)
+                .GetSnapshotAsync();
+            if (notifsSnap.Documents.Count > 0)
+            {
+                var batch = _firestoreDb.StartBatch();
+                foreach (var doc in notifsSnap.Documents)
+                {
+                    batch.Delete(doc.Reference);
+                }
+                await batch.CommitAsync();
+            }
 
             await docRef.DeleteAsync();
             return Ok(new { Message = "Course deleted successfully." });
@@ -351,8 +447,8 @@ namespace WebAPI_E_learning.Controllers
                     var userDoc = await _firestoreDb.Collection("Users").Document(userId).GetSnapshotAsync();
                     if (userDoc.Exists)
                     {
-                        if (userDoc.TryGetValue("FullName", out string fn)) fullName = fn;
-                        if (userDoc.TryGetValue("Email", out string em)) email = em;
+                        if (userDoc.TryGetValue("FullName", out string fn) || userDoc.TryGetValue("fullName", out fn)) fullName = fn;
+                        if (userDoc.TryGetValue("Email", out string em) || userDoc.TryGetValue("email", out em)) email = em;
                     }
                 }
                 data["fullName"] = fullName;
@@ -418,6 +514,22 @@ namespace WebAPI_E_learning.Controllers
             return Ok(assignments);
         }
 
+        [HttpGet("{courseId}/assignments/{asmId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAssignmentDetail(string courseId, string asmId)
+        {
+            var docRef = _firestoreDb.Collection("Courses").Document(courseId)
+                                     .Collection("Assignments").Document(asmId);
+            var docSnap = await docRef.GetSnapshotAsync();
+            if (!docSnap.Exists) return NotFound(new { Message = "Assignment not found." });
+
+            return Ok(new
+            {
+                Id = docSnap.Id,
+                Data = ConvertFirestoreTypes(docSnap.ToDictionary())
+            });
+        }
+
         [HttpPost("{courseId}/assignments")]
         [Authorize(Roles = "Instructor,Admin")]
         public async Task<IActionResult> CreateAssignment(string courseId, [FromBody] CreateAssignmentRequest request)
@@ -444,7 +556,23 @@ namespace WebAPI_E_learning.Controllers
         {
             string uid = GetCurrentUserId();
             var asmRef = _firestoreDb.Collection("Courses").Document(courseId).Collection("Assignments").Document(asmId);
-            if (!(await asmRef.GetSnapshotAsync()).Exists) return NotFound("Assignment not found.");
+            var asmSnap = await asmRef.GetSnapshotAsync();
+            if (!asmSnap.Exists) return NotFound("Assignment not found.");
+
+            // Tính toán xem có nộp muộn (trễ hạn) hay không
+            bool isLate = false;
+            var asmDict = asmSnap.ToDictionary();
+            if (asmDict.ContainsKey("DueDate") && asmDict["DueDate"] != null)
+            {
+                if (asmDict["DueDate"] is Timestamp ts)
+                {
+                    isLate = DateTime.UtcNow > ts.ToDateTime().ToUniversalTime();
+                }
+                else if (DateTime.TryParse(asmDict["DueDate"].ToString(), out DateTime dueDate))
+                {
+                    isLate = DateTime.UtcNow > dueDate.ToUniversalTime();
+                }
+            }
 
             var subData = new Dictionary<string, object>
             {
@@ -452,6 +580,7 @@ namespace WebAPI_E_learning.Controllers
                 { "FileUrl", request.FileUrl },
                 { "Content", request.Content },
                 { "SubmittedAt", DateTime.UtcNow },
+                { "IsLate", isLate },
                 { "Score", null }
             };
 

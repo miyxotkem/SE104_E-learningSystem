@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.Views.NotificationsView"
+<UserControl x:Class="e_learning_app.Views.NotificationsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F0F2F5"
@@ -97,7 +97,6 @@
             <RadioButton x:Name="BtnFilterAll" Content="Tất cả" Style="{StaticResource FilterTabBtn}" IsChecked="True" Checked="FilterTab_Checked" Tag="all"/>
             <RadioButton x:Name="BtnFilterUnread" Content="Chua đọc" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="unread"/>
             <RadioButton x:Name="BtnFilterSent" Content="Đã gửi" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="sent"/>
-            <RadioButton x:Name="BtnFilterSystem" Content="Hệ thống" Style="{StaticResource FilterTabBtn}" Checked="FilterTab_Checked" Tag="system"/>
         </StackPanel>
 
         <!-- LIST NOTIFICATIONS -->

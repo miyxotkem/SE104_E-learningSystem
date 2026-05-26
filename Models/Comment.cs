@@ -52,6 +52,35 @@ namespace e_learning_app
         public bool CanDelete { get; set; }
         public System.Windows.Visibility DeleteButtonVisibility => CanDelete ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
+        private static readonly string[] AvatarColors = new string[]
+        {
+            "#3B82F6", // Blue
+            "#10B981", // Emerald
+            "#8B5CF6", // Violet
+            "#F59E0B", // Amber
+            "#EF4444", // Red
+            "#EC4899", // Pink
+            "#06B6D4", // Cyan
+            "#F97316", // Orange
+            "#14B8A6", // Teal
+            "#6366F1"  // Indigo
+        };
+
+        public string AvatarColor
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(UserName)) return "#64748B"; // Slate default
+                int hash = 0;
+                foreach (char c in UserName)
+                {
+                    hash += c;
+                }
+                int index = Math.Abs(hash) % AvatarColors.Length;
+                return AvatarColors[index];
+            }
+        }
+
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string propertyName)
         {

@@ -163,7 +163,7 @@ namespace e_learning_app.Views
             EditYearInput.Items.Clear();
             for (int i = currentYear - 2; i <= currentYear + 3; i++)
             {
-                EditYearInput.Items.Add($"{i}-{i + 1}");
+                EditYearInput.Items.Add($"{i} - {i + 1}");
             }
         }
 
@@ -1322,6 +1322,7 @@ namespace e_learning_app.Views
                     using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
                     using (HttpClient client = new HttpClient())
                     {
+                        var addedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                         int currentIndex = 0;
                         foreach (var resp in submissions)
                         {
@@ -1332,14 +1333,55 @@ namespace e_learning_app.Views
 
                             var sub = resp.Data;
                             string displayFileName = GetDisplayNameFromUrl(sub.FileUrl, "submission");
-                            string finalZipName = sub.IsLate ? $"late_{sub.StudentId}_{displayFileName}" : $"{sub.StudentId}_{displayFileName}";
-
-                            var fileBytes = await client.GetByteArrayAsync(sub.FileUrl);
-
-                            ZipArchiveEntry fileEntry = archive.CreateEntry(finalZipName);
-                            using (Stream writer = fileEntry.Open())
+                            if (string.IsNullOrEmpty(displayFileName))
                             {
-                                await writer.WriteAsync(fileBytes, 0, fileBytes.Length);
+                                displayFileName = "bai_nop";
+                            }
+
+                            // Làm sạch tên file để tránh các ký tự không hợp lệ trong tệp ZIP
+                            string cleanFileName = string.Join("_", displayFileName.Split(Path.GetInvalidFileNameChars()));
+                            string finalZipName = sub.IsLate ? $"late_{sub.StudentId}_{cleanFileName}" : $"{sub.StudentId}_{cleanFileName}";
+
+                            // Đảm bảo không trùng tên file trong ZIP để tránh ngoại lệ ArgumentException
+                            if (addedNames.Contains(finalZipName))
+                            {
+                                string nameWithoutExt = Path.GetFileNameWithoutExtension(finalZipName);
+                                string ext = Path.GetExtension(finalZipName);
+                                int suffix = 1;
+                                while (addedNames.Contains($"{nameWithoutExt}_{suffix}{ext}"))
+                                {
+                                    suffix++;
+                                }
+                                finalZipName = $"{nameWithoutExt}_{suffix}{ext}";
+                            }
+                            addedNames.Add(finalZipName);
+
+                            try
+                            {
+                                var fileBytes = await client.GetByteArrayAsync(sub.FileUrl);
+                                ZipArchiveEntry fileEntry = archive.CreateEntry(finalZipName);
+                                using (Stream writer = fileEntry.Open())
+                                {
+                                    await writer.WriteAsync(fileBytes, 0, fileBytes.Length);
+                                }
+                            }
+                            catch (Exception downloadEx)
+                            {
+                                // Ghi tệp thông báo lỗi thay vì làm sập toàn bộ tiến trình tải xuống
+                                string errorFileName = sub.IsLate ? $"error_late_{sub.StudentId}.txt" : $"error_{sub.StudentId}.txt";
+                                if (addedNames.Contains(errorFileName))
+                                {
+                                    errorFileName = $"error_{sub.StudentId}_{currentIndex}.txt";
+                                }
+                                addedNames.Add(errorFileName);
+
+                                ZipArchiveEntry errorEntry = archive.CreateEntry(errorFileName);
+                                using (Stream writer = errorEntry.Open())
+                                using (StreamWriter textWriter = new StreamWriter(writer))
+                                {
+                                    await textWriter.WriteLineAsync($"Lỗi tải tệp: {downloadEx.Message}");
+                                    await textWriter.WriteLineAsync($"Đường dẫn gốc: {sub.FileUrl}");
+                                }
                             }
                         }
                     }
@@ -1680,13 +1722,21 @@ namespace e_learning_app.Views
 
             if (!string.IsNullOrEmpty(_course.Semester) && _course.Semester.Contains(" - "))
             {
-                string[] parts = _course.Semester.Split(new[] { " - " }, StringSplitOptions.None);
-                SetComboBoxByContent(EditSemesterInput, parts[0].Trim());
-                if (parts.Length > 1)
+                int firstDashIdx = _course.Semester.IndexOf(" - ");
+                string semPart = _course.Semester.Substring(0, firstDashIdx).Trim();
+                string yearPart = _course.Semester.Substring(firstDashIdx + 3).Trim();
+
+                SetComboBoxByContent(EditSemesterInput, semPart);
+                
+                string standardYearPart = yearPart.Replace(" ", "");
+                foreach (var item in EditYearInput.Items)
                 {
-                    string yearValue = parts[1].Trim();
-                    foreach (var item in EditYearInput.Items)
-                        if (item.ToString() == yearValue) { EditYearInput.SelectedItem = item; break; }
+                    string standardItem = item.ToString().Replace(" ", "");
+                    if (standardItem == standardYearPart)
+                    {
+                        EditYearInput.SelectedItem = item;
+                        break;
+                    }
                 }
             }
             MainScrollViewer.Effect = new BlurEffect { Radius = 10 }; EditDrawer.Visibility = Visibility.Visible;
