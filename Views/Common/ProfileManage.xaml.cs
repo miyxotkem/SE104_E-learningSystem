@@ -13,6 +13,7 @@ namespace e_learning_app
     public partial class ProfileManage : UserControl
     {
         private DatabaseManager _dbManager;
+        private string _pendingAvatarUrl = null;
 
         public ProfileManage(DatabaseManager dbManager)
         {
@@ -93,6 +94,20 @@ namespace e_learning_app
                 user.Email = txtEmail.Text;
                 user.PhoneNumber = txtPhone.Text;
 
+                if (_pendingAvatarUrl != null)
+                {
+                    user.ProfileImageUrl = _pendingAvatarUrl;
+                    if (string.IsNullOrEmpty(_pendingAvatarUrl))
+                    {
+                        await e_learning_app.Class.ApiService.DeleteAsync("users/profile/avatar");
+                    }
+                    else
+                    {
+                        await e_learning_app.Class.ApiService.PutAsync("users/profile/avatar", new { ProfileImageUrl = _pendingAvatarUrl });
+                    }
+                    _pendingAvatarUrl = null;
+                }
+
                 await _dbManager.UpdateFullProfile(user.Id, user);
                 
                 // Cập nhật lại local state để các màn hình khác (Sidebar) thấy được sự thay đổi
@@ -138,13 +153,10 @@ namespace e_learning_app
                     
                     string newAvatarUrl = uploadResult.SecureUrl.ToString();
                     
-                    var user = _dbManager.GetCurrentUser();
-                    user.ProfileImageUrl = newAvatarUrl;
-                    
-                    await e_learning_app.Class.ApiService.PutAsync("users/profile/avatar", new { ProfileImageUrl = newAvatarUrl });
+                    _pendingAvatarUrl = newAvatarUrl;
                     
                     imgAvatar.ImageSource = new BitmapImage(new Uri(newAvatarUrl));
-                    CustomDialog.Show("Cập nhật ảnh đại diện thành công!", "Thông báo", DialogType.Success);
+                    CustomDialog.Show("Ảnh đại diện đã được thay đổi. Nhấn Lưu thay đổi để áp dụng!", "Thông báo", DialogType.Success);
                 }
                 catch (Exception ex)
                 {
@@ -153,16 +165,13 @@ namespace e_learning_app
             }
         }
 
-        private async void btnDeleteAvatar_Click(object sender, RoutedEventArgs e)
+        private void btnDeleteAvatar_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                var user = _dbManager.GetCurrentUser();
-                user.ProfileImageUrl = "";
-
-                await e_learning_app.Class.ApiService.DeleteAsync("users/profile/avatar");
+                _pendingAvatarUrl = "";
                 imgAvatar.ImageSource = null;
-                CustomDialog.Show("Xóa ảnh đại diện thành công!", "Thông báo", DialogType.Success);
+                CustomDialog.Show("Ảnh đại diện đã được xóa. Nhấn Lưu thay đổi để áp dụng!", "Thông báo", DialogType.Success);
             }
             catch (Exception ex)
             {

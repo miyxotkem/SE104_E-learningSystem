@@ -74,6 +74,7 @@ namespace WebAPI_E_learning.Controllers
                     { "UserId", uid },
                     { "UserName", request?.UserName ?? "" },
                     { "UserRole", request?.UserRole ?? "" },
+                    { "ProfileImageUrl", request?.ProfileImageUrl ?? "" },
                     { "CreatedAt", Google.Cloud.Firestore.Timestamp.GetCurrentTimestamp() }
                 };
 
@@ -132,5 +133,6 @@ namespace WebAPI_E_learning.Controllers
         public string Content { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public string UserRole { get; set; } = string.Empty;
+        public string ProfileImageUrl { get; set; } = string.Empty;
     }
 }

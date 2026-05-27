@@ -33,5 +33,6 @@ namespace WebAPI_E_learning.Models
     {
         // Key: QuestionId or Index, Value: Index of Option chosen by student
         public System.Collections.Generic.Dictionary<string, int> Answers { get; set; } = new(); 
+        public int TimeSpentSeconds { get; set; }
     }
 }

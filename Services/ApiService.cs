@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -97,7 +97,9 @@ namespace e_learning_app.Class
     public static class ApiService
     {
         private static readonly HttpClient _httpClient = new HttpClient();
-        private const string BaseUrl = "https://api-e-learning.thankfulflower-208a0ec8.eastasia.azurecontainerapps.io/api";
+        // Comment out the Azure URL temporarily for local testing:
+        // private const string BaseUrl = "https://api-e-learning.thankfulflower-208a0ec8.eastasia.azurecontainerapps.io/api";
+        private const string BaseUrl = "https://localhost:7243/api";
 
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions 
         { 

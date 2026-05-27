@@ -195,8 +195,14 @@
                                             <StackPanel>
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                                     <Border Width="30" Height="30" CornerRadius="8" Background="{Binding AvatarColor}">
-                                                        <TextBlock Text="{Binding UserName[0]}" Foreground="White" FontSize="11" FontWeight="Bold"
-                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <Grid>
+                                                            <TextBlock Text="{Binding UserName[0]}" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            <Border CornerRadius="8">
+                                                                <Border.Background>
+                                                                    <ImageBrush ImageSource="{Binding ProfileImageUrl, TargetNullValue={x:Null}, FallbackValue={x:Null}}" Stretch="UniformToFill"/>
+                                                                </Border.Background>
+                                                            </Border>
+                                                        </Grid>
                                                     </Border>
                                                     <StackPanel Margin="8,0,0,0" VerticalAlignment="Center">
                                                         <StackPanel Orientation="Horizontal">
@@ -252,8 +258,14 @@
                                                         <StackPanel>
                                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                                                 <Border Width="24" Height="24" CornerRadius="6" Background="{Binding AvatarColor}">
-                                                                    <TextBlock Text="{Binding UserName[0]}" Foreground="White" FontSize="10" FontWeight="Bold"
-                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    <Grid>
+                                                                        <TextBlock Text="{Binding UserName[0]}" Foreground="White" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        <Border CornerRadius="6">
+                                                                            <Border.Background>
+                                                                                <ImageBrush ImageSource="{Binding ProfileImageUrl, TargetNullValue={x:Null}, FallbackValue={x:Null}}" Stretch="UniformToFill"/>
+                                                                            </Border.Background>
+                                                                        </Border>
+                                                                    </Grid>
                                                                 </Border>
                                                                 <StackPanel Margin="6,0,0,0" VerticalAlignment="Center">
                                                                     <StackPanel Orientation="Horizontal">

@@ -45,6 +45,27 @@ namespace e_learning_app.Views
             {
                 TxtQuizTitle.Text = $"📝  {_exam.Title}";
 
+                // Load questions from Firestore first to get the latest exam configuration
+                var detailRes = await e_learning_app.Class.ApiService.GetAsync<System.Text.Json.JsonElement?>($"exams/{_exam.Id}");
+                if (detailRes != null && detailRes.HasValue)
+                {
+                    try
+                    {
+                        if (detailRes.Value.TryGetProperty("Data", out var docData) || detailRes.Value.TryGetProperty("data", out docData))
+                        {
+                            if (docData.TryGetProperty("MaxAttempts", out var maxElem) || docData.TryGetProperty("maxAttempts", out maxElem))
+                            {
+                                if (maxElem.ValueKind == System.Text.Json.JsonValueKind.Number) _exam.MaxAttempts = maxElem.GetInt32();
+                            }
+                            if (docData.TryGetProperty("AllowMultipleAttempts", out var allowElem) || docData.TryGetProperty("allowMultipleAttempts", out allowElem))
+                            {
+                                if (allowElem.ValueKind == System.Text.Json.JsonValueKind.True || allowElem.ValueKind == System.Text.Json.JsonValueKind.False) _exam.AllowMultipleAttempts = allowElem.GetBoolean();
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
                 // Double check attempt limit qua API
                 var user = _dbManager.GetCurrentUser();
                 if (user != null)
@@ -80,8 +101,6 @@ namespace e_learning_app.Views
                     _activeDraft = await _dbManager.GetExamDraftAsync(_exam.Id, user.Id);
                 }
 
-                // Load questions from Firestore
-                var detailRes = await e_learning_app.Class.ApiService.GetAsync<System.Text.Json.JsonElement?>($"exams/{_exam.Id}");
                 if (detailRes != null && detailRes.HasValue)
                 {
                     _questions = new System.Collections.Generic.List<e_learning_app.Class.ExamQuestion>();
@@ -545,6 +564,7 @@ namespace e_learning_app.Views
             _timer?.Stop();
 
             var request = new e_learning_app.Class.SubmitExamRequest();
+            request.TimeSpentSeconds = (int)(DateTime.Now - _startTime).TotalSeconds;
             for (int i = 0; i < _questions.Count; i++)
             {
                 var q = _questions[i];

@@ -24,6 +24,15 @@ namespace e_learning_app
         [FirestoreProperty]
         public string UserRole { get; set; } = null!; // Student, Teacher
 
+        private string _profileImageUrl = string.Empty;
+
+        [FirestoreProperty]
+        public string ProfileImageUrl 
+        { 
+            get => string.IsNullOrEmpty(_profileImageUrl) ? null : _profileImageUrl;
+            set => _profileImageUrl = value; 
+        }
+
         [FirestoreProperty]
         public string Content { get; set; } = null!;
 

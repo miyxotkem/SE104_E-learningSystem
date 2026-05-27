@@ -668,7 +668,8 @@ namespace WebAPI_E_learning.Controllers
                 { "TotalQuestions", totalQuestions },
                 { "Percentage", percentage },
                 { "Answers", richAnswers }, // Lưu câu trả lời chuẩn hoá hoàn chỉnh
-                { "SubmittedAt", DateTime.UtcNow }
+                { "SubmittedAt", DateTime.UtcNow },
+                { "TimeSpentSeconds", request.TimeSpentSeconds }
             };
 
             await _firestoreDb.Collection("exam_submissions").AddAsync(subData);

@@ -1,10 +1,12 @@
 using Google.Cloud.Firestore;
 using System;
 
+using System.ComponentModel;
+
 namespace e_learning_app
 {
     [FirestoreData]
-    public class User
+    public class User : INotifyPropertyChanged
     {
         [FirestoreDocumentId]
         public string Id { get; set; }
@@ -15,8 +17,13 @@ namespace e_learning_app
         [FirestoreProperty]
         public string Email { get; set; }
 
+        private string _fullName;
         [FirestoreProperty]
-        public string FullName { get; set; }
+        public string FullName 
+        { 
+            get => _fullName; 
+            set { _fullName = value; OnPropertyChanged(nameof(FullName)); } 
+        }
 
         [FirestoreProperty]
         public string PhoneNumber { get; set; }
@@ -30,7 +37,18 @@ namespace e_learning_app
         [FirestoreProperty]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        private string _profileImageUrl;
         [FirestoreProperty]
-        public string ProfileImageUrl { get; set; }
+        public string ProfileImageUrl 
+        { 
+            get => _profileImageUrl; 
+            set { _profileImageUrl = value; OnPropertyChanged(nameof(ProfileImageUrl)); } 
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

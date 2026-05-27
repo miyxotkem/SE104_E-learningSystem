@@ -435,7 +435,8 @@ namespace e_learning_app.Views
                 ParentId = "",
                 Content = content,
                 UserName = userName,
-                UserRole = role
+                UserRole = role,
+                ProfileImageUrl = currentUser.ProfileImageUrl ?? ""
             };
 
             await ApiService.PostAsync("comments", newComment);
@@ -484,7 +485,8 @@ namespace e_learning_app.Views
                     ParentId = parentId,
                     Content = content,
                     UserName = userName,
-                    UserRole = role
+                    UserRole = role,
+                    ProfileImageUrl = currentUser.ProfileImageUrl ?? ""
                 };
 
                 await ApiService.PostAsync("comments", newComment);

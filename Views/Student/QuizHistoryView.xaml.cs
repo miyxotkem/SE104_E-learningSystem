@@ -59,6 +59,22 @@ namespace e_learning_app.Views
                                     if (qElem.TryGetProperty("Points", out var ptsElem)) totalPoints += ptsElem.GetDouble();
                                 }
                             }
+
+                            if (docData.TryGetProperty("MaxAttempts", out var maxElem) || docData.TryGetProperty("maxAttempts", out maxElem))
+                            {
+                                if (maxElem.ValueKind == System.Text.Json.JsonValueKind.Number)
+                                {
+                                    _exam.MaxAttempts = maxElem.GetInt32();
+                                    TxtMaxAttempts.Text = $"{_exam.MaxAttempts} lần";
+                                }
+                            }
+                            if (docData.TryGetProperty("AllowMultipleAttempts", out var allowElem) || docData.TryGetProperty("allowMultipleAttempts", out allowElem))
+                            {
+                                if (allowElem.ValueKind == System.Text.Json.JsonValueKind.True || allowElem.ValueKind == System.Text.Json.JsonValueKind.False)
+                                {
+                                    _exam.AllowMultipleAttempts = allowElem.GetBoolean();
+                                }
+                            }
                         }
                     }
                     catch { }
