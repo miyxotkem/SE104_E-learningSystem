@@ -103,9 +103,43 @@ namespace WebAPI_E_learning.Controllers
             if (string.IsNullOrEmpty(uid)) return Unauthorized();
 
             var docRef = _firestoreDb.Collection("Users").Document(uid);
-            await docRef.UpdateAsync("FullName", request.FullName);
+            var updates = new Dictionary<string, object>
+            {
+                { "FullName", request.FullName }
+            };
+
+            if (request.ProfileImageUrl != null)
+            {
+                updates["ProfileImageUrl"] = request.ProfileImageUrl;
+            }
+
+            await docRef.UpdateAsync(updates);
 
             return Ok(new { Message = "Profile updated successfully." });
+        }
+
+        [HttpPut("profile/avatar")]
+        public async Task<IActionResult> UpdateAvatar([FromBody] UpdateAvatarRequest request)
+        {
+            string uid = GetCurrentUserId();
+            if (string.IsNullOrEmpty(uid)) return Unauthorized();
+
+            var docRef = _firestoreDb.Collection("Users").Document(uid);
+            await docRef.UpdateAsync("ProfileImageUrl", request.ProfileImageUrl);
+
+            return Ok(new { Message = "Avatar updated successfully.", ProfileImageUrl = request.ProfileImageUrl });
+        }
+
+        [HttpDelete("profile/avatar")]
+        public async Task<IActionResult> DeleteAvatar()
+        {
+            string uid = GetCurrentUserId();
+            if (string.IsNullOrEmpty(uid)) return Unauthorized();
+
+            var docRef = _firestoreDb.Collection("Users").Document(uid);
+            await docRef.UpdateAsync("ProfileImageUrl", "");
+
+            return Ok(new { Message = "Avatar deleted successfully." });
         }
 
         [HttpGet]

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="e_learning_app.ProfileManage"
+<UserControl x:Class="e_learning_app.ProfileManage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -137,11 +137,29 @@
 
             <Border Grid.Row="1" Background="White" CornerRadius="20" Padding="30" VerticalAlignment="Top">
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,0,0,20">
+                        <Border Width="100" Height="100" CornerRadius="50" BorderBrush="#E2E8F0" BorderThickness="2">
+                            <Border.Background>
+                                <ImageBrush x:Name="imgAvatar" Stretch="UniformToFill"/>
+                            </Border.Background>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Center">
+                            <Button Content="Đổi ảnh" Style="{StaticResource PasswordButtonStyle}" Width="80" Height="30" FontSize="12" Padding="0" Margin="0,0,10,0" Click="btnChangeAvatar_Click"/>
+                            <Button Content="Xóa ảnh" Style="{StaticResource PasswordButtonStyle}" Width="80" Height="30" FontSize="12" Padding="0" Foreground="Red" BorderBrush="Red" Click="btnDeleteAvatar_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="30"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="Họ và Tên" Style="{StaticResource FieldLabelStyle}"/>
@@ -159,6 +177,7 @@
                         <TextBox x:Name="txtRole" IsReadOnly="True" Background="#F1F5F9"/>
 
                     </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
 

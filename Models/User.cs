@@ -29,5 +29,8 @@ namespace e_learning_app
 
         [FirestoreProperty]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [FirestoreProperty]
+        public string ProfileImageUrl { get; set; }
     }
 }

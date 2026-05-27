@@ -206,7 +206,8 @@ namespace WebAPI_E_learning.Controllers
                     { "Role", "Student" },
                     { "PhoneNumber", "" },
                     { "CreatedAt", DateTime.UtcNow },
-                    { "IsBlocked", false }
+                    { "IsBlocked", false },
+                    { "ProfileImageUrl", "" }
                 };
                 await userDoc.SetAsync(userData);
 
@@ -283,6 +284,7 @@ namespace WebAPI_E_learning.Controllers
                     string uid = root.GetProperty("localId").GetString();
                     string email = root.GetProperty("email").GetString();
                     string displayName = root.TryGetProperty("displayName", out var dp) ? dp.GetString() : email;
+                    string photoUrl = root.TryGetProperty("photoUrl", out var pu) ? pu.GetString() : "";
 
                     var userDocRef = _firestoreDb.Collection("Users").Document(uid);
                     var userDoc = await userDocRef.GetSnapshotAsync();
@@ -298,7 +300,8 @@ namespace WebAPI_E_learning.Controllers
                             { "Role", "Student" },
                             { "PhoneNumber", "" },
                             { "CreatedAt", DateTime.UtcNow },
-                            { "IsBlocked", false }
+                            { "IsBlocked", false },
+                            { "ProfileImageUrl", photoUrl }
                         };
                         await userDocRef.SetAsync(userData);
                     }

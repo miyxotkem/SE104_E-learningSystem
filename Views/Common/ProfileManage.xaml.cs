@@ -3,6 +3,10 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.Win32;
 
 namespace e_learning_app
 {
@@ -29,6 +33,14 @@ namespace e_learning_app
                         txtEmail.Text = user.Email;
                         txtPhone.Text = user.PhoneNumber;
                         txtRole.Text = user.Role;
+                        if (!string.IsNullOrEmpty(user.ProfileImageUrl))
+                        {
+                            try
+                            {
+                                imgAvatar.ImageSource = new BitmapImage(new Uri(user.ProfileImageUrl));
+                            }
+                            catch { }
+                        }
                     }
                 }
             }
@@ -101,6 +113,61 @@ namespace e_learning_app
         private void txtFullName_TextChanged(object sender, TextChangedEventArgs e)
         {
 
+        }
+
+        private async void btnChangeAvatar_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog { Filter = "Image Files (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png" };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    Account account = new Account("drg8swbxp", "167723827683986", "3aclNKhg3htYds76wcUrxjTdnRU");
+                    Cloudinary cloudinary = new Cloudinary(account);
+                    cloudinary.Api.Secure = true;
+
+                    var uploadParams = new ImageUploadParams()
+                    {
+                        File = new FileDescription(openFileDialog.FileName),
+                        UseFilename = true,
+                        UniqueFilename = true
+                    };
+
+                    var uploadResult = await cloudinary.UploadAsync(uploadParams);
+                    if (uploadResult.Error != null) throw new Exception(uploadResult.Error.Message);
+                    
+                    string newAvatarUrl = uploadResult.SecureUrl.ToString();
+                    
+                    var user = _dbManager.GetCurrentUser();
+                    user.ProfileImageUrl = newAvatarUrl;
+                    
+                    await e_learning_app.Class.ApiService.PutAsync("users/profile/avatar", new { ProfileImageUrl = newAvatarUrl });
+                    
+                    imgAvatar.ImageSource = new BitmapImage(new Uri(newAvatarUrl));
+                    CustomDialog.Show("Cập nhật ảnh đại diện thành công!", "Thông báo", DialogType.Success);
+                }
+                catch (Exception ex)
+                {
+                    CustomDialog.Show("Lỗi cập nhật ảnh đại diện: " + ex.Message, "Lỗi", DialogType.Error);
+                }
+            }
+        }
+
+        private async void btnDeleteAvatar_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var user = _dbManager.GetCurrentUser();
+                user.ProfileImageUrl = "";
+
+                await e_learning_app.Class.ApiService.DeleteAsync("users/profile/avatar");
+                imgAvatar.ImageSource = null;
+                CustomDialog.Show("Xóa ảnh đại diện thành công!", "Thông báo", DialogType.Success);
+            }
+            catch (Exception ex)
+            {
+                CustomDialog.Show("Lỗi xóa ảnh đại diện: " + ex.Message, "Lỗi", DialogType.Error);
+            }
         }
     }
 }
