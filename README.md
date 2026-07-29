@@ -1,6 +1,6 @@
 <!-- HEADER BANNER -->
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:1e3c72,100:2a5298&height=200&section=header&text=📚%20E-Learning%20System&fontSize=55&fontColor=ffffff&desc=Centralized%20Platform%20for%20Course%20Registration%20%26%20Assessment&descAlignY=75" width="100%" alt="E-Learning System Banner" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1e3c72,2a5298&height=200&section=header&text=E-Learning%20System&fontSize=55&fontColor=ffffff&desc=Centralized%20Platform%20for%20Course%20Registration%20and%20Assessment&descAlignY=75" width="100%" alt="E-Learning System Banner" />
 </p>
 
 <p align="center">
