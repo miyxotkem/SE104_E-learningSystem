@@ -1,7 +1,6 @@
-<!-- HEADER BANNER -->
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:1e3c72,100:2a5298&height=200&section=header&text=📚%20SmartEdu%20(SE104)&fontSize=50&fontColor=ffffff&desc=E-Learning%20Platform%20for%20Course%20%26%20Online%20Exam%20Management&descAlignY=75" width="100%" alt="SmartEdu Banner" />
-</p>
+<!-- HEADER -->
+<h1 align="center">📚 SmartEdu (SE104)</h1>
+<p align="center"><i>E-Learning Platform for Course &amp; Online Exam Management</i></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/.NET-9-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt=".NET 9" />
