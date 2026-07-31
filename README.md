@@ -1,6 +1,6 @@
 <!-- HEADER BANNER -->
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:1e3c72,100:2a5298&height=200&section=header&text=📚%20SmartEdu%20(SE104)&fontSize=50&fontColor=ffffff&desc=E-Learning%20Platform%20for%20Course%20%26%20Online%20Exam%20Management&descAlignY=75" width="100%" alt="Banner" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:1e3c72,100:2a5298&height=200&section=header&text=📚%20SmartEdu%20(SE104)&fontSize=50&fontColor=ffffff&desc=E-Learning%20Platform%20for%20Course%20and%20Online%20Exam%20Management&descAlignY=75" width="100%" alt="Banner" />
 </p>
 
 <p align="center">
